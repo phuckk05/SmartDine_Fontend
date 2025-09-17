@@ -6,6 +6,6 @@ RUN mvn clean package -DskipTests
 
 FROM openjdk:17-jdk-slim
 WORKDIR /app
-COPY --from=build /app/target/*backend-0.0.1-SNAPSHOT app.jar  
-EXPOSE 8080
+COPY --from=build /app/target/backend-0.0.1-SNAPSHOT app.jar  
+EXPOSE 8082
 ENTRYPOINT ["java", "-jar", "app.jar"]
