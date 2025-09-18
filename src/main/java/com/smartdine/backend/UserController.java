@@ -1,6 +1,8 @@
 package com.smartdine.backend.controller;
 
 import com.smartdine.backend.model.User;
+import org.springframework.http.ResponseEntity;
+import java.util.Optional;
 import com.smartdine.backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +15,8 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+     @Autowired
+    private UserRepository userRepository;
     
 
     //Lấy all user
