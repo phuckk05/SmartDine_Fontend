@@ -10,4 +10,8 @@ public class UserController {
     public String hello() {
         return "Hello World , I'm Phúc, I'm Doing demo spring-boot!";
     }
+     @GetMapping("/test")
+    public String test() {
+        return "Done";
+    }
 }
