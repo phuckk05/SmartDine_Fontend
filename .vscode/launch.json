@@ -1,0 +1,34 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "me_talk",
+            "cwd": "fontend\\me_talk",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "me_talk (profile mode)",
+            "cwd": "fontend\\me_talk",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "me_talk (release mode)",
+            "cwd": "fontend\\me_talk",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "my_app",
+            "cwd": "fontend\\my_app",
+            "request": "launch",
+            "type": "dart"
+        }
+    ]
+}
