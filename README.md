@@ -21,8 +21,7 @@ Xem lịch sử đơn hàng
 Nhận thông báo từ bếp hoặc quản lý
 
 App được thiết kế tối ưu cho thao tác nhanh, giao diện thân thiện với người dùng.
-
-⚙️ Backend (Spring Boot)
+Backend (Spring Boot)
 Ngôn ngữ: Java
 
 Framework: Spring Boot + Spring Data JPA
