@@ -1,60 +1,121 @@
-Mô tả dự án: SmartServe RMS
-SmartServe RMS là hệ thống quản lý vận hành nhà hàng (Restaurant Management System) được thiết kế để tối ưu hóa quy trình phục vụ, thanh toán và quản lý. Dự án gồm 3 phần chính:
+# Mô tả dự án: SmartServe RMS
+# I. Giới thiệu chung
 
-Frontend (Mobile App – Flutter)
+SmartServe RMS (Restaurant Management System) là hệ thống quản lý vận hành nhà hàng được phát triển nhằm tối ưu hóa toàn bộ quy trình từ phục vụ, đặt món, thanh toán đến quản lý dữ liệu kinh doanh.
+Giải pháp hướng đến việc nâng cao hiệu suất hoạt động, giảm sai sót thủ công và cải thiện trải nghiệm khách hàng thông qua giao diện di động hiện đại.
+
+# Dự án gồm hai phần chính:
+
+Ứng dụng di động (Mobile App) – Dành cho nhân viên, thu ngân, bếp và quản lý chi nhánh.
+
+Hệ thống Backend (API Server) – Xử lý logic, quản lý dữ liệu và phân quyền người dùng.
+
+# II. Phần 1: Ứng dụng di động (Frontend)
+# 1.1. Công nghệ sử dụng
+
 Ngôn ngữ: Dart
 
-Nền tảng: Flutter (Android/iOS)
+Framework: Flutter
 
-Vai trò: Giao diện cho nhân viên và thu ngân
+Nền tảng: Android / iOS
 
-Chức năng chính:
+Môi trường phát triển: Android Studio / VS Code
 
-Đặt món, tạo đơn hàng
+# 1.2. Vai trò
 
-Quét mã bàn hoặc chọn bàn
+Ứng dụng mobile đóng vai trò là giao diện tương tác trực tiếp giữa người dùng và hệ thống, hỗ trợ nhiều nhóm người dùng trong nhà hàng:
 
-Thanh toán và in hóa đơn
+Nhân viên phục vụ (Staff): Nhận order, ghi món, gửi bếp.
 
-Xem lịch sử đơn hàng
+Thu ngân (Cashier): Tính tiền, áp dụng khuyến mãi, in hóa đơn.
 
-Nhận thông báo từ bếp hoặc quản lý
+Quản lý chi nhánh (Manager): Theo dõi hoạt động chi nhánh, xem báo cáo.
 
-App được thiết kế tối ưu cho thao tác nhanh, giao diện thân thiện với người dùng.
-Backend (Spring Boot)
+Chủ nhà hàng (Owner): Quản lý tổng thể các chi nhánh, doanh thu.
+
+Bếp (Kitchen): Nhận và xử lý món từ nhân viên phục vụ theo thời gian thực.
+
+# 1.3. Các chức năng chính
+
+Đặt món và tạo đơn hàng:
+Nhân viên có thể tạo đơn hàng mới, chọn món theo danh mục, tùy chỉnh số lượng và ghi chú.
+
+Quét mã bàn hoặc chọn bàn:
+Sử dụng mã QR để nhận diện bàn ăn, giảm sai sót khi ghi order.
+
+Gửi order đến bếp:
+Món được đồng bộ ngay với thiết bị bếp thông qua hệ thống backend.
+
+Thanh toán và in hóa đơn:
+Hỗ trợ thanh toán bằng tiền mặt, thẻ, chuyển khoản hoặc ví điện tử, đồng thời in hóa đơn nhanh.
+
+Xem lịch sử đơn hàng:
+Theo dõi chi tiết hóa đơn đã thanh toán hoặc đang phục vụ.
+
+Nhận thông báo theo thời gian thực:
+Thông báo từ bếp (món hoàn thành) hoặc từ quản lý (thông báo nội bộ).
+
+Phân quyền người dùng:
+Giao diện và chức năng được hiển thị tùy theo vai trò đăng nhập.
+
+# III. Phần 2: Hệ thống Backend (API Server)
+# 2.1. Công nghệ sử dụng
+
 Ngôn ngữ: Java
 
-Framework: Spring Boot + Spring Data JPA
+Framework: Spring Boot, Spring Data JPA
 
-Database: Supabase (PostgreSQL)
+Cơ sở dữ liệu: Supabase (PostgreSQL)
 
 Triển khai: Render (Cloud Hosting)
 
-Chức năng chính:
+API: RESTful API
 
-Cung cấp RESTful API cho mobile và web
+# 2.2. Vai trò
 
-Quản lý người dùng theo role: admin, manager, cashier, staff
+Backend là trung tâm xử lý logic nghiệp vụ, chịu trách nhiệm:
 
-Xử lý logic đơn hàng, menu, thanh toán
+Kết nối, lưu trữ và truy xuất dữ liệu từ Supabase.
 
-Kết nối database Supabase để lưu trữ dữ liệu
+Quản lý xác thực, phân quyền và bảo mật người dùng.
 
-Bảo mật API theo phân quyền
+Cung cấp API cho ứng dụng di động giao tiếp.
 
-Backend là trung tâm xử lý logic, đảm bảo dữ liệu chính xác và bảo mật.
+Xử lý quy trình nghiệp vụ phức tạp như order, thanh toán, khuyến mãi và ca làm.
 
-Web Admin (Spring Boot + Thymeleaf hoặc React)
-Vai trò: Giao diện quản trị cho admin và manager
+# 2.3. Các chức năng chính
 
-Chức năng chính:
+Quản lý người dùng và phân quyền:
+Các vai trò gồm Admin, Manager, Cashier, Staff, Chef.
 
-Quản lý thực đơn: thêm, sửa, xóa món ăn
+Quản lý menu và danh mục món:
+Cho phép thêm, sửa, xóa món ăn, danh mục và trạng thái hoạt động.
 
-Quản lý nhân viên và phân quyền
+Xử lý đơn hàng:
+Tạo, cập nhật, thanh toán, hủy đơn; theo dõi trạng thái món (đang chế biến, hoàn tất, phục vụ).
 
-Xem báo cáo doanh thu, món bán chạy
+Quản lý thanh toán và giảm giá:
+Hỗ trợ nhiều phương thức thanh toán và mã giảm giá theo từng chi nhánh hoặc công ty.
 
-Theo dõi tồn kho và cảnh báo nguyên liệu
+Quản lý công ty và chi nhánh:
+Mỗi công ty có thể sở hữu nhiều chi nhánh, dữ liệu được tách biệt nhưng vẫn có thể tổng hợp theo cấp chủ nhà hàng.
 
-Cấu hình hệ thống, khuyến mãi, ca làm
+Báo cáo và thống kê:
+Tổng hợp doanh thu, số lượng đơn, món bán chạy, khung giờ cao điểm.
+
+Bảo mật hệ thống:
+Sử dụng JWT Authentication, xác thực bằng token và phân quyền chi tiết theo từng người dùng.
+  
+# IV. Tổng kết
+
+SmartServe RMS là hệ thống quản lý nhà hàng toàn diện, được thiết kế với:
+
+Ứng dụng di động Flutter cho trải nghiệm người dùng mượt mà, thao tác nhanh.
+
+Backend Spring Boot mạnh mẽ, bảo mật, dễ mở rộng.
+
+Cơ sở dữ liệu Supabase (PostgreSQL) linh hoạt và đáng tin cậy.
+
+Hạ tầng triển khai Render Cloud giúp mở rộng dễ dàng.
+
+Hệ thống hướng đến mục tiêu số hóa quy trình vận hành nhà hàng, giúp quản lý hiệu quả, tiết kiệm chi phí và nâng cao trải nghiệm phục vụ khách hàng.
