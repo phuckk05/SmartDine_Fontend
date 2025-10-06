@@ -13,7 +13,7 @@ Hệ thống Backend (API Server) – Xử lý logic, quản lý dữ liệu và
 # II. Phần 1: Ứng dụng di động (Frontend)
 # 1.1. Công nghệ sử dụng
 
-Ngôn ngữ: Dart
+ Ngôn ngữ: Dart
 
 Framework: Flutter
 
