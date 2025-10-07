@@ -9,7 +9,7 @@ class Style {
     fontSize: 18,
   );
   //font cho tiêu đề mini
-   static TextStyle fontTitleMini = GoogleFonts.roboto(
+  static TextStyle fontTitleMini = GoogleFonts.roboto(
     fontSize: 18,
     fontWeight: FontWeight.bold,
     letterSpacing: 0.2,
@@ -23,7 +23,7 @@ class Style {
     ],
   );
   //font cho tiêu đề mini
-   static TextStyle fontTitleSuperMini = GoogleFonts.roboto(
+  static TextStyle fontTitleSuperMini = GoogleFonts.roboto(
     fontSize: 14,
     fontWeight: FontWeight.bold,
     letterSpacing: 0.2,
@@ -36,19 +36,19 @@ class Style {
       ),
     ],
   );
-  //font bình thường 
-   static TextStyle fontNormal = GoogleFonts.roboto(
+  //font bình thường
+  static TextStyle fontNormal = GoogleFonts.roboto(
     fontSize: 14,
-    fontWeight: FontWeight.w500, 
-    letterSpacing: 0.3, 
+    fontWeight: FontWeight.w500,
+    letterSpacing: 0.3,
     height: 1.3,
   );
 
   //font cho tất cả title
   static TextStyle fontTitle = GoogleFonts.roboto(
     fontSize: 22,
-    fontWeight: FontWeight.w900, 
-    letterSpacing: 0.3, 
+    fontWeight: FontWeight.w900,
+    letterSpacing: 0.3,
     height: 1.3,
     color: Colors.blue.shade700,
     shadows: [
@@ -74,7 +74,7 @@ class Style {
       ),
     ],
   );
-  
+
   //font cho nội dung bài viết
   static TextStyle fontContent = GoogleFonts.roboto(
     fontSize: 16,
@@ -99,7 +99,7 @@ class Style {
     color: Colors.white,
   );
 
-  //font chú thích nhỏ và thời gian 
+  //font chú thích nhỏ và thời gian
   static TextStyle fontCaption = GoogleFonts.roboto(
     fontSize: 12,
     fontWeight: FontWeight.w400,
@@ -130,8 +130,6 @@ class Style {
     ],
   );
 
-
-  
   //font name app
   static const String fontFamily = 'Lobster';
 
@@ -140,17 +138,19 @@ class Style {
   static const double subheadingFontSize = 20.0;
 
   //Colors
-  static const Color kTextColorMedium = Color(0xFF666666);
-  static const Color textColorMedium = Color.fromARGB(200, 0, 0, 0);
+  static const Color textColorGray = Color(0xFF666666);
+  static const Color textColorBlack = Color.fromARGB(200, 0, 0, 0);
+  static const Color textColorWhite = Colors.white;
+
   static const String primaryColor = '#6200EE';
   static const String secondaryColor = '#03DAC6';
   static const Color backgroundColor = Color(0xFFF0F0F0);
   static const String textColor = '#000000';
   static const Color buttonBackgroundColor = Color(0xFF4BC0D9);
-  
-  //Color Mode 
-    
-  static const Color colorDark = Colors.black; 
+
+  //Color Mode
+
+  static const Color colorDark = Colors.black;
   static const Color colorLight = Colors.white;
 
   // Add more styles as needed

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
+import 'package:mart_dine/features/signin/screen/screen_signin.dart';
+import 'package:mart_dine/routes.dart';
 
 // Provider quản lý alignment
 final alignmentProvider = StateProvider<Alignment>(
@@ -59,15 +61,11 @@ class _ScreenStartState extends ConsumerState<ScreenStart> {
               currentWidth == 150 ? MediaQuery.of(context).size.width : 150;
 
           // Cập nhật tên ứng dụng
-          appName = 'Metalk';
-          // appNameLast = 'Talk';
-
-          appImage = 'assets/images/logoApp.png';
+          appName = 'SmartDine'; 
 
           //Chuyển màn hình sang login sau 3 giây
           Future.delayed(Duration(seconds: 3), () {
-            // ignore: use_build_context_synchronously
-            // Routes.pushAndRemoveUntil(context, ScreenSignIn());
+            Routes.pushAndRemoveUntil(context, ScreenSignIn());
           });
 
           // Ch
