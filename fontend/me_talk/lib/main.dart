@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:me_talk/demo_spring_boot.dart';
 import 'package:me_talk/features/bottom_Navigation/screen/bottom_navigation.dart';
+import 'package:me_talk/features/start/screen/screen_start.dart';
 import 'package:me_talk/providers/mode_provider.dart';
 
 void main() async {
