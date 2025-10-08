@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
-import 'package:mart_dine/features/signup/screen/screen_signup.dart';
+import 'package:mart_dine/features/signup/screens/screen_information_signup.dart';
 import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets/appbar.dart';
 
@@ -21,7 +21,7 @@ class ScreenSelectSiginup extends ConsumerWidget {
                 context,
                 Icon(Icons.business, size: 40, color: Style.textColorWhite),
                 'Chủ nhà hàng',
-                'Đăng kí để trải nghiệm ứng dụng',
+                'Quản lí nhà hàng của bạn',
                 1,
               ),
               const SizedBox(height: 20),
@@ -29,7 +29,7 @@ class ScreenSelectSiginup extends ConsumerWidget {
                 context,
                 Icon(Icons.account_tree, size: 40, color: Style.textColorWhite),
                 'Chinh nhánh',
-                'Đăng kí để quản lí nhà hàng',
+                'Quản lí chi nhánh nhà hàng',
                 2,
               ),
               const SizedBox(height: 20),
@@ -37,7 +37,7 @@ class ScreenSelectSiginup extends ConsumerWidget {
                 context,
                 Icon(Icons.person, size: 40, color: Style.textColorWhite),
                 'Nhân viên',
-                'Đăng kí để quản lí nhà hàng',
+                'Sử dụng cho nhân viên nhà hàng',
                 3,
               ),
             ],
@@ -88,9 +88,10 @@ class ScreenSelectSiginup extends ConsumerWidget {
           ),
           trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
           onTap: () {
-            if (index == 1) {
-              Routes.pushRightLeftConsumerFul(context, ScreenSignup());
-            }
+            Routes.pushRightLeftConsumerLess(
+              context,
+              ScreenInformationSignup(title: "Thông tin cá nhân", index: index),
+            );
           },
         ),
       ),

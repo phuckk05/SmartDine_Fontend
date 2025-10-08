@@ -81,7 +81,7 @@ Quản lý xác thực, phân quyền và bảo mật người dùng.
 
 Cung cấp API cho ứng dụng di động giao tiếp.
 
-Xử lý quy trình nghiệp vụ phức tạp như order, thanh toán, khuyến mãi và ca làm.
+Xử lý quy trình nghiệp vụ phức tạp như order, thanh toán, khuyến mãi.
 
 # 2.3. Các chức năng chính
 

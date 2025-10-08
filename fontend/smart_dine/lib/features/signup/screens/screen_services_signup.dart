@@ -1,30 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mart_dine/core/constrats.dart'
-    show ShadowCus, kTextColorDark, kTextColorLight;
+import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/input_infor/screen/screen_inputinfor.dart';
 import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets/appbar.dart';
 
-class ScreenSignup extends ConsumerStatefulWidget {
-  const ScreenSignup({super.key});
+class ScreenServicesSignup extends ConsumerStatefulWidget {
+  final String? title;
+  const ScreenServicesSignup({super.key, this.title});
 
   @override
-  ConsumerState<ScreenSignup> createState() => _ScreenSignupState();
+  ConsumerState<ScreenServicesSignup> createState() =>
+      _ScreenServicesSignupState();
 }
 
 final _obscureText1 = StateProvider<bool>((ref) => true);
 final _obscureText2 = StateProvider<bool>((ref) => true);
 
-class _ScreenSignupState extends ConsumerState<ScreenSignup> {
+class _ScreenServicesSignupState extends ConsumerState<ScreenServicesSignup> {
   @override
   Widget build(BuildContext context) {
     // State to toggle password visibility
 
     return Scaffold(
       backgroundColor: Style.backgroundColor,
-      appBar: AppBarCus(title: 'Đăng kí'),
+      appBar: AppBarCus(title: widget.title ?? ''),
 
       body: SafeArea(child: _main()),
     );
