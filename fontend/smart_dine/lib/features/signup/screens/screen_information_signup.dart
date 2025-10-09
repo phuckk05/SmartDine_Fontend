@@ -1,14 +1,24 @@
+import 'dart:io';
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
+import 'package:mart_dine/features/signup/screens/screen_manager_signup.dart';
+import 'package:mart_dine/features/signup/screens/screen_owner_signup.dart';
+import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets/appbar.dart';
 import 'package:mart_dine/widgets/loading.dart';
+import 'package:image_picker/image_picker.dart';
 
 //Các state provider
 final _isLoadingProvider = StateProvider<bool>((ref) => false);
 final _obscureText1Provider = StateProvider<bool>((ref) => true);
 final _obscureText2Provider = StateProvider<bool>((ref) => true);
+
+final _fontImageProvider = StateProvider<File?>((ref) => null);
+final _backImageProvider = StateProvider<File?>((ref) => null);
 
 //Giao diện đăng kí thông tin cá nhân
 class ScreenInformationSignup extends ConsumerWidget {
@@ -21,6 +31,21 @@ class ScreenInformationSignup extends ConsumerWidget {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController1 = TextEditingController();
   final TextEditingController _passwordController2 = TextEditingController();
+  final TextEditingController _codeBranchController = TextEditingController();
+
+  //Hàm lấy ảnh
+  Future<void> _getCCCDImage(StateProvider<File?> _image, WidgetRef ref) async {
+    //Khia báo
+    final ImagePicker picker = ImagePicker();
+    //Lấy ảnh
+    final XFile? pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+    );
+    if (pickedFile != null) {
+      //Cập nhật state
+      ref.read(_image.notifier).state = File(pickedFile.path);
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,15 +62,10 @@ class ScreenInformationSignup extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: Style.paddingPhone),
             child: Column(
               children: [
-                // _label("Tên đăng nhập*"),
-                // _textFiled(
-                //   Icon(Icons.person, color: Colors.grey[600]),
-                //   "",
-                //   _usernameController,
-                // ),
                 SizedBox(height: 10),
                 _label("Số điện thoại*"),
                 _textFiled(
+                  1,
                   null,
                   Icon(Icons.phone, color: Colors.grey[600]),
                   null,
@@ -55,6 +75,7 @@ class ScreenInformationSignup extends ConsumerWidget {
                 SizedBox(height: 10),
                 _label("Email*"),
                 _textFiled(
+                  2,
                   null,
                   Icon(Icons.email, color: Colors.grey[600]),
                   null,
@@ -64,6 +85,7 @@ class ScreenInformationSignup extends ConsumerWidget {
                 SizedBox(height: 10),
                 _label("Mật khẩu*"),
                 _textFiled(
+                  3,
                   _obscureText1,
                   Icon(Icons.password, color: Colors.grey[600]),
                   null,
@@ -86,6 +108,7 @@ class ScreenInformationSignup extends ConsumerWidget {
                 SizedBox(height: 10),
                 _label("Xác nhận mật khẩu*"),
                 _textFiled(
+                  4,
                   _obscureText2,
                   Icon(Icons.password, color: Colors.grey[600]),
                   null,
@@ -106,8 +129,26 @@ class ScreenInformationSignup extends ConsumerWidget {
                   ),
                 ),
                 SizedBox(height: 10),
+                index == 3
+                    ? Column(
+                      children: [
+                        _label("Nhập mã code chi nhánh*"),
+                        _textFiled(
+                          5,
+                          null,
+                          Icon(Icons.code, color: Colors.grey[600]),
+                          null,
+                          _codeBranchController,
+                          null,
+                        ),
+                        SizedBox(height: 10),
+                      ],
+                    )
+                    : SizedBox(),
                 _label("Căn cước công dân*"),
-                _getCCCD(),
+                _getCCCD(ref),
+                SizedBox(height: 30),
+                index == 3 ? _note() : SizedBox(),
                 SizedBox(height: 30),
                 _signinButton(context, ref),
                 SizedBox(height: 20),
@@ -130,6 +171,7 @@ class ScreenInformationSignup extends ConsumerWidget {
 
   //Textfield
   Widget _textFiled(
+    int index,
     bool? isObscureText,
     Icon icon,
     String? hintText,
@@ -138,7 +180,7 @@ class ScreenInformationSignup extends ConsumerWidget {
   ) {
     return ShadowCus(
       isConcave: true, // Concave effect for input
-      borderRadius: 24.0,
+      borderRadius: 10.0,
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
       child: TextField(
         obscureText: isObscureText ?? false,
@@ -156,53 +198,173 @@ class ScreenInformationSignup extends ConsumerWidget {
           ), // Adjust padding
           suffixIcon: suffixIcon,
         ),
+        keyboardType:
+            index == 1
+                ? TextInputType.phone
+                : index == 2
+                ? TextInputType.emailAddress
+                : TextInputType.text,
+        inputFormatters:
+            index == 1
+                ? [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(10),
+                ]
+                : [FilteringTextInputFormatter.singleLineFormatter],
       ),
     );
   }
 
   //Phần Lấy CCCD
-  Widget _getCCCD() {
+  Widget _getCCCD(WidgetRef ref) {
+    final _fontImage = ref.watch(_fontImageProvider);
+    final _backImage = ref.watch(_backImageProvider);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 0),
-            child: ShadowCus(
-              isConcave: true, // Concave effect for input
-              borderRadius: 10.0,
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-              child: TextField(
-                decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.credit_card, color: Colors.grey[600]),
-                  hintText: 'Số CCCD', // Use hintText
-                  hintStyle: const TextStyle(color: kTextColorLight),
-                  border: InputBorder.none, // Remove default border
-                  contentPadding: const EdgeInsets.only(
-                    left: 0,
-                    top: 12,
-                    bottom: 12,
-                    right: 0,
-                  ), // Adjust padding
-                ),
-                style: const TextStyle(color: kTextColorDark),
+            child: InkWell(
+              onTap: () {
+                _getCCCDImage(_fontImageProvider, ref);
+              },
+              child: Stack(
+                children: [
+                  ShadowCus(
+                    isConcave: true, // Concave effect for input
+                    borderRadius: 10.0,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 5,
+                    ),
+                    child: DottedBorder(
+                      color: Colors.grey, // màu viền
+                      strokeWidth: 1, // độ dày nét
+                      dashPattern: [6, 3], // chiều dài nét + khoảng trống
+                      borderType: BorderType.RRect, // bo tròn góc
+                      radius: const Radius.circular(6),
+                      child: Container(
+                        width: 200,
+                        height: 100,
+                        alignment: Alignment.center,
+                        child:
+                            _fontImage == null
+                                ? Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text("Mặt trước", style: Style.fontContent),
+                                    const Icon(Icons.add, color: Colors.grey),
+                                  ],
+                                )
+                                : ClipRRect(
+                                  borderRadius: BorderRadius.circular(6.0),
+                                  child: Image.file(
+                                    _fontImage,
+                                    fit: BoxFit.fill,
+                                  ),
+                                ),
+                      ),
+                    ),
+                  ),
+                  _fontImage == null
+                      ? SizedBox()
+                      : Positioned(
+                        top: 0,
+                        right: 0,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints(),
+                          onPressed: () {
+                            ref.read(_fontImageProvider.notifier).state = null;
+                          },
+                          icon: Icon(Icons.close, color: Colors.grey),
+                        ),
+                      ),
+                ],
               ),
             ),
           ),
         ),
         SizedBox(width: 10),
-        ElevatedButton(
-          onPressed: () {
-            // Handle button press
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Style.buttonBackgroundColor,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10.0),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 0),
+            child: InkWell(
+              onTap: () {
+                _getCCCDImage(_backImageProvider, ref);
+              },
+              child: Stack(
+                children: [
+                  ShadowCus(
+                    isConcave: true, // Concave effect for input
+                    borderRadius: 10.0,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 5,
+                    ),
+                    child: DottedBorder(
+                      color: Colors.grey, // màu viền
+                      strokeWidth: 1, // độ dày nét
+                      dashPattern: [6, 3], // chiều dài nét + khoảng trống
+                      borderType: BorderType.RRect, // bo tròn góc
+                      radius: const Radius.circular(6),
+                      child: Container(
+                        width: 200,
+                        height: 100,
+                        alignment: Alignment.center,
+                        child:
+                            _backImage == null
+                                ? Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text("Mặt trước", style: Style.fontContent),
+                                    const Icon(Icons.add, color: Colors.grey),
+                                  ],
+                                )
+                                : ClipRRect(
+                                  borderRadius: BorderRadius.circular(6.0),
+                                  child: Image.file(
+                                    _backImage,
+                                    fit: BoxFit.fill,
+                                  ),
+                                ),
+                      ),
+                    ),
+                  ),
+                  _backImage == null
+                      ? SizedBox()
+                      : Positioned(
+                        top: 0,
+                        right: 0,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints(),
+                          onPressed: () {
+                            ref.read(_backImageProvider.notifier).state = null;
+                          },
+                          icon: Icon(Icons.close, color: Colors.grey),
+                        ),
+                      ),
+                ],
+              ),
             ),
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           ),
-          child: Text('Lấy CCCD', style: Style.TextButton),
+        ),
+      ],
+    );
+  }
+
+  //Note
+  Widget _note() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        Text(' - Vui lòng nhập đúng thông của bạn !', style: Style.fontCaption),
+        Text(
+          ' - Mã code chi nhánh có từ quản lý chi nhánh.',
+          style: Style.fontCaption,
         ),
       ],
     );
@@ -218,13 +380,25 @@ class ScreenInformationSignup extends ConsumerWidget {
         baseColor: Style.buttonBackgroundColor, // Button's distinct color
         padding: EdgeInsets.zero, // Padding handled by MaterialButton
         child: MaterialButton(
-          onPressed: () {
+          onPressed: () async {
             ref.read(_isLoadingProvider.notifier).state = true;
-            Future.delayed(
+            await Future.delayed(
               Duration(seconds: 5),
               () => ref.read(_isLoadingProvider.notifier).state = false,
             );
-            Constrats.showThongBao(context, _emailController.text);
+            if (index == 1) {
+              Routes.pushRightLeftConsumerFul(
+                // ignore: use_build_context_synchronously
+                context,
+                ScreenOwnerSignup(title: "Đăng kí nhà hàng"),
+              );
+            } else if (index == 2) {
+              Routes.pushRightLeftConsumerFul(
+                // ignore: use_build_context_synchronously
+                context,
+                ScreenManagerSignup(title: "Đăng kí chi nhánh"),
+              );
+            }
           },
           // Set button color to transparent so NeumorphicContainer's color shows
           color: Colors.transparent,
@@ -239,7 +413,11 @@ class ScreenInformationSignup extends ConsumerWidget {
 
           // child: Text('Đăng nhập', style: Style.TextButton),
           child:
-              isLoading ? Loading() : Text('Tiếp tục', style: Style.TextButton),
+              isLoading
+                  ? Loading()
+                  : index == 3
+                  ? Text('Đăng kí', style: Style.TextButton)
+                  : Text('Tiếp tục', style: Style.TextButton),
         ),
       ),
     );
