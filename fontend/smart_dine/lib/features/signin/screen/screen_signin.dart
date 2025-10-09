@@ -3,7 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
-import 'package:mart_dine/features/signup/screens/screen_services_signup.dart';
+import 'package:mart_dine/features/forgot_passwork/screens/screen_findaccuont.dart';
 import 'package:mart_dine/features/signup/screens/screen_select_signup.dart';
 import 'package:mart_dine/providers/signin_provider.dart';
 import 'package:mart_dine/routes.dart';
@@ -223,7 +223,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
       children: [
         TextButton(
           onPressed: () {
-            // Routes.pushRightLeft(context, ScreenFindAccuont());
+            Routes.pushRightLeftConsumerLess(context, ScreenFindaccuont());
           },
           child: Text(
             'Quên mật khẩu?',
