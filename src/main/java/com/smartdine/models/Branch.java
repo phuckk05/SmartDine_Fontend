@@ -11,6 +11,7 @@ public class Branch {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // Mã chi nhánh
 
+    @Column(name = company_id);
     private String companyId; // Mã công ty
     private String name; // Tên chi nhánh
     private String branchCode; // Mã code để gộp nhân viên
