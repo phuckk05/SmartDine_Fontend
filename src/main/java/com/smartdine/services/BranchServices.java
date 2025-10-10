@@ -12,13 +12,13 @@ public class BranchServices {
     @Autowired
     private BranchRepository branchRepository;
 
-    public Branch getBranchById(Long id) {
+    public Branch getBranchById(int id) {
         return branchRepository.findById(id).orElse(null);
     }
 
     // Tìm branch code và lấy thông tin chi nhánh đó
     public Branch findBranch(String branchCode) {
-        if (branchRepository.existsBranchCode(branchCode)) {
+        if (branchRepository.existsByBranchCode(branchCode)) {
             return branchRepository.findByBranchCode(branchCode).orElse(null);
         }
         return null;
