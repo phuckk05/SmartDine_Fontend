@@ -18,7 +18,13 @@ public class UserService {
     }
 
     public User createUser(User user) {
-        return userRepository.save(user);
+        if(userRepository.existsByEmail(user.getEmail())){
+            throw new RuntimeException("Email đã tồn tại!");
+        }
+        if (userRepository.existsByPhone(user.getPhone())) {
+            throw new RuntimeException("Số điện thoại đã tồn tại!");
+        }
+        return userRepository.save(user)
     }
 
     public User getUserById(Long id) {

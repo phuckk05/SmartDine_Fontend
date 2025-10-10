@@ -29,8 +29,13 @@ public class UserController {
     
     //Tạo user
     @PostMapping
-    public User createUser(@RequestBody User user) {
-        return userService.createUser(user);
+    public ResponseEntity<?> createUser(@RequestBody User user) {
+        try{
+           User createUser = userService.createUser(user)
+           return ResponseEntity.ok(createUser)
+        } catch(){
+           return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
     //lấy user theo id 
     @GetMapping("/{id}")
