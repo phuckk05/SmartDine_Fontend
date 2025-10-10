@@ -1,7 +1,7 @@
-package com.smartdine.backend.service;
+package com.smartdine.services;
 
-import com.smartdine.backend.model.User;
-import com.smartdine.backend.repository.UserRepository;
+import com.smartdine.models.User;
+import com.smartdine.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,13 +18,13 @@ public class UserService {
     }
 
     public User createUser(User user) {
-        if(userRepository.existsByEmail(user.getEmail())){
+        if (userRepository.existsByEmail(user.getEmail())) {
             throw new RuntimeException("Email đã tồn tại!");
         }
         if (userRepository.existsByPhone(user.getPhone())) {
             throw new RuntimeException("Số điện thoại đã tồn tại!");
         }
-        return userRepository.save(user)
+        return userRepository.save(user);
     }
 
     public User getUserById(Long id) {
