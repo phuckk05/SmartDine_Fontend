@@ -9,25 +9,34 @@ public class Branch {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // Mã chi nhánh
+    private int id; // Mã chi nhánh
 
-    @Column(name = company_id);
+    @Column(name = "company_id")
     private String companyId; // Mã công ty
+    @Column(name = "name")
     private String name; // Tên chi nhánh
+    @Column(name = "branch_code")
     private String branchCode; // Mã code để gộp nhân viên
+    @Column(name = "address")
     private String address; // Địa chỉ nhà hàng
+    @Column(name = "image")
     private String image; // Ảnh (ví dụ: ảnh CCCD hoặc logo)
+    @Column(name = "phone")
     private String phone; // Số điện thoại liên hệ
+    @Column(name = "status_id")
     private int statusId; // Mã trạng thái
+    @Column(name = "manager_id")
     private int managerId; // Mã quản lý
+    @Column(name = "created_at")
     private LocalDateTime createdAt; // Ngày tạo
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt; // Ngày cập nhật
 
     // ===== Constructor =====
     public Branch() {
     }
 
-    public Branch(Long id, String companyId, String name, String branchCode, String address,
+    public Branch(int id, String companyId, String name, String branchCode, String address,
             String image, String phone, int statusId, int managerId,
             LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
@@ -44,11 +53,11 @@ public class Branch {
     }
 
     // ===== Getter & Setter =====
-    public Long getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(int id) {
         this.id = id;
     }
 
