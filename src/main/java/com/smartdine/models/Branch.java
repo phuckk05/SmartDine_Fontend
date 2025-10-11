@@ -12,7 +12,7 @@ public class Branch {
     private int id; // Mã chi nhánh
 
     @Column(name = "company_id")
-    private String companyId; // Mã công ty
+    private int companyId; // Mã công ty
     @Column(name = "name")
     private String name; // Tên chi nhánh
     @Column(name = "branch_code")
@@ -36,7 +36,7 @@ public class Branch {
     public Branch() {
     }
 
-    public Branch(int id, String companyId, String name, String branchCode, String address,
+    public Branch(int id, int companyId, String name, String branchCode, String address,
             String image, String phone, int statusId, int managerId,
             LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
@@ -61,11 +61,11 @@ public class Branch {
         this.id = id;
     }
 
-    public String getCompanyId() {
+    public int getCompanyId() {
         return companyId;
     }
 
-    public void setCompanyId(String companyId) {
+    public void setCompanyId(int companyId) {
         this.companyId = companyId;
     }
 
