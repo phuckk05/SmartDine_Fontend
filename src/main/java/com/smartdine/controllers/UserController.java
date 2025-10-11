@@ -41,7 +41,7 @@ public class UserController {
 
     // Xoa User
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) {
+    public void deleteUser(@PathVariable Integer id) {
         userService.deleteUser(id);
     }
 
