@@ -8,7 +8,7 @@ import jakarta.persistence.*;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private int id;
 
     private String fullName;
     private String email;
@@ -25,7 +25,7 @@ public class User {
     public User() {
     }
 
-    public User(Long id, String fullName, String email, String phone,
+    public User(int id, String fullName, String email, String phone,
             String passwordHash, String fontImage, String backImage,
             Integer statusId,
             LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
@@ -43,11 +43,11 @@ public class User {
     }
 
     // Getters & Setters
-    public Long getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(int id) {
         this.id = id;
     }
 
