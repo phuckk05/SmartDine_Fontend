@@ -18,12 +18,26 @@ public class UserService {
     }
 
     public User createUser(User user) {
+        if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
+            throw new RuntimeException("Email không được để trống");
+        }
+        if (user.getPhone() == null || user.getPhone().trim().isEmpty()) {
+            throw new RuntimeException("Số điện thoại không được để trống");
+        }
+
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new RuntimeException("Email đã tồn tại!");
         }
         if (userRepository.existsByPhone(user.getPhone())) {
             throw new RuntimeException("Số điện thoại đã tồn tại!");
         }
+
+        // ensure timestamps
+        if (user.getCreatedAt() == null) {
+            user.setCreatedAt(java.time.LocalDateTime.now());
+        }
+        user.setUpdatedAt(java.time.LocalDateTime.now());
+
         return userRepository.save(user);
     }
 

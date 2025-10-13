@@ -3,6 +3,7 @@ package com.smartdine.models;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.*;
@@ -18,30 +19,31 @@ public class User {
     private String fullName;
     private String email;
     private String phone;
-    private String passworkHash;
+    @JsonProperty("passworkHash")
+    private String passwordHash;
     private String fontImage;
     private String backImage;
     private Integer statusId;
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private LocalDateTime createdAt;
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private LocalDateTime updatedAt;
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private LocalDateTime deletedAt;
 
     // Constructor
     public User() {
     }
 
-    public User(int id, String fullName, String email, String phone,
-            String passworkHash, String fontImage, String backImage,
+    public User(Integer id, String fullName, String email, String phone,
+            String passwordHash, String fontImage, String backImage,
             Integer statusId,
             LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
         this.id = id;
         this.fullName = fullName;
         this.email = email;
         this.phone = phone;
-        this.passworkHash = passworkHash;
+        this.passwordHash = passwordHash;
         this.fontImage = fontImage;
         this.backImage = backImage;
         this.statusId = statusId;
@@ -51,11 +53,11 @@ public class User {
     }
 
     // Getters & Setters
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -84,11 +86,11 @@ public class User {
     }
 
     public String getPasswordHash() {
-        return passworkHash;
+        return passwordHash;
     }
 
-    public void setPasswordHash(String passworkHash) {
-        this.passworkHash = passworkHash;
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
     public String getFontImage() {
@@ -137,5 +139,18 @@ public class User {
 
     public void setDeletedAt(LocalDateTime deletedAt) {
         this.deletedAt = deletedAt;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdAt == null)
+            this.createdAt = LocalDateTime.now();
+        if (this.updatedAt == null)
+            this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 }
