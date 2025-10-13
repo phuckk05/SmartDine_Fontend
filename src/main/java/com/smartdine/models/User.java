@@ -13,7 +13,7 @@ public class User {
     private String fullName;
     private String email;
     private String phone;
-    private String passwordHash;
+    private String passworkHash;
     private String fontImage;
     private String backImage;
     private Integer statusId;
@@ -26,14 +26,14 @@ public class User {
     }
 
     public User(int id, String fullName, String email, String phone,
-            String passwordHash, String fontImage, String backImage,
+            String passworkHash, String fontImage, String backImage,
             Integer statusId,
             LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
         this.id = id;
         this.fullName = fullName;
         this.email = email;
         this.phone = phone;
-        this.passwordHash = passwordHash;
+        this.passworkHash = passworkHash;
         this.fontImage = fontImage;
         this.backImage = backImage;
         this.statusId = statusId;
@@ -76,11 +76,11 @@ public class User {
     }
 
     public String getPasswordHash() {
-        return passwordHash;
+        return passworkHash;
     }
 
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
+    public void setPasswordHash(String passworkHash) {
+        this.passworkHash = passworkHash;
     }
 
     public String getFontImage() {
