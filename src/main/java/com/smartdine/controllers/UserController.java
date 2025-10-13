@@ -29,6 +29,7 @@ public class UserController {
             User createUser = userService.createUser(user);
             return ResponseEntity.ok(createUser);
         } catch (RuntimeException e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
