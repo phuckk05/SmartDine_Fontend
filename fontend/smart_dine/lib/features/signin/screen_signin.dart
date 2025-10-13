@@ -4,8 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/forgot_passwork/screens/screen_findaccuont.dart';
-import 'package:mart_dine/features/signup/screens/screen_select_signup.dart';
-import 'package:mart_dine/providers/signin_provider.dart';
+import 'package:mart_dine/features/signup/screen_select_signup.dart';
 import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets/loading.dart';
 
@@ -167,8 +166,8 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
                 right: 0,
               ), // Adjust padding
             ),
-            onSubmitted:
-                (value) => ref.read(userProvider.notifier).updateName(value),
+            // onSubmitted:
+            //     (value) => ref.read(userProvider.notifier).updateName(value),
             style: const TextStyle(color: kTextColorDark),
           ),
         ),
@@ -208,9 +207,9 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
               },
             ),
           ),
-          onSubmitted:
-              (value) => ref.read(userProvider.notifier).updateAge(value),
-          style: const TextStyle(color: kTextColorDark),
+          // onSubmitted:
+          //     (value) => ref.read(userProvider.notifier).updateAge(value),
+          // style: const TextStyle(color: kTextColorDark),
         ),
       ),
     );

@@ -11,12 +11,12 @@ import 'package:mart_dine/widgets/loading.dart';
 
 //Các state provider
 final _isLoadingProvider = StateProvider<bool>((ref) => false);
-
 final _imageProvider = StateProvider<File?>((ref) => null);
 
 //Giao diện đăng kí chủ nhà hàng
 class ScreenManagerSignup extends ConsumerStatefulWidget {
   final String? title;
+  // final User user;
   const ScreenManagerSignup({super.key, this.title});
   @override
   ConsumerState<ConsumerStatefulWidget> createState() =>

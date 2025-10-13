@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
-import 'package:mart_dine/features/signup/screens/screen_information_signup.dart';
+import 'package:mart_dine/features/signup/screen_information_signup.dart';
 import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets/appbar.dart';
 
@@ -88,7 +88,7 @@ class ScreenSelectSiginup extends ConsumerWidget {
           ),
           trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
           onTap: () {
-            Routes.pushRightLeftConsumerLess(
+            Routes.pushRightLeftConsumerFul(
               context,
               ScreenInformationSignup(title: "Thông tin cá nhân", index: index),
             );

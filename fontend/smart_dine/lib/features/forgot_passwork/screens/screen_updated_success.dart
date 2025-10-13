@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
-import 'package:mart_dine/features/signin/screen/screen_signin.dart';
+import 'package:mart_dine/features/signin/screen_signin.dart';
 import 'package:mart_dine/routes.dart';
 
 class ScreenUpdatedSuccess extends ConsumerWidget {

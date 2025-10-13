@@ -1,43 +1,51 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mart_dine/API/branch_API.dart';
 import 'package:mart_dine/API/user_API.dart';
+import 'package:mart_dine/models/branch.dart';
 import 'package:mart_dine/models/user.dart';
 
-class UserNotifier extends StateNotifier<List<User>> {
+class UserNotifier extends StateNotifier<User?> {
   final UserAPI userAPI;
+  final BranchAPI branchAPI;
 
-  UserNotifier(this.userAPI) : super([]) {
-    _init();
-  }
+  UserNotifier(this.userAPI, this.branchAPI) : super(null);
 
-  Future<void> _init() async {
+  // Đăng ký user
+  Future<int> signUp(User user, String branchCode) async {
+    // Gọi API để tìm chi nhánh
+    final Branch? branch;
+    bool check = false;
     try {
-      final user = await userAPI.fetchUsers();
-      state = user;
+      branch = await branchAPI.findBranchByBranchCode(branchCode);
+      if (branch != null) {
+        check = true;
+      } else {
+        return 1;
+      }
+      if (check == true) {
+        try {
+          final registerSuccess = await userAPI.create(user);
+          if (registerSuccess != null) {
+            // Cập nhật state sau khi đăng ký thành công
+            state = user;
+            return 2;
+          }
+          return 3;
+        } catch (e) {
+          // ignore: avoid_print
+          print('Lỗi 2 :  $e');
+        }
+      }
     } catch (e) {
-      // Có thể log hoặc giữ state mặc định
-      print('❌ Lỗi khi fetch user: $e');
+      // ignore: avoid_print
+      print('loi 1  $e');
     }
+    return 0;
   }
-
-  Future<void> updateUserById(int id, String name, String email) async {
-    try {
-      final updated = await userAPI.updateUser(id, name, email);
-      state =
-          state
-              .map((u) => u.id == id ? updated : u)
-              .toList(); // cập nhật trong danh sách
-    } catch (e) {
-      print('❌ Lỗi khi cập nhật user: $e');
-    }
-  }
-
-  // void updateName(String n) => state = state.copyWith(name: n);
-  // void updateEmail(String e) => state = state.copyWith(email: e);
 }
 
-final userRepositoryProvider = Provider((ref) => UserAPI());
-
-final userProvider = StateNotifierProvider<UserNotifier, List<User>>((ref) {
-  final repo = ref.read(userRepositoryProvider);
-  return UserNotifier(repo);
+final userNotifierProvider = StateNotifierProvider<UserNotifier, User?>((ref) {
+  final userApi = ref.read(userApiProvider);
+  final branchApi = ref.read(branchApiProvider);
+  return UserNotifier(userApi, branchApi);
 });
