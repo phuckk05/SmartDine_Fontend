@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/features/start/screen/screen_start.dart';
+import 'package:mart_dine/kitchen_navigation.dart';
 import 'package:mart_dine/providers/mode_provider.dart';
 
 void main() async {
@@ -29,7 +30,7 @@ class MeTalkApp extends ConsumerWidget {
       ),
 
       // home: const ScreenStart(),
-      home: const ScreenStart(),
+      home: MainNavigation(),
     );
   }
 }

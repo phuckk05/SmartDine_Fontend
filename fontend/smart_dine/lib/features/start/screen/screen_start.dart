@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
-import 'package:mart_dine/features/signin/screen/screen_signin.dart';
+import 'package:mart_dine/features/signin/screen_signin.dart';
 import 'package:mart_dine/routes.dart';
 
 // Provider quản lý alignment
@@ -61,7 +61,7 @@ class _ScreenStartState extends ConsumerState<ScreenStart> {
               currentWidth == 150 ? MediaQuery.of(context).size.width : 150;
 
           // Cập nhật tên ứng dụng
-          appName = 'SmartDine'; 
+          appName = 'SmartDine';
 
           //Chuyển màn hình sang login sau 3 giây
           Future.delayed(Duration(seconds: 3), () {
