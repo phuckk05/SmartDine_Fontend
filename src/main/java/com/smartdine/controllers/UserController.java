@@ -17,7 +17,7 @@ public class UserController {
     private UserService userService;
 
     // Lấy all user
-    @GetMapping
+    @GetMapping("/all")
     public List<User> getUsers() {
         return userService.getAllUsers();
     }

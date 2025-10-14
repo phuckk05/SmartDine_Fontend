@@ -12,7 +12,7 @@ import com.smartdine.models.Role;
 import com.smartdine.services.RoleServices;
 
 @RestController
-@RequestMapping("/api/role")
+@RequestMapping("/api/roles")
 public class RoleController {
 
     @Autowired

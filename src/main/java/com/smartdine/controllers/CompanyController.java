@@ -11,7 +11,7 @@ import com.smartdine.models.Company;
 import com.smartdine.services.CompanyServices;
 
 @RestController
-@RequestMapping("/api/company")
+@RequestMapping("/api/companys")
 public class CompanyController {
     @Autowired
     CompanyServices companyServices;

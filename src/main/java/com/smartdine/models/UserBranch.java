@@ -21,15 +21,15 @@ public class UserBranch {
     private Integer branch_id;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
-    private LocalDateTime assgned_at;
+    private LocalDateTime assigned_at;
 
     public UserBranch() {
     }
 
-    public UserBranch(Integer user_id, Integer branch_id, LocalDateTime assgneed_At) {
+    public UserBranch(Integer user_id, Integer branch_id, LocalDateTime assigned_At) {
         this.user_id = user_id;
         this.branch_id = branch_id;
-        this.assgned_at = assgneed_At;
+        this.assigned_at = assigned_At;
     }
 
     public Integer getUserId() {
@@ -48,18 +48,18 @@ public class UserBranch {
         this.branch_id = branch_id;
     }
 
-    public LocalDateTime getAssgnedAt() {
-        return assgned_at;
+    public LocalDateTime getAssignedAt() {
+        return assigned_at;
     }
 
-    public void setAssgnedAt(LocalDateTime assgned_At) {
-        this.assgned_at = assgned_At;
+    public void setAssgnedAt(LocalDateTime assigned_At) {
+        this.assigned_at = assigned_At;
     }
 
     @PrePersist
     protected void onCreate() {
-        if (this.assgned_at == null) {
-            this.assgned_at = LocalDateTime.now();
+        if (this.assigned_at == null) {
+            this.assigned_at = LocalDateTime.now();
         }
     }
 }
