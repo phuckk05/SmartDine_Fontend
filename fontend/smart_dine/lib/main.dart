@@ -28,7 +28,7 @@ class MeTalkApp extends ConsumerWidget {
         ),
       ),
 
-      // Thiết lập chệ độ sáng tối
+      // home: const ScreenStart(),
       home: const ScreenStart(),
     );
   }
