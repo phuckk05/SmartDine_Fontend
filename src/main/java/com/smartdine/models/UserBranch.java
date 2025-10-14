@@ -1,23 +1,18 @@
 package com.smartdine.models;
 
 import java.time.LocalDateTime;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "user_branches")
+@IdClass(UserBranchId.class)
 public class UserBranch {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer user_id;
 
+    @Id
     private Integer branch_id;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
@@ -26,34 +21,34 @@ public class UserBranch {
     public UserBranch() {
     }
 
-    public UserBranch(Integer user_id, Integer branch_id, LocalDateTime assigned_At) {
+    public UserBranch(Integer user_id, Integer branch_id, LocalDateTime assigned_at) {
         this.user_id = user_id;
         this.branch_id = branch_id;
-        this.assigned_at = assigned_At;
+        this.assigned_at = assigned_at;
     }
 
-    public Integer getUserId() {
+    public Integer getUser_id() {
         return user_id;
     }
 
-    public void setUserId(Integer user_id) {
+    public void setUser_id(Integer user_id) {
         this.user_id = user_id;
     }
 
-    public Integer getBranchId() {
+    public Integer getBranch_id() {
         return branch_id;
     }
 
-    public void setBranchId(Integer branch_id) {
+    public void setBranch_id(Integer branch_id) {
         this.branch_id = branch_id;
     }
 
-    public LocalDateTime getAssignedAt() {
+    public LocalDateTime getAssigned_at() {
         return assigned_at;
     }
 
-    public void setAssgnedAt(LocalDateTime assigned_At) {
-        this.assigned_at = assigned_At;
+    public void setAssigned_at(LocalDateTime assigned_at) {
+        this.assigned_at = assigned_at;
     }
 
     @PrePersist
