@@ -24,6 +24,7 @@ public class User {
     private String fontImage;
     private String backImage;
     private Integer statusId;
+    private Integer role;
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private LocalDateTime createdAt;
     @JsonFormat(shape = JsonFormat.Shape.STRING)
@@ -38,6 +39,7 @@ public class User {
     public User(Integer id, String fullName, String email, String phone,
             String passworkHash, String fontImage, String backImage,
             Integer statusId,
+            Integer role,
             LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
         this.id = id;
         this.fullName = fullName;
@@ -47,6 +49,7 @@ public class User {
         this.fontImage = fontImage;
         this.backImage = backImage;
         this.statusId = statusId;
+        this.role = role;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.deletedAt = deletedAt;
@@ -55,6 +58,14 @@ public class User {
     // Getters & Setters
     public Integer getId() {
         return id;
+    }
+
+    public void setRole(Integer role) {
+        this.role = role;
+    }
+
+    public Integer getRole() {
+        return role;
     }
 
     public void setId(Integer id) {
