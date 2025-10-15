@@ -9,10 +9,10 @@ import com.smartdine.repository.UserBranchRepository;
 @Service
 public class UserBranchSevices {
     @Autowired
-    UserBranchRepository userBranchReppository;
+    UserBranchRepository userBranchRepository;
 
     // Thêm mới
     public UserBranch create(UserBranch userBranch) {
-        return userBranchReppository.save(userBranch);
+        return userBranchRepository.save(userBranch);
     }
 }

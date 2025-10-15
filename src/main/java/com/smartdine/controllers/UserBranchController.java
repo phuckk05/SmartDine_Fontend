@@ -13,13 +13,13 @@ import com.smartdine.services.UserBranchSevices;
 @RequestMapping("/api/user_branches")
 public class UserBranchController {
     @Autowired
-    UserBranchSevices userBranchSevices;
+    UserBranchSevices userBranchServices;
 
     // Thêm mới
     @PostMapping
     public ResponseEntity<?> createUser(@RequestBody UserBranch userBranch) {
         try {
-            UserBranch createUser = userBranchSevices.create(userBranch);
+            UserBranch createUser = userBranchServices.create(userBranch);
             return ResponseEntity.ok(createUser);
         } catch (RuntimeException e) {
             e.printStackTrace();
