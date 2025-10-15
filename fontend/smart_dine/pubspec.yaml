@@ -59,6 +59,9 @@ dependencies:
   lottie: ^3.3.0
   dotted_border: ^2.1.0
 
+  # Thư viện hỗ trợ chức năng biểu đồ
+  fl_chart: ^0.66.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

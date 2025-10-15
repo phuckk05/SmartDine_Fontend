@@ -1,143 +1,109 @@
-// import 'package:flutter/material.dart';
-// import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import 'package:me_talk/features/connect/screens/screen_connect.dart';
-// import 'package:me_talk/features/home/screen/screen_home.dart';
-// import 'package:me_talk/features/notification/screen/screen_notification.dart';
-// import 'package:me_talk/features/profile/screen/screen_profile.dart';
-// import 'package:me_talk/features/to_match/screen/screen_tomatch.dart';
-// import 'package:me_talk/providers/mode_provider.dart';
-// import 'package:me_talk/widgets/list_post.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mart_dine/features/kitchen/screen_caidat.dart';
+import 'package:mart_dine/features/kitchen/screen_lichsu.dart';
+import 'package:mart_dine/features/kitchen/screen_phongbep.dart';
+import 'package:mart_dine/features/admin/screen_dashboard.dart';
+import 'package:mart_dine/features/admin/screen_qlcuahang.dart';
+import 'package:mart_dine/features/admin/screen_qlxacnhan.dart';
 
-// class ScreenBottomNavigation extends ConsumerStatefulWidget {
-//   const ScreenBottomNavigation({super.key});
-//   @override
-//   ConsumerState<ConsumerStatefulWidget> createState() =>
-//       _ScreenBottomNavigationState();
-// }
+// Các state provider
+final currentIndexProvider = StateProvider<int>((ref) => 0);
 
-// //Các provider sẽ được định nghĩa ở đây nếu cần thiết
+class ScreenBottomNavigation extends ConsumerStatefulWidget {
+  final int? index;
+  const ScreenBottomNavigation({super.key, this.index});
 
-// final _selectedIndexProvider = StateProvider<int>((ref) => 0);
+  @override
+  ConsumerState<ScreenBottomNavigation> createState() {
+    return _BottomNavigationState();
+  }
+}
 
-// class _ScreenBottomNavigationState
-//     extends ConsumerState<ScreenBottomNavigation> {
-//   //Các Screen sẽ được định nghĩa ở đây
-//   final List<Widget> _screens = [
-//     const ScreenHome(),
-//     const ScreenTomatch(),
-//     const ScreenConnect(),
-//     const ScreenNotification(),
-//     const ScreenProfile(),
-//   ];
+class _BottomNavigationState extends ConsumerState<ScreenBottomNavigation> {
+  // Danh sách các màn hình cho Kitchen (index = 1)
+  final List<Widget> _kitchenScreens = [
+    const KitchenScreen(),
+    const HistoryScreen(),
+    const SettingsScreen(),
+  ];
 
-//   @override
-//   Widget build(BuildContext context) {
-//     //lấy stateproviders
-//     final isScroll = ref.watch(isScrollProvider);
-//     return Scaffold(
-//       body: SafeArea(child: _screens[ref.watch(_selectedIndexProvider)]),
+  // Danh sách các màn hình cho Admin (index = 2)
+  final List<Widget> _adminScreens = [
+    const DashboardScreen(),
+    const ConfirmManagementScreen(), // screen_qlxacnhan.dart
+    const StoreManagementScreen(), // screen_qlcuahang.dart
+  ];
 
-//       bottomNavigationBar:AnimatedSlide(
-//         offset: isScroll ? const Offset(0, 1) : Offset.zero,
-//         duration: const Duration(milliseconds: 550),
-//         curve: Curves.easeInOutCubic,
-//         child: AnimatedOpacity(
-//           opacity: isScroll ? 0.0 : 1.0,
-//           duration: const Duration(milliseconds: 550),
-//           curve: Curves.easeInOutCubic,
-//           child:!isScroll? BottomNavigationBar(
-//             currentIndex: ref.watch(_selectedIndexProvider),
-//             onTap: (index) {
-//               ref.read(_selectedIndexProvider.notifier).state = index;
-//             },
-//             selectedItemColor: ref.watch(modeProvider) ? Colors.white : Colors.black,
-//             unselectedItemColor: Colors.grey,
-//             selectedLabelStyle: TextStyle(
-//               fontSize: 12,
-//               fontWeight: FontWeight.bold,
-//               color: ref.watch(modeProvider) ? Colors.white : Colors.black,
-//             ),
-//             unselectedLabelStyle: TextStyle(
-//               fontSize: 12,
-//               fontWeight: FontWeight.normal,
-//               color: ref.watch(modeProvider) ? Colors.white70 : Colors.black54,
-//             ),
-//             type: BottomNavigationBarType.fixed,
-//             items: const [
-//               BottomNavigationBarItem(
-//                 icon: Icon(Icons.home),
-//                 label: 'Trang chủ',
-//                 activeIcon: Icon(Icons.home, color: Colors.blue),
-//               ),
-//               BottomNavigationBarItem(
-//                 icon: Icon(Icons.favorite),
-//                 label: 'Ghép đôi',
-//                 activeIcon: Icon(Icons.favorite, color: Colors.red),
-//               ),
-//               BottomNavigationBarItem(
-//                 icon: Icon(Icons.group),
-//                 label: 'Kết nối',
-//                 activeIcon: Icon(Icons.group, color: Colors.green),
-//               ),
-//               BottomNavigationBarItem(
-//                 icon: Icon(Icons.notifications),
-//                 label: 'Thông báo',
-//                 activeIcon: Icon(Icons.notifications, color: Colors.orange),
-//               ),
-//               BottomNavigationBarItem(
-//                 icon: Icon(Icons.person),
-//                 label: 'Hồ sơ',
-//                 activeIcon: Icon(Icons.person, color: Colors.blue),
-//               ),
-//             ],
-//           ): BottomNavigationBar(
-//             currentIndex: ref.watch(_selectedIndexProvider),
-//             onTap: (index) {
-//               ref.read(_selectedIndexProvider.notifier).state = index;
-//             },
-//             selectedItemColor: ref.watch(modeProvider) ? Colors.white : Colors.black,
-//             unselectedItemColor: Colors.grey,
-//             selectedLabelStyle: TextStyle(
-//               fontSize: 12,
-//               fontWeight: FontWeight.bold,
-//               color: ref.watch(modeProvider) ? Colors.white : Colors.black,
-//             ),
-//             unselectedLabelStyle: TextStyle(
-//               fontSize: 12,
-//               fontWeight: FontWeight.normal,
-//               color: ref.watch(modeProvider) ? Colors.white70 : Colors.black54,
-//             ),
-//             type: BottomNavigationBarType.fixed,
-//             items: const [
-//               BottomNavigationBarItem(
-//                 icon: Icon(Icons.home),
-//                 label: 'Trang chủ',
-//                 activeIcon: Icon(Icons.home, color: Colors.blue),
-//               ),
-//               BottomNavigationBarItem(
-//                 icon: Icon(Icons.favorite),
-//                 label: 'Ghép đôi',
-//                 activeIcon: Icon(Icons.favorite, color: Colors.red),
-//               ),
-//               BottomNavigationBarItem(
-//                 icon: Icon(Icons.group),
-//                 label: 'Kết nối',
-//                 activeIcon: Icon(Icons.group, color: Colors.green),
-//               ),
-//               BottomNavigationBarItem(
-//                 icon: Icon(Icons.notifications),
-//                 label: 'Thông báo',
-//                 activeIcon: Icon(Icons.notifications, color: Colors.orange),
-//               ),
-//               BottomNavigationBarItem(
-//                 icon: Icon(Icons.person),
-//                 label: 'Hồ sơ',
-//                 activeIcon: Icon(Icons.person, color: Colors.blue),
-//               ),
-//             ],
-//           )
-//         ),
-//       )
-//     );
-//   }
-// }
+  @override
+  Widget build(BuildContext context) {
+    final currentIndex = ref.watch(currentIndexProvider);
+
+    // Xác định màn hình nào sẽ hiển thị dựa trên widget.index
+    final screens = widget.index == 2 ? _adminScreens : _kitchenScreens;
+
+    return Scaffold(
+      body: IndexedStack(index: currentIndex, children: screens),
+      bottomNavigationBar:
+          widget.index == 1
+              ? BottomNavigationBar(
+                currentIndex: currentIndex,
+                onTap: (index) {
+                  ref.read(currentIndexProvider.notifier).state = index;
+                },
+                type: BottomNavigationBarType.fixed,
+                selectedItemColor: Colors.blue[700],
+                unselectedItemColor: Colors.grey[600],
+                selectedFontSize: 12,
+                unselectedFontSize: 12,
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.kitchen_outlined),
+                    activeIcon: Icon(Icons.kitchen),
+                    label: 'Phòng bếp',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.history_outlined),
+                    activeIcon: Icon(Icons.history),
+                    label: 'Lịch sử',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.settings_outlined),
+                    activeIcon: Icon(Icons.settings),
+                    label: 'Cài đặt',
+                  ),
+                ],
+              )
+              : widget.index == 2
+              ? BottomNavigationBar(
+                currentIndex: currentIndex,
+                onTap: (index) {
+                  ref.read(currentIndexProvider.notifier).state = index;
+                },
+                type: BottomNavigationBarType.fixed,
+                selectedItemColor: Colors.blue[700],
+                unselectedItemColor: Colors.grey[600],
+                selectedFontSize: 12,
+                unselectedFontSize: 12,
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.dashboard_outlined),
+                    activeIcon: Icon(Icons.dashboard),
+                    label: 'Dashboard',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.check_circle_outline),
+                    activeIcon: Icon(Icons.check_circle),
+                    label: 'Xác nhận',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.store_outlined),
+                    activeIcon: Icon(Icons.store),
+                    label: 'Cửa hàng',
+                  ),
+                ],
+              )
+              : const SizedBox(),
+    );
+  }
+}

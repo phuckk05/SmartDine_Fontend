@@ -1,8 +1,7 @@
 // import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mart_dine/features/start/screen/screen_start.dart';
-import 'package:mart_dine/kitchen_navigation.dart';
+import 'package:mart_dine/features/bottom_Navigation/screen/bottom_navigation.dart';
 import 'package:mart_dine/providers/mode_provider.dart';
 
 void main() async {
@@ -10,11 +9,11 @@ void main() async {
   // WidgetsFlutterBinding.ensureInitialized();
   // // Khởi tạo Firebase
   // await Firebase.initializeApp();
-  runApp(ProviderScope(child: MeTalkApp()));
+  runApp(ProviderScope(child: SmartDineApp()));
 }
 
-class MeTalkApp extends ConsumerWidget {
-  const MeTalkApp({super.key});
+class SmartDineApp extends ConsumerWidget {
+  const SmartDineApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -29,8 +28,8 @@ class MeTalkApp extends ConsumerWidget {
         ),
       ),
 
-      // home: const ScreenStart(),
-      home: MainNavigation(),
+      home: const ScreenBottomNavigation(index: 2), // Chạy Admin
+      //home: const ScreenBottomNavigation(index: 1), // Chạy Kitchen
     );
   }
 }

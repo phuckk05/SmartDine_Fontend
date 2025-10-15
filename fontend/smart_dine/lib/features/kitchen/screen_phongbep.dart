@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mart_dine/core/style.dart';
 
 class KitchenScreen extends StatefulWidget {
   const KitchenScreen({super.key});
