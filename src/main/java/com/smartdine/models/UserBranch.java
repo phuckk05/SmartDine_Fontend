@@ -10,51 +10,51 @@ import jakarta.persistence.*;
 public class UserBranch {
 
     @Id
-    private Integer user_id;
+    private Integer userId;
 
     @Id
-    private Integer branch_id;
+    private Integer branchId;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
-    private LocalDateTime assigned_at;
+    private LocalDateTime assignedAt;
 
     public UserBranch() {
     }
 
-    public UserBranch(Integer user_id, Integer branch_id, LocalDateTime assigned_at) {
-        this.user_id = user_id;
-        this.branch_id = branch_id;
-        this.assigned_at = assigned_at;
+    public UserBranch(Integer userId, Integer branchId, LocalDateTime assignedAt) {
+        this.userId = userId;
+        this.branchId = branchId;
+        this.assignedAt = assignedAt;
     }
 
     public Integer getUser_id() {
-        return user_id;
+        return userId;
     }
 
-    public void setUser_id(Integer user_id) {
-        this.user_id = user_id;
+    public void setUser_id(Integer userId) {
+        this.userId = userId;
     }
 
     public Integer getBranch_id() {
-        return branch_id;
+        return branchId;
     }
 
-    public void setBranch_id(Integer branch_id) {
-        this.branch_id = branch_id;
+    public void setBranch_id(Integer branchId) {
+        this.branchId = branchId;
     }
 
     public LocalDateTime getAssigned_at() {
-        return assigned_at;
+        return assignedAt;
     }
 
-    public void setAssigned_at(LocalDateTime assigned_at) {
-        this.assigned_at = assigned_at;
+    public void setAssigned_at(LocalDateTime assignedAt) {
+        this.assignedAt = assignedAt;
     }
 
     @PrePersist
     protected void onCreate() {
-        if (this.assigned_at == null) {
-            this.assigned_at = LocalDateTime.now();
+        if (this.assignedAt == null) {
+            this.assignedAt = LocalDateTime.now();
         }
     }
 }

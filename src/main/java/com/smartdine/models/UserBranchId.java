@@ -4,15 +4,15 @@ import java.io.Serializable;
 import java.util.Objects;
 
 public class UserBranchId implements Serializable {
-    private Integer user_id;
-    private Integer branch_id;
+    private Integer userId;
+    private Integer branchId;
 
     public UserBranchId() {
     }
 
-    public UserBranchId(Integer user_id, Integer branch_id) {
-        this.user_id = user_id;
-        this.branch_id = branch_id;
+    public UserBranchId(Integer userId, Integer branchId) {
+        this.userId = userId;
+        this.branchId = branchId;
     }
 
     @Override
@@ -22,12 +22,12 @@ public class UserBranchId implements Serializable {
         if (!(o instanceof UserBranchId))
             return false;
         UserBranchId that = (UserBranchId) o;
-        return Objects.equals(user_id, that.user_id) &&
-                Objects.equals(branch_id, that.branch_id);
+        return Objects.equals(userId, that.userId) &&
+                Objects.equals(branchId, that.branchId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(user_id, branch_id);
+        return Objects.hash(userId, branchId);
     }
 }

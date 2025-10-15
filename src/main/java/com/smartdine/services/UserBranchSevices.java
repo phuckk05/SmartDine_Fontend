@@ -1,5 +1,7 @@
 package com.smartdine.services;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -10,6 +12,10 @@ import com.smartdine.repository.UserBranchRepository;
 public class UserBranchSevices {
     @Autowired
     UserBranchRepository userBranchRepository;
+
+    public List<UserBranch> getAll() {
+        return userBranchRepository.findAll();
+    }
 
     // Thêm mới
     public UserBranch create(UserBranch userBranch) {
