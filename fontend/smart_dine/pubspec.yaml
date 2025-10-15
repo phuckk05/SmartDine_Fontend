@@ -52,7 +52,8 @@ dependencies:
   fluentui_system_icons: ^1.1.273
   lucide_icons: ^0.257.0
   lottie: ^3.3.0
-
+  # package intl để định dạng ngày, giờ
+  intl: ^0.18.1
 
 dev_dependencies:
   flutter_test:

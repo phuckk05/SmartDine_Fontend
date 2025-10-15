@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'choose_table_controller.dart';
+import 'providers_choose_table.dart';
 
-/// Danh sách món (tạm hard-coded)
+/// Danh sách món ăn có sẵn (hard-coded)
 final dishesProvider = Provider<List<Map<String, dynamic>>>((ref) => _dishes);
 
-/// Controller quản lý số lượng đã chọn: key = index món, value = số lượng
+/// Controller quản lý trạng thái của order hiện tại trên màn hình chọn món
 final orderControllerProvider =
     StateNotifierProvider<OrderNotifier, Map<int, int>>((ref) {
   return OrderNotifier(ref);
@@ -12,6 +12,8 @@ final orderControllerProvider =
 
 class OrderNotifier extends StateNotifier<Map<int, int>> {
   final Ref ref;
+  Map<int, String> notes = {}; // Lưu ghi chú cho từng món ăn
+
   OrderNotifier(this.ref) : super({});
 
   void increase(int idx) {
@@ -20,34 +22,78 @@ class OrderNotifier extends StateNotifier<Map<int, int>> {
 
   void decrease(int idx) {
     final cur = (state[idx] ?? 0) - 1;
-    final Map<int, int> next = Map.from(state);
     if (cur <= 0) {
+      final next = Map<int, int>.from(state);
       next.remove(idx);
+      notes.remove(idx); // Xóa ghi chú khi số lượng về 0
+      state = next;
     } else {
-      next[idx] = cur;
+      state = {...state, idx: cur};
     }
-    state = next;
   }
 
-  void clear() => state = {};
+  // Thêm hoặc cập nhật ghi chú
+  void addNote(int dishIndex, String note) {
+    if (state.containsKey(dishIndex)) {
+      notes[dishIndex] = note;
+    }
+  }
 
-  /// Xác nhận order: cập nhật trạng thái bàn thành 'Đã đặt' và xoá order tạm
+  // Lấy ghi chú của món ăn
+  String getNote(int dishIndex) {
+    return notes[dishIndex] ?? '';
+  }
+
+  void clear() {
+    state = {};
+    notes = {};
+  }
+
+  /// Xác nhận order: Cập nhật trạng thái bàn thành 'Có khách' và lưu order
   Future<void> confirmOrder(String tableName, int guestCount) async {
-    // Thực thi cập nhật trạng thái bàn
-    // Khi khách chọn món => bàn đang có khách
-      // Lưu order xuống ordersProvider
-      final ordersNotifier = ref.read(ordersProvider.notifier);
-    ordersNotifier.setOrder(tableName, {'guestCount': guestCount, 'items': state});
-    // Nếu có booking, xoá booking (khách đến)
+    final dishes = ref.read(dishesProvider);
+    final orderItems = state.entries.map((entry) {
+      final dish = dishes[entry.key];
+      return {
+        'name': dish['name'],
+        'price': dish['price'],
+        'quantity': entry.value,
+        'note': notes[entry.key] ?? '',
+      };
+    }).toList();
+
+    // Lưu order vào ordersProvider
+    final ordersNotifier = ref.read(ordersProvider.notifier);
+    ordersNotifier.setOrder(tableName, {
+      'guestCount': guestCount,
+      'items': orderItems,
+      'total': ref.read(orderTotalProvider),
+    });
+
+    // Nếu có booking, xóa booking (khách đã đến)
     ref.read(bookingsProvider.notifier).removeBooking(tableName);
+
     // Đánh dấu bàn có khách
     ref.read(tablesProvider.notifier).occupyTable(tableName);
-      // Sau khi confirm, clear order
-      clear();
+
+    // Sau khi xác nhận, clear order tạm
+    clear();
+  }
+
+  /// Xử lý thanh toán: xóa order và cập nhật trạng thái bàn thành 'Trống'
+  Future<void> checkoutOrder(String tableName) async {
+    // Xóa order khỏi danh sách
+    ref.read(ordersProvider.notifier).removeOrder(tableName);
+
+    // Đánh dấu bàn trống
+    ref.read(tablesProvider.notifier).vacateTable(tableName);
+    
+    // Clear order tạm (dù màn hình sẽ pop)
+    clear();
   }
 }
 
-/// Provider tính tổng tiền theo order hiện tại
+/// Provider tính tổng tiền của order hiện tại
 final orderTotalProvider = Provider<int>((ref) {
   final quantities = ref.watch(orderControllerProvider);
   final dishes = ref.watch(dishesProvider);
@@ -67,7 +113,7 @@ final List<Map<String, dynamic>> _dishes = [
   {'name': 'Nước ngọt', 'price': 15000},
 ];
 
-/// Orders per table: key = tableName -> value = order data { guestCount, items }
+/// Orders per table: key = tableName -> value = order data { guestCount, items, total }
 final ordersProvider = StateNotifierProvider<OrdersNotifier, Map<String, Map<String, dynamic>>>((ref) {
   return OrdersNotifier();
 });
@@ -87,3 +133,5 @@ class OrdersNotifier extends StateNotifier<Map<String, Map<String, dynamic>>> {
     state = next;
   }
 }
+
+

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../Data/menu_controller.dart';
-import '../Data/choose_table_controller.dart';
+import '../Data/providers_choose_table.dart';
 
 class ScreenTableOrder extends ConsumerWidget {
   final String tableName;
