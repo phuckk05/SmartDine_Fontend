@@ -10,6 +10,7 @@ class User {
   final String fontImage;
   final String backImage;
   final int statusId;
+  final int? role;
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? deletedAt;
@@ -22,6 +23,7 @@ class User {
     required this.fontImage,
     required this.backImage,
     required this.statusId,
+    this.role,
     required this.createdAt,
     required this.updatedAt,
     required this.deletedAt,
@@ -34,6 +36,7 @@ class User {
     required String phone,
     required String password, // nhận mật khẩu gốc
     required int statusId,
+    required int? role,
     required String? fontImage,
     required String? backImage,
   }) {
@@ -46,6 +49,7 @@ class User {
       phone: phone,
       passworkHash: hashed,
       statusId: statusId,
+      role: role,
       fontImage: fontImage ?? "Chưa có",
       backImage: backImage ?? "Chưa có",
       createdAt: now,
@@ -61,6 +65,7 @@ class User {
     String? phone,
     String? passworkHash,
     int? statusId,
+    int? role,
     String? fontImage,
     String? backImage,
     DateTime? createdAt,
@@ -74,6 +79,7 @@ class User {
       phone: phone ?? this.phone,
       passworkHash: passworkHash ?? this.passworkHash,
       statusId: statusId ?? this.statusId,
+      role: role ?? this.role,
       fontImage: fontImage ?? this.fontImage,
       backImage: backImage ?? this.backImage,
       createdAt: createdAt ?? this.createdAt,
@@ -90,6 +96,7 @@ class User {
       'phone': phone,
       'passworkHash': passworkHash,
       'statusId': statusId,
+      'role': role,
       'fontImage': fontImage,
       'backImage': backImage,
       'createdAt': createdAt.toIso8601String(),
@@ -134,6 +141,7 @@ class User {
       phone: map['phone'] ?? '',
       passworkHash: map['passworkHash'] ?? '',
       statusId: _parseInt(map['statusId']) ?? 0,
+      role: _parseInt(map['statusId']) ?? 0,
       fontImage: map['fontImage'] ?? '',
       backImage: map['backImage'] ?? '',
       createdAt: _parseDate(map['createdAt']),
@@ -162,6 +170,7 @@ class User {
         other.phone == phone &&
         other.passworkHash == passworkHash &&
         other.statusId == statusId &&
+        other.role == role &&
         other.fontImage == fontImage &&
         other.backImage == backImage &&
         other.createdAt == createdAt &&

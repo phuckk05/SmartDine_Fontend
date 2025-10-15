@@ -10,6 +10,7 @@ import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/signup/screen_manager_signup.dart';
 import 'package:mart_dine/features/signup/screen_owner_signup.dart';
 import 'package:mart_dine/models/user.dart';
+import 'package:mart_dine/providers/internet_provider.dart';
 import 'package:mart_dine/providers/loading_provider.dart';
 import 'package:mart_dine/providers/user_provider.dart';
 import 'package:mart_dine/routes.dart';
@@ -103,61 +104,64 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
 
   //Hàm check value trước khi đăng kí
   Future<void> checkControllers(BuildContext context, User user) async {
-    // Check passwords match (not just both non-empty)
-    if (_passwordController1.text == _passwordController2.text) {
-      if (_nameController.text.isNotEmpty &&
-          _emailController.text.isNotEmpty &&
-          _codeBranchController.text.isNotEmpty &&
-          _phoneController.text.isNotEmpty &&
-          ref.watch(_fontImageUrlProvider) != null &&
-          ref.watch(_backImageUrlProvider) != null) {
-        //Chuyển hướng đăng kí qua role khác
-        if (_phoneController.text.length == 10) {
-          if (isValidEmail(_emailController.text)) {
-            if (_nameController.text.length > 1) {
-              if (widget.index == 1) {
-                Routes.pushRightLeftConsumerFul(
-                  context,
-                  ScreenOwnerSignup(title: "Đăng kí nhà hàng"),
-                );
-              } else if (widget.index == 2) {
-                Routes.pushRightLeftConsumerFul(
-                  context,
-                  ScreenManagerSignup(title: "Đăng kí chi nhánh"),
-                );
-              } else {
-                ref.read(isLoadingNotifierProvider.notifier).toggle();
-                ref.read(_isCanPop.notifier).state = true;
-                try {
-                  await siginUpStaff(user, context);
-                } catch (e) {
-                  // Show server error message if any
-                  final msg = e.toString();
-                  Constrats.showThongBao(context, msg);
-                } finally {
-                  if (mounted) {
-                    ref.read(isLoadingNotifierProvider.notifier).toggle();
-                    ref.read(_isCanPop.notifier).state = false;
+    if (!ref.watch(internetProvider)) {
+      Constrats.showThongBao(context, "Không có internet !");
+    } else {
+      // Check passwords match (not just both non-empty)
+      if (_passwordController1.text == _passwordController2.text) {
+        if (_nameController.text.isNotEmpty &&
+            _emailController.text.isNotEmpty &&
+            _codeBranchController.text.isNotEmpty &&
+            _phoneController.text.isNotEmpty &&
+            ref.watch(_fontImageUrlProvider) != null &&
+            ref.watch(_backImageUrlProvider) != null) {
+          //Chuyển hướng đăng kí qua role khác
+          if (_phoneController.text.length == 10) {
+            if (isValidEmail(_emailController.text)) {
+              if (_nameController.text.length > 1) {
+                if (widget.index == 1) {
+                  Routes.pushRightLeftConsumerFul(
+                    context,
+                    ScreenOwnerSignup(title: "Đăng kí nhà hàng"),
+                  );
+                } else if (widget.index == 2) {
+                  Routes.pushRightLeftConsumerFul(
+                    context,
+                    ScreenManagerSignup(title: "Đăng kí chi nhánh"),
+                  );
+                } else {
+                  ref.read(isLoadingNotifierProvider.notifier).toggle();
+                  ref.read(_isCanPop.notifier).state = true;
+                  try {
+                    await siginUpStaff(user, context);
+                  } catch (e) {
+                    // Show server error message if any
+                    final msg = e.toString();
+                    Constrats.showThongBao(context, msg);
+                  } finally {
+                    if (mounted) {
+                      ref.read(_isCanPop.notifier).state = false;
+                    }
                   }
                 }
+              } else {
+                Constrats.showThongBao(context, "Tên quá ngắn !");
               }
             } else {
-              Constrats.showThongBao(context, "Tên quá ngắn !");
+              Constrats.showThongBao(context, "email chưa đúng định dạng !");
             }
           } else {
-            Constrats.showThongBao(context, "email chưa đúng định dạng !");
+            Constrats.showThongBao(
+              context,
+              "Số điện thoại chưa đúng định dạng !",
+            );
           }
         } else {
-          Constrats.showThongBao(
-            context,
-            "Số điện thoại chưa đúng định dạng !",
-          );
+          Constrats.showThongBao(context, "Vui lòng nhập đủ thông tin !");
         }
       } else {
-        Constrats.showThongBao(context, "Vui lòng nhập đủ thông tin !");
+        Constrats.showThongBao(context, "Mật khẩu không đúng !");
       }
-    } else {
-      Constrats.showThongBao(context, "Mật khẩu không đúng !");
     }
   }
 
@@ -167,17 +171,21 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
     AutoDisposeStateProvider<String?> imageUrl,
     BuildContext context,
   ) async {
-    //Khia báo
-    final ImagePicker picker = ImagePicker();
-    //Lấy ảnh
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      //Cập nhật state
-      final changeImage = File(pickedFile.path);
-      ref.read(image.notifier).state = File(pickedFile.path);
-      _changeUrl(imageUrl, changeImage, ref, context);
-      ref.read(isLoadingNotifierProvider.notifier).toggle();
-      ref.read(_isCanPop.notifier).state = false;
+    if (!ref.watch(internetProvider)) {
+      Constrats.showThongBao(context, "Không có internet !");
+    } else {
+      //Khia báo
+      final ImagePicker picker = ImagePicker();
+      //Lấy ảnh
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        //Cập nhật state
+        final changeImage = File(pickedFile.path);
+        ref.read(image.notifier).state = File(pickedFile.path);
+        _changeUrl(imageUrl, changeImage, ref, context);
+        ref.read(isLoadingNotifierProvider.notifier).toggle();
+        ref.read(_isCanPop.notifier).state = false;
+      }
     }
   }
 
@@ -604,6 +612,7 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
               phone: _phoneController.text,
               password: _passwordController1.text,
               statusId: 3,
+              role: null,
               fontImage: _fontImageUrl ?? "Chưa có",
               backImage: _backImageUrl ?? "Chưa có",
             );
