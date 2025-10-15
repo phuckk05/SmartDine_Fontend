@@ -95,11 +95,11 @@ public class User {
         this.phone = phone;
     }
 
-    public String getPasswordHash() {
+    public String getPassworkHash() {
         return passworkHash;
     }
 
-    public void setPasswordHash(String passworkHash) {
+    public void setPassworkHash(String passworkHash) {
         this.passworkHash = passworkHash;
     }
 
