@@ -27,27 +27,27 @@ public class UserBranch {
         this.assignedAt = assignedAt;
     }
 
-    public Integer getUser_id() {
+    public Integer getUserId() {
         return userId;
     }
 
-    public void setUser_id(Integer userId) {
+    public void setUserId(Integer userId) {
         this.userId = userId;
     }
 
-    public Integer getBranch_id() {
+    public Integer getBranchId() {
         return branchId;
     }
 
-    public void setBranch_id(Integer branchId) {
+    public void setBranchId(Integer branchId) {
         this.branchId = branchId;
     }
 
-    public LocalDateTime getAssigned_at() {
+    public LocalDateTime getAssignedAt() {
         return assignedAt;
     }
 
-    public void setAssigned_at(LocalDateTime assignedAt) {
+    public void setAssignedAt(LocalDateTime assignedAt) {
         this.assignedAt = assignedAt;
     }
 

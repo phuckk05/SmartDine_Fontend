@@ -19,6 +19,7 @@ public class User {
     private String fullName;
     private String email;
     private String phone;
+    @Column(name = "passworkHash")
     private String passworkHash;
     private String fontImage;
     private String backImage;
