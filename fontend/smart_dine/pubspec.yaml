@@ -58,6 +58,7 @@ dependencies:
   lucide_icons: ^0.257.0
   lottie: ^3.3.0
   dotted_border: ^2.1.0
+  fl_chart: ^1.1.1
 
 
 dev_dependencies:
