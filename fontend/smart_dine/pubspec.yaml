@@ -61,6 +61,8 @@ dependencies:
 
   # Thư viện hỗ trợ chức năng biểu đồ
   fl_chart: ^0.66.0
+  shared_preferences: ^2.5.3
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:

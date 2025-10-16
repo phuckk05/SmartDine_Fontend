@@ -1,33 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mart_dine/providers/caidat_provider.dart';
+import '../../../core/style.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Lấy state từ providers
+    final settings = ref.watch(settingsProvider);
 
-class _SettingsScreenState extends State<SettingsScreen> {
-  bool _notificationEnabled = true;
-  bool _soundEnabled = true;
-  bool _darkModeEnabled = false;
+    // Dữ liệu cứng để test UI
+    final userInfo = {
+      'name': 'Nguyễn Đình Phúc',
+      'id': '234234235253325',
+      'email': 'phuckk3423@gmail.com',
+      'role': 'Bếp',
+    };
 
-  @override
-  Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isWeb = screenWidth > 600;
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Style.backgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.blue[700],
         elevation: 0,
         centerTitle: false,
         automaticallyImplyLeading: false,
-        title: const Text(
+        title: Text(
           'Cài đặt',
-          style: TextStyle(
-            color: Colors.white,
+          style: Style.fontTitle.copyWith(
+            color: Style.textColorWhite,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -42,7 +47,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildSection(
               title: 'Tài khoản',
               isWeb: isWeb,
-              children: [_buildProfileCard(isWeb)],
+              children: [_buildProfileCard(userInfo, isWeb)],
             ),
 
             const SizedBox(height: 20),
@@ -53,26 +58,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
               isWeb: isWeb,
               children: [
                 _buildSwitchTile(
+                  ref: ref,
                   icon: Icons.notifications,
                   title: 'Thông báo đẩy',
                   subtitle: 'Nhận thông báo về đơn hàng mới',
-                  value: _notificationEnabled,
+                  value: settings.notificationEnabled,
                   onChanged: (value) {
-                    setState(() {
-                      _notificationEnabled = value;
-                    });
+                    ref
+                        .read(settingsProvider.notifier)
+                        .toggleNotification(value);
                   },
                   isWeb: isWeb,
                 ),
                 _buildSwitchTile(
+                  ref: ref,
                   icon: Icons.volume_up,
                   title: 'Âm thanh',
                   subtitle: 'Phát âm thanh khi có đơn mới',
-                  value: _soundEnabled,
+                  value: settings.soundEnabled,
                   onChanged: (value) {
-                    setState(() {
-                      _soundEnabled = value;
-                    });
+                    ref.read(settingsProvider.notifier).toggleSound(value);
                   },
                   isWeb: isWeb,
                 ),
@@ -87,14 +92,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               isWeb: isWeb,
               children: [
                 _buildSwitchTile(
+                  ref: ref,
                   icon: Icons.dark_mode,
                   title: 'Chế độ tối',
                   subtitle: 'Giao diện tối cho mắt',
-                  value: _darkModeEnabled,
+                  value: settings.darkModeEnabled,
                   onChanged: (value) {
-                    setState(() {
-                      _darkModeEnabled = value;
-                    });
+                    ref.read(settingsProvider.notifier).toggleDarkMode(value);
                   },
                   isWeb: isWeb,
                 ),
@@ -109,12 +113,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               isWeb: isWeb,
               children: [
                 _buildListTile(
+                  context: context,
+                  ref: ref,
                   icon: Icons.logout,
                   title: 'Đăng xuất',
                   subtitle: 'Thoát khỏi tài khoản',
-                  onTap: () {
-                    _showLogoutDialog();
-                  },
+                  onTap: () => _showLogoutDialog(context, ref),
                   isWeb: isWeb,
                   textColor: Colors.red,
                 ),
@@ -128,21 +132,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // ==================== WIDGETS ====================
+
+  // Build section
   Widget _buildSection({
     required String title,
     required List<Widget> children,
     required bool isWeb,
   }) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: isWeb ? 20 : 16),
+      padding: EdgeInsets.symmetric(
+        horizontal: isWeb ? 20 : Style.paddingPhone,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            padding: const EdgeInsets.only(left: 4, bottom: Style.spacingSmall),
             child: Text(
               title,
-              style: TextStyle(
+              style: Style.fontTitleSuperMini.copyWith(
                 fontSize: isWeb ? 16 : 14,
                 fontWeight: FontWeight.bold,
                 color: Colors.grey[700],
@@ -151,13 +160,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              color: Style.colorLight,
+              borderRadius: BorderRadius.circular(Style.cardBorderRadius),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  blurRadius: Style.shadowBlurRadius,
+                  offset: Offset(Style.shadowOffsetX, Style.shadowOffsetY),
                 ),
               ],
             ),
@@ -168,9 +177,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildProfileCard(bool isWeb) {
+  // Profile card
+  Widget _buildProfileCard(Map<String, String> userInfo, bool isWeb) {
     return Padding(
-      padding: EdgeInsets.all(isWeb ? 20 : 16),
+      padding: EdgeInsets.all(isWeb ? 20 : Style.paddingPhone),
       child: Row(
         children: [
           Expanded(
@@ -178,40 +188,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Nguyễn Đình Phúc',
-                  style: TextStyle(
+                  userInfo['name']!,
+                  style: Style.fontTitleMini.copyWith(
                     fontSize: isWeb ? 18 : 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '234234235253325',
-                  style: TextStyle(
-                    fontSize: isWeb ? 14 : 13,
-                    color: Colors.grey[600],
-                  ),
+                  userInfo['id']!,
+                  style: Style.fontCaption.copyWith(fontSize: isWeb ? 14 : 13),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'phuckk3423@gmail.com',
-                  style: TextStyle(
-                    fontSize: isWeb ? 14 : 13,
-                    color: Colors.grey[600],
-                  ),
+                  userInfo['email']!,
+                  style: Style.fontCaption.copyWith(fontSize: isWeb ? 14 : 13),
                 ),
               ],
             ),
           ),
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(Style.spacingSmall),
             decoration: BoxDecoration(
               color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(Style.buttonBorderRadius),
             ),
             child: Text(
-              'Bếp',
-              style: TextStyle(
+              userInfo['role']!,
+              style: Style.fontTitleSuperMini.copyWith(
                 fontSize: isWeb ? 14 : 13,
                 color: Colors.grey[700],
                 fontWeight: FontWeight.w600,
@@ -223,7 +227,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // Switch tile
   Widget _buildSwitchTile({
+    required WidgetRef ref,
     required IconData icon,
     required String title,
     required String subtitle,
@@ -233,20 +239,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }) {
     return ListTile(
       contentPadding: EdgeInsets.symmetric(
-        horizontal: isWeb ? 20 : 16,
+        horizontal: isWeb ? 20 : Style.paddingPhone,
         vertical: 4,
       ),
       leading: Icon(icon, color: Colors.blue[700]),
       title: Text(
         title,
-        style: TextStyle(
-          fontSize: isWeb ? 16 : 15,
-          fontWeight: FontWeight.w500,
-        ),
+        style: Style.fontTitleSuperMini.copyWith(fontSize: isWeb ? 16 : 15),
       ),
       subtitle: Text(
         subtitle,
-        style: TextStyle(fontSize: isWeb ? 14 : 13, color: Colors.grey[600]),
+        style: Style.fontCaption.copyWith(fontSize: isWeb ? 14 : 13),
       ),
       trailing: Switch(
         value: value,
@@ -256,7 +259,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // List tile
   Widget _buildListTile({
+    required BuildContext context,
+    required WidgetRef ref,
     required IconData icon,
     required String title,
     required String subtitle,
@@ -266,13 +272,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }) {
     return ListTile(
       contentPadding: EdgeInsets.symmetric(
-        horizontal: isWeb ? 20 : 16,
+        horizontal: isWeb ? 20 : Style.paddingPhone,
         vertical: 4,
       ),
       leading: Icon(icon, color: textColor ?? Colors.blue[700]),
       title: Text(
         title,
-        style: TextStyle(
+        style: Style.fontTitleSuperMini.copyWith(
           fontSize: isWeb ? 16 : 15,
           fontWeight: FontWeight.w500,
           color: textColor,
@@ -280,38 +286,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       subtitle: Text(
         subtitle,
-        style: TextStyle(fontSize: isWeb ? 14 : 13, color: Colors.grey[600]),
+        style: Style.fontCaption.copyWith(fontSize: isWeb ? 14 : 13),
       ),
       trailing: Icon(Icons.chevron_right, color: Colors.grey[400]),
       onTap: onTap,
     );
   }
 
-  void _showLogoutDialog() {
+  // ==================== HANDLERS ====================
+
+  // Show logout dialog
+  void _showLogoutDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Đăng xuất'),
-            content: const Text('Bạn có chắc chắn muốn đăng xuất?'),
+            title: Text('Đăng xuất', style: Style.fontTitleMini),
+            content: Text(
+              'Bạn có chắc chắn muốn đăng xuất?',
+              style: Style.fontNormal,
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Hủy'),
+                child: Text(
+                  'Hủy',
+                  style: Style.fontButton.copyWith(color: Style.textColorGray),
+                ),
               ),
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Đã đăng xuất'),
+                    SnackBar(
+                      content: Text(
+                        'Đã đăng xuất',
+                        style: Style.fontNormal.copyWith(
+                          color: Style.textColorWhite,
+                        ),
+                      ),
                       backgroundColor: Colors.green,
                     ),
                   );
                 },
-                child: const Text(
+                child: Text(
                   'Đăng xuất',
-                  style: TextStyle(color: Colors.red),
+                  style: Style.fontButton.copyWith(color: Colors.red),
                 ),
               ),
             ],

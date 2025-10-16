@@ -28,8 +28,8 @@ class SmartDineApp extends ConsumerWidget {
         ),
       ),
 
-      home: const ScreenBottomNavigation(index: 2), // Chạy Admin
-      //home: const ScreenBottomNavigation(index: 1), // Chạy Kitchen
+      //home: const ScreenBottomNavigation(index: 2), // Chạy Admin
+      home: const ScreenBottomNavigation(index: 1), // Chạy Kitchen
     );
   }
 }
