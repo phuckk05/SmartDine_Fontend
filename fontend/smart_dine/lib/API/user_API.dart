@@ -1,33 +1,25 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/user.dart';
 
+final _uri = 'https://spring-boot-smartdine.onrender.com/api/users';
+
 class UserAPI {
-  Future<List<User>> fetchUsers() async {
-    final response = await http.get(
-      Uri.parse('https://spring-boot-smartdine.onrender.com/users'),
-    );
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((e) => User.fromJson(e)).toList();
-    } else {
-      throw Exception('Không thể lấy danh sách người dùng');
-    }
-  }
-
-  Future<User> updateUser(int id, String name, String email) async {
-    final response = await http.put(
-      Uri.parse('https://spring-boot-smartdine.onrender.com/users/$id'),
+  //Tạo user
+  Future<User?> create(User user) async {
+    final response = await http.post(
+      Uri.parse('${_uri}'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'name': name, 'email': email}),
+      body: jsonEncode(user.toMap()),
     );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return User.fromJson(data);
-    } else {
-      throw Exception('Không thể cập nhật user');
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      return User.fromMap(data);
     }
+    return null;
   }
 }
+
+//userApiProvider
+final userApiProvider = Provider<UserAPI>((ref) => UserAPI());

@@ -1,4 +1,4 @@
-# Mô tả dự án: SmartServe RMS
+# Mô tả dự án: SmartDine RMS
 # I. Giới thiệu chung
 
 SmartServe RMS (Restaurant Management System) là hệ thống quản lý vận hành nhà hàng được phát triển nhằm tối ưu hóa toàn bộ quy trình từ phục vụ, đặt món, thanh toán đến quản lý dữ liệu kinh doanh.
@@ -81,7 +81,7 @@ Quản lý xác thực, phân quyền và bảo mật người dùng.
 
 Cung cấp API cho ứng dụng di động giao tiếp.
 
-Xử lý quy trình nghiệp vụ phức tạp như order, thanh toán, khuyến mãi và ca làm.
+Xử lý quy trình nghiệp vụ phức tạp như order, thanh toán, khuyến mãi.
 
 # 2.3. Các chức năng chính
 
