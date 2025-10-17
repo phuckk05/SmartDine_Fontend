@@ -1,4 +1,4 @@
-package com.smartdine.models;
+package com.smartdine.models.idclass;
 
 import java.io.Serializable;
 import java.util.Objects;

@@ -2,6 +2,8 @@ package com.smartdine.models;
 
 import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.smartdine.models.idclass.UserBranchId;
+
 import jakarta.persistence.*;
 
 @Entity

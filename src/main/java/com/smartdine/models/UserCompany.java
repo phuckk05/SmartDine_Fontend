@@ -3,19 +3,19 @@ package com.smartdine.models;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 @Entity
 @Table(name = "user_companys")
+@IdClass(UserCompany.class)
 public class UserCompany {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
     private Integer userId;
 
-    @Column(name = "company_id")
+    @Id
     private Integer companyId;
 
-    @Column(name = "assigned_at")
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private LocalDateTime assignedAt;
 
     public UserCompany() {
@@ -27,10 +27,6 @@ public class UserCompany {
         this.assignedAt = assignedAt;
     }
 
-    public Integer getId() {
-        return userId;
-    }
-
     public Integer getUserId() {
         return userId;
     }
@@ -39,11 +35,11 @@ public class UserCompany {
         this.userId = userId;
     }
 
-    public Integer getCompanyId() {
+    public Integer getBranchId() {
         return companyId;
     }
 
-    public void setCompanyId(Integer companyId) {
+    public void setBranchId(Integer companyId) {
         this.companyId = companyId;
     }
 

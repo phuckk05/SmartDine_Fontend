@@ -4,12 +4,12 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "company")
+@Table(name = "companys")
 public class Company {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     private String name;
 
@@ -20,6 +20,7 @@ public class Company {
 
     private String address;
 
+    private Integer statusId;
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -29,23 +30,25 @@ public class Company {
     public Company() {
     }
 
-    public Company(Long id, String name, String companyCode, String image, String address, LocalDateTime createdAt,
+    public Company(Integer id, String name, String companyCode, String image, String address, Integer statusId,
+            LocalDateTime createdAt,
             LocalDateTime updatedAt) {
         this.id = id;
         this.name = name;
         this.companyCode = companyCode;
         this.image = image;
         this.address = address;
+        this.statusId = statusId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
 
     // Getter và Setter
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -79,6 +82,14 @@ public class Company {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public Integer getStatusId() {
+        return statusId;
+    }
+
+    public void setStatusId(Integer statusId) {
+        this.statusId = statusId;
     }
 
     public LocalDateTime getCreatedAt() {
