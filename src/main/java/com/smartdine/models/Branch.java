@@ -21,8 +21,6 @@ public class Branch {
     private String address; // Địa chỉ nhà hàng
     @Column(name = "image")
     private String image; // Ảnh (ví dụ: ảnh CCCD hoặc logo)
-    @Column(name = "phone")
-    private String phone; // Số điện thoại liên hệ
     @Column(name = "status_id")
     private int statusId; // Mã trạng thái
     @Column(name = "manager_id")
@@ -37,7 +35,7 @@ public class Branch {
     }
 
     public Branch(int id, int companyId, String name, String branchCode, String address,
-            String image, String phone, int statusId, int managerId,
+            String image, int statusId, int managerId,
             LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.companyId = companyId;
@@ -45,7 +43,6 @@ public class Branch {
         this.branchCode = branchCode;
         this.address = address;
         this.image = image;
-        this.phone = phone;
         this.statusId = statusId;
         this.managerId = managerId;
         this.createdAt = createdAt;
@@ -101,14 +98,6 @@ public class Branch {
         this.image = image;
     }
 
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
     public int getStatusId() {
         return statusId;
     }
@@ -150,7 +139,6 @@ public class Branch {
                 ", branchCode='" + branchCode + '\'' +
                 ", address='" + address + '\'' +
                 ", image='" + image + '\'' +
-                ", phone='" + phone + '\'' +
                 ", statusId=" + statusId +
                 ", managerId=" + managerId +
                 ", createdAt=" + createdAt +

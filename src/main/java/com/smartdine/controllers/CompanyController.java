@@ -24,6 +24,7 @@ public class CompanyController {
             List<Company> companys = companyServices.getAll();
             return ResponseEntity.ok(companys);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.internalServerError().body("Loi " + e.getMessage());
         }
     }
