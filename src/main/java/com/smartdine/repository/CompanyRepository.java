@@ -5,5 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.smartdine.models.Company;
 
 public interface CompanyRepository extends JpaRepository<Company, Integer> {
-
+    boolean existsByCompanyCode(String comapanyCode);
 }
