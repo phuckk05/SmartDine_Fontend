@@ -25,7 +25,7 @@ public class CompanyServices {
 
     // Kiểm tra companyCode
     public Company existsByCompanyCode(String companyCode) {
-        return companyRepository.existsByCompanyCode(companyCode).orElse(null);
+        return companyRepository.findByCompanyCode(companyCode).orElse(null);
     }
 
 }
