@@ -13,11 +13,19 @@ public class CompanyServices {
     @Autowired
     CompanyRepository companyRepository;
 
+    // Lấy tất cà company
     public List<Company> getAll() {
         return companyRepository.findAll();
     }
 
+    // Thêm mới company
     public Company save(Company company) {
         return companyRepository.save(company);
     }
+
+    // Kiểm tra companyCode
+    public Company existsByCompanyCode(String companyCode) {
+        return companyRepository.existsByCompanyCode(companyCode).orElse(null);
+    }
+
 }
