@@ -3,15 +3,45 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/user.dart';
 
-final _uri = 'https://spring-boot-smartdine.onrender.com/api/users';
+final uri1 = 'https://spring-boot-smartdine.onrender.com/api/users';
+final uri2 = 'https://smartdine-backend-oq2x.onrender.com/api/users';
 
 class UserAPI {
   //Tạo user
-  Future<User?> create(User user) async {
+  Future<User?> createUser(User user) async {
     final response = await http.post(
-      Uri.parse('${_uri}'),
+      Uri.parse('${uri2}'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(user.toMap()),
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      return User.fromMap(data);
+    }
+    return null;
+  }
+
+  //Đăng nhập user
+  Future<User?> signIn(String email) async {
+    final response = await http.get(
+      Uri.parse('$uri2/email/${Uri.encodeComponent(email)}'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      return User.fromMap(data);
+    }
+    return null;
+  }
+
+  //Update user
+  Future<User?> updatePassword(int userId, String newPassword) async {
+    final uri = Uri.parse(
+      '$uri2/update/$userId',
+    ).replace(queryParameters: {'newPassword': newPassword});
+    final response = await http.put(
+      uri,
+      headers: {'Content-Type': 'application/json'},
     );
     if (response.statusCode == 200 || response.statusCode == 201) {
       final Map<String, dynamic> data = jsonDecode(response.body);

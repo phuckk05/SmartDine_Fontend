@@ -2,32 +2,50 @@ import 'dart:convert';
 
 class Branch {
   //Properties
-  final int id;
+  final int? id;
   final int companyId;
   final String name;
   final String branchCode;
   final String address;
   final String image;
-  final String phone;
   final int statusId;
   final int managerId;
   final DateTime createdAt;
   final DateTime updatedAt;
   //Constructor
   Branch({
-    required this.id,
+    this.id,
     required this.companyId,
     required this.name,
     required this.branchCode,
     required this.address,
     required this.image,
-    required this.phone,
     required this.statusId,
     required this.managerId,
     required this.createdAt,
     required this.updatedAt,
   });
-
+  factory Branch.create({
+    required int companyId,
+    required String name,
+    required String branchCode,
+    required String address,
+    required String image,
+    required int managerId,
+  }) {
+    final now = DateTime.now();
+    return Branch(
+      companyId: companyId,
+      name: name,
+      branchCode: branchCode,
+      address: address,
+      image: image,
+      statusId: 3,
+      managerId: managerId,
+      createdAt: now,
+      updatedAt: now,
+    );
+  }
   Branch copyWith({
     int? id,
     int? companyId,
@@ -35,7 +53,6 @@ class Branch {
     String? branchCode,
     String? address,
     String? image,
-    String? phone,
     int? statusId,
     int? managerId,
     DateTime? createdAt,
@@ -48,7 +65,6 @@ class Branch {
       branchCode: branchCode ?? this.branchCode,
       address: address ?? this.address,
       image: image ?? this.image,
-      phone: phone ?? this.phone,
       statusId: statusId ?? this.statusId,
       managerId: managerId ?? this.managerId,
       createdAt: createdAt ?? this.createdAt,
@@ -64,11 +80,10 @@ class Branch {
       'branchCode': branchCode,
       'address': address,
       'image': image,
-      'phone': phone,
       'statusId': statusId,
       'managerId': managerId,
-      'createdAt': createdAt.millisecondsSinceEpoch,
-      'updatedAt': updatedAt.millisecondsSinceEpoch,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
     };
   }
 
@@ -80,7 +95,6 @@ class Branch {
       branchCode: map['branchCode'] ?? '',
       address: map['address'] ?? '',
       image: map['image'] ?? '',
-      phone: map['phone'] ?? '',
       statusId: int.tryParse(map['statusId'].toString()) ?? 0,
       managerId: int.tryParse(map['managerId'].toString()) ?? 0,
       createdAt: DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
@@ -94,7 +108,7 @@ class Branch {
 
   @override
   String toString() {
-    return 'Branch(id: $id, companyId: $companyId, name: $name, branchCode: $branchCode, address: $address, image: $image, phone: $phone, statusId: $statusId, managerId: $managerId, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'Branch(id: $id, companyId: $companyId, name: $name, branchCode: $branchCode, address: $address, image: $image, statusId: $statusId, managerId: $managerId, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -108,7 +122,6 @@ class Branch {
         other.branchCode == branchCode &&
         other.address == address &&
         other.image == image &&
-        other.phone == phone &&
         other.statusId == statusId &&
         other.managerId == managerId &&
         other.createdAt == createdAt &&
@@ -123,7 +136,6 @@ class Branch {
         branchCode.hashCode ^
         address.hashCode ^
         image.hashCode ^
-        phone.hashCode ^
         statusId.hashCode ^
         managerId.hashCode ^
         createdAt.hashCode ^

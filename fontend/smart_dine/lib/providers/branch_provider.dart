@@ -1,0 +1,48 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mart_dine/API/branch_API.dart';
+import 'package:mart_dine/API/company_API.dart';
+import 'package:mart_dine/models/branch.dart';
+
+class BranchNotifier extends StateNotifier<Branch?> {
+  final BranchAPI branchAPI;
+  final CompanyAPI companyAPI;
+  BranchNotifier(this.branchAPI, this.companyAPI) : super(null);
+
+  Set<Branch> build() {
+    return const {};
+  }
+
+  //Đăng kí chi nhánh
+  Future<int> signUpBranch(
+    Branch branch,
+    int userId,
+    String companyCode,
+  ) async {
+    try {
+      final responseCompany = await companyAPI.exitsCompanyCode(companyCode);
+      if (responseCompany != null) {
+        final branchPayload = branch.copyWith(companyId: responseCompany.id);
+        final response = await branchAPI.create(branchPayload);
+        if (response != null) {
+          //Cập nhạt state
+          state = response;
+          return 1;
+        }
+      } else {
+        return 2;
+      }
+    } catch (e) {
+      print("Tìm không thấy companyCode : ${e.toString()}");
+    }
+    return 0;
+  }
+}
+
+final branchNotifierProvider = StateNotifierProvider<BranchNotifier, Branch?>((
+  ref,
+) {
+  return BranchNotifier(
+    ref.watch(branchApiProvider),
+    ref.watch(companyApiProvider),
+  );
+});

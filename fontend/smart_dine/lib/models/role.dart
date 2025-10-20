@@ -1,7 +1,8 @@
 import 'dart:convert';
+import 'dart:ffi';
 
 class Role {
-  final String id; // UUID hoặc ID do Firestore tạo
+  final int id; // UUID hoặc ID do Firestore tạo
   final String
   code; //Max vai trò: "admin", "manager", "cashier", "staff", "chef"
   final String
@@ -14,7 +15,7 @@ class Role {
     required this.description,
   });
 
-  Role copyWith({String? id, String? code, String? name, String? description}) {
+  Role copyWith({int? id, String? code, String? name, String? description}) {
     return Role(
       id: id ?? this.id,
       code: code ?? this.code,
@@ -29,7 +30,7 @@ class Role {
 
   factory Role.fromMap(Map<String, dynamic> map) {
     return Role(
-      id: map['id'] ?? '',
+      id: map['id']?.toInt() ?? 0,
       code: map['code'] ?? '',
       name: map['name'] ?? '',
       description: map['description'] ?? '',

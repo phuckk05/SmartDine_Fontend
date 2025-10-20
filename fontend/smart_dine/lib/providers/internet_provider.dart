@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 class InternetNotifier extends StateNotifier<bool> {
-  InternetNotifier() : super(false) {
+  InternetNotifier() : super(true) {
     _init();
   }
 

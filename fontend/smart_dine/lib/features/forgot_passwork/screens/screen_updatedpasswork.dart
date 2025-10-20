@@ -3,34 +3,51 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/forgot_passwork/screens/screen_updated_success.dart';
+import 'package:mart_dine/providers/user_provider.dart';
 import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets/icon_back.dart';
+import 'package:mart_dine/widgets/loading.dart';
+
+final _resetLoadingProvider = StateProvider.autoDispose<bool>((ref) => false);
+final _resetObscurePasswordProvider = StateProvider.autoDispose<bool>(
+  (ref) => true,
+);
+final _resetObscureConfirmProvider = StateProvider.autoDispose<bool>(
+  (ref) => true,
+);
 
 class ScreenUpdatedpasswork extends ConsumerStatefulWidget {
-  const ScreenUpdatedpasswork({super.key});
+  final int userId;
+  final String email;
+  const ScreenUpdatedpasswork({
+    super.key,
+    required this.userId,
+    required this.email,
+  });
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() {
-    return _ScreenUpdatedpassworkState();
-  }
+  ConsumerState<ScreenUpdatedpasswork> createState() =>
+      _ScreenUpdatedpassworkState();
 }
 
-//Các Provider
-final textPass1Provider = StateProvider<TextEditingController>(
-  (ref) => TextEditingController(),
-);
-final textPass2Provider = StateProvider<TextEditingController>(
-  (ref) => TextEditingController(),
-);
-
-final isCheckShow1Provider = StateProvider<bool>((ref) => true);
-final isCheckShow2Provider = StateProvider<bool>((ref) => true);
-
 class _ScreenUpdatedpassworkState extends ConsumerState<ScreenUpdatedpasswork> {
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmController = TextEditingController();
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isLoading = ref.watch(_resetLoadingProvider);
+    final obscurePassword = ref.watch(_resetObscurePasswordProvider);
+    final obscureConfirm = ref.watch(_resetObscureConfirmProvider);
+
     return Scaffold(
-      //Appbar
       backgroundColor: Style.backgroundColor,
       appBar: AppBar(
         leading: IconBack.back(context),
@@ -38,96 +55,44 @@ class _ScreenUpdatedpassworkState extends ConsumerState<ScreenUpdatedpasswork> {
         centerTitle: true,
         backgroundColor: Colors.transparent,
       ),
-      //Body
-      body: _body(),
+      body: Stack(
+        children: [
+          _buildBody(
+            obscurePassword: obscurePassword,
+            obscureConfirm: obscureConfirm,
+          ),
+          if (isLoading) const Loading(),
+        ],
+      ),
     );
   }
 
-  //Phần body
-  Widget _body() {
-    final isCheckShow1 = ref.watch(isCheckShow1Provider);
-    final isCheckShow2 = ref.watch(isCheckShow2Provider);
+  Widget _buildBody({
+    required bool obscurePassword,
+    required bool obscureConfirm,
+  }) {
     return SafeArea(
       child: Center(
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: Style.paddingPhone),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _dongChu(),
                 const SizedBox(height: 30),
-                ShadowCus(
-                  isConcave: true, // Concave effect for input
-                  borderRadius: 10.0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 15,
-                    vertical: 5,
-                  ),
-                  child: TextField(
-                    obscureText: isCheckShow1, // Toggle visibility
-                    decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.lock, color: Colors.grey[600]),
-                      hintText: 'Mật khẩu', // Use hintText
-                      hintStyle: const TextStyle(color: Style.textColorGray),
-                      border: InputBorder.none, // Remove default border
-                      contentPadding: const EdgeInsets.only(
-                        left: 0,
-                        top: 12,
-                        bottom: 12,
-                        right: 0,
-                      ), // Adjust padding
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          isCheckShow1
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          color: Colors.grey[600],
-                        ),
-                        onPressed: () {
-                          ref.read(isCheckShow1Provider.notifier).state =
-                              !isCheckShow1;
-                        },
-                      ),
-                    ),
-                    style: const TextStyle(color: Style.textColorGray),
-                  ),
+                _passwordField(
+                  controller: _passwordController,
+                  hint: 'Mật khẩu mới',
+                  obscure: obscurePassword,
+                  onToggle: _togglePasswordVisibility,
                 ),
-                const SizedBox(height: 15), // Space before buttons
-                ShadowCus(
-                  isConcave: true, // Concave effect for input
-                  borderRadius: 10.0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 15,
-                    vertical: 5,
-                  ),
-                  child: TextField(
-                    obscureText: isCheckShow2, // Toggle visibility
-                    decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.lock, color: Colors.grey[600]),
-                      hintText: 'Xác nhận mật khẩu', // Use hintText
-                      hintStyle: const TextStyle(color: Style.textColorGray),
-                      border: InputBorder.none, // Remove default border
-                      contentPadding: const EdgeInsets.only(
-                        left: 0,
-                        top: 12,
-                        bottom: 12,
-                        right: 0,
-                      ), // Adjust padding
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          isCheckShow2
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          color: Colors.grey[600],
-                        ),
-                        onPressed: () {
-                          ref.read(isCheckShow2Provider.notifier).state =
-                              !isCheckShow2;
-                        },
-                      ),
-                    ),
-                    style: const TextStyle(color: Style.textColorGray),
-                  ),
+                const SizedBox(height: 15),
+                _passwordField(
+                  controller: _confirmController,
+                  hint: 'Xác nhận mật khẩu',
+                  obscure: obscureConfirm,
+                  onToggle: _toggleConfirmVisibility,
                 ),
                 const SizedBox(height: 30),
                 _buttonConfirm(),
@@ -139,45 +104,129 @@ class _ScreenUpdatedpassworkState extends ConsumerState<ScreenUpdatedpasswork> {
     );
   }
 
-  //Phần dòng chữ
   Widget _dongChu() {
     return Align(
       alignment: Alignment.centerLeft,
-      child: const Text(
-        'Mật khẩu càng mạnh độ bảo càng cao.',
-        style: TextStyle(
-          fontSize: Style.defaultFontSize,
-          color: Style.textColorGray,
-          fontWeight: FontWeight.w600,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Tài khoản: ${widget.email}', style: Style.fontCaption),
+          const SizedBox(height: 6),
+          Text(
+            'Mật khẩu càng mạnh độ bảo càng cao.',
+            style: TextStyle(
+              fontSize: Style.defaultFontSize,
+              color: Style.textColorGray,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  //Phần button "Xác nhận"
+  Widget _passwordField({
+    required TextEditingController controller,
+    required String hint,
+    required bool obscure,
+    required VoidCallback onToggle,
+  }) {
+    return ShadowCus(
+      isConcave: true,
+      borderRadius: 10.0,
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+      child: TextField(
+        controller: controller,
+        obscureText: obscure,
+        decoration: InputDecoration(
+          prefixIcon: Icon(Icons.lock, color: Colors.grey[600]),
+          hintText: hint,
+          hintStyle: const TextStyle(color: Style.textColorGray),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.only(
+            left: 0,
+            top: 12,
+            bottom: 12,
+            right: 0,
+          ),
+          suffixIcon: IconButton(
+            icon: Icon(
+              obscure ? Icons.visibility_off : Icons.visibility,
+              color: Colors.grey[600],
+            ),
+            onPressed: onToggle,
+          ),
+        ),
+        style: const TextStyle(color: Style.textColorGray),
+      ),
+    );
+  }
+
   Widget _buttonConfirm() {
     return ShadowCus(
       borderRadius: 20.0,
-      baseColor: Style.buttonBackgroundColor, // Button's distinct color
-      padding: EdgeInsets.zero, // Padding handled by MaterialButton
+      baseColor: Style.buttonBackgroundColor,
+      padding: EdgeInsets.zero,
       child: MaterialButton(
-        onPressed: () {
-          Routes.pushRightLeftConsumerLess(context, ScreenUpdatedSuccess());
-        },
-        // Set button color to transparent so NeumorphicContainer's color shows
+        onPressed: _handleUpdatePassword,
         color: Colors.transparent,
-        elevation: 0, // Remove default elevation
-        highlightElevation: 0, // Remove highlight elevation
-        splashColor: Colors.white.withOpacity(0.2), // Splash effect
+        elevation: 0,
+        highlightElevation: 0,
+        splashColor: Colors.white.withOpacity(0.2),
         minWidth: double.infinity,
         height: 50,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20.0),
         ),
-
-        // child: Text('Đăng nhập', style: Style.TextButton),
         child: Text('Xác nhận', style: Style.TextButton),
       ),
     );
+  }
+
+  Future<void> _handleUpdatePassword() async {
+    final newPassword = _passwordController.text.trim();
+    final confirmPassword = _confirmController.text.trim();
+
+    if (newPassword.isEmpty || confirmPassword.isEmpty) {
+      Constrats.showThongBao(context, 'Vui lòng nhập đầy đủ mật khẩu.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      Constrats.showThongBao(context, 'Mật khẩu cần ít nhất 6 ký tự.');
+      return;
+    }
+    if (newPassword != confirmPassword) {
+      Constrats.showThongBao(context, 'Mật khẩu xác nhận không khớp.');
+      return;
+    }
+
+    final loadingNotifier = ref.read(_resetLoadingProvider.notifier);
+    loadingNotifier.state = true;
+    try {
+      final updated = await ref
+          .read(userNotifierProvider.notifier)
+          .updateUserInfor(widget.userId, newPassword);
+      if (!mounted) return;
+      if (!updated) {
+        Constrats.showThongBao(
+          context,
+          'Không thể cập nhật mật khẩu. Vui lòng thử lại.',
+        );
+        return;
+      }
+      Routes.pushRightLeftConsumerLess(context, const ScreenUpdatedSuccess());
+    } finally {
+      loadingNotifier.state = false;
+    }
+  }
+
+  void _togglePasswordVisibility() {
+    final notifier = ref.read(_resetObscurePasswordProvider.notifier);
+    notifier.state = !notifier.state;
+  }
+
+  void _toggleConfirmVisibility() {
+    final notifier = ref.read(_resetObscureConfirmProvider.notifier);
+    notifier.state = !notifier.state;
   }
 }
