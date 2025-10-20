@@ -16,25 +16,28 @@ class _ScreenBookTableState extends ConsumerState<ScreenBookTable> {
   // State variables for the form
   final _nameController = TextEditingController(text: 'Nguyễn Văn A');
   final _phoneController = TextEditingController(text: '0912 345 678');
+  final _emailController = TextEditingController(); // ✅ Controller cho email
   final _dateController = TextEditingController();
   final _timeController = TextEditingController(text: '19:00');
   final _notesController = TextEditingController(text: 'Ví dụ: Cần ghế em bé');
-  final _tableController = TextEditingController(); // Controller for selected table
+  final _tableController = TextEditingController();
 
   int _guestCount = 4;
   DateTime _selectedDate = DateTime.now();
-  TableModel? _selectedTable; // To store the selected table
+  TableModel? _selectedTable;
 
   @override
   void initState() {
     super.initState();
-    _dateController.text = DateFormat('EEEE, dd/MM/yyyy', 'vi_VN').format(_selectedDate);
+    _dateController.text =
+        DateFormat('EEEE, dd/MM/yyyy', 'vi_VN').format(_selectedDate);
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _emailController.dispose(); // ✅ Dispose controller email
     _dateController.dispose();
     _timeController.dispose();
     _notesController.dispose();
@@ -52,7 +55,8 @@ class _ScreenBookTableState extends ConsumerState<ScreenBookTable> {
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
-        _dateController.text = DateFormat('EEEE, dd/MM/yyyy', 'vi_VN').format(_selectedDate);
+        _dateController.text =
+            DateFormat('EEEE, dd/MM/yyyy', 'vi_VN').format(_selectedDate);
       });
     }
   }
@@ -77,7 +81,16 @@ class _ScreenBookTableState extends ConsumerState<ScreenBookTable> {
           children: [
             _buildTextField(controller: _nameController, label: 'Tên khách hàng'),
             const SizedBox(height: 16),
-            _buildTextField(controller: _phoneController, label: 'Số điện thoại', keyboardType: TextInputType.phone),
+            _buildTextField(
+                controller: _phoneController,
+                label: 'Số điện thoại',
+                keyboardType: TextInputType.phone),
+            const SizedBox(height: 16),
+            // ✅ Thêm trường nhập Email
+            _buildTextField(
+                controller: _emailController,
+                label: 'Email',
+                keyboardType: TextInputType.emailAddress),
             const SizedBox(height: 16),
             _buildTextField(
               controller: _dateController,
@@ -87,13 +100,18 @@ class _ScreenBookTableState extends ConsumerState<ScreenBookTable> {
               onTap: () => _selectDate(context),
             ),
             const SizedBox(height: 16),
-            _buildTextField(controller: _timeController, label: 'Giờ đến', readOnly: true),
+            _buildTextField(
+                controller: _timeController, label: 'Giờ đến', readOnly: true),
             const SizedBox(height: 16),
             _buildGuestCounter(),
             const SizedBox(height: 16),
-            _buildTextField(controller: _tableController, label: 'Bàn đã chọn', readOnly: true), // Display selected table
+            _buildTextField(
+                controller: _tableController,
+                label: 'Bàn đã chọn',
+                readOnly: true),
             const SizedBox(height: 16),
-            _buildTextField(controller: _notesController, label: 'Ghi chú', maxLines: 3),
+            _buildTextField(
+                controller: _notesController, label: 'Ghi chú', maxLines: 3),
           ],
         ),
       ),
@@ -106,7 +124,8 @@ class _ScreenBookTableState extends ConsumerState<ScreenBookTable> {
               onPressed: () async {
                 final selectedTable = await Navigator.of(context).push<TableModel>(
                   MaterialPageRoute(
-                    builder: (context) => ScreenAvailableTables(guestCount: _guestCount),
+                    builder: (context) =>
+                        ScreenAvailableTables(guestCount: _guestCount),
                   ),
                 );
 
@@ -126,25 +145,70 @@ class _ScreenBookTableState extends ConsumerState<ScreenBookTable> {
             ElevatedButton(
               onPressed: () {
                 if (_selectedTable != null) {
-                  ref.read(tableProvider.notifier).setCustomerCount(_selectedTable!.id, _guestCount);
-                  
-                  // Show success dialog
+                  ref
+                      .read(tableProvider.notifier)
+                      .setCustomerCount(_selectedTable!.id, _guestCount);
+
+                  // ✅ Hiển thị dialog thành công đã thiết kế lại
                   showDialog(
                     context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Đặt bàn thành công'),
-                      content: Text('Bàn ${_selectedTable!.name} đã được đặt.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('OK'),
+                    builder: (dialogContext) => Dialog(
+                      backgroundColor: Colors.grey[200],
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'ĐẶT BÀN THÀNH CÔNG',
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 20),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8)
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Thông tin chi tiết:',
+                                      style: TextStyle(fontWeight: FontWeight.w600)),
+                                  const Divider(),
+                                  _buildSuccessInfo('Tên khách hàng:', _nameController.text),
+                                  _buildSuccessInfo('Số điện thoại:', _phoneController.text),
+                                  if (_emailController.text.isNotEmpty)
+                                    _buildSuccessInfo('Email:', _emailController.text),
+                                  _buildSuccessInfo('Ngày đặt:', _dateController.text),
+                                  _buildSuccessInfo('Giờ đến:', _timeController.text),
+                                  _buildSuccessInfo('Số lượng khách:', '$_guestCount'),
+                                  _buildSuccessInfo('Loại bàn:', 'Thường'),
+                                  _buildSuccessInfo('Ghi chú:', _notesController.text),
+                                  const SizedBox(height: 20),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        // TODO: Xử lý logic gửi SMS
+                                      },
+                                      child: const Text('GỬI SMS'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  );
+                  ).then((_) {
+                      // Đóng màn hình đặt bàn sau khi dialog đóng
+                      Navigator.of(context).pop();
+                  });
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Vui lòng chọn bàn trước.')),
@@ -164,8 +228,8 @@ class _ScreenBookTableState extends ConsumerState<ScreenBookTable> {
     );
   }
 
+  // Widget helper để tạo các trường nhập liệu
   Widget _buildTextField({
-    String? initialValue,
     TextEditingController? controller,
     required String label,
     bool readOnly = false,
@@ -175,7 +239,6 @@ class _ScreenBookTableState extends ConsumerState<ScreenBookTable> {
     VoidCallback? onTap,
   }) {
     return TextFormField(
-      initialValue: initialValue,
       controller: controller,
       readOnly: readOnly,
       maxLines: maxLines,
@@ -198,6 +261,7 @@ class _ScreenBookTableState extends ConsumerState<ScreenBookTable> {
     );
   }
 
+  // Widget cho bộ đếm số khách
   Widget _buildGuestCounter() {
     return InputDecorator(
       decoration: InputDecoration(
@@ -224,7 +288,9 @@ class _ScreenBookTableState extends ConsumerState<ScreenBookTable> {
             },
             icon: const Icon(Icons.remove_circle_outline),
           ),
-          Text('$_guestCount', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text('$_guestCount',
+              style:
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           IconButton(
             onPressed: () {
               setState(() {
@@ -232,6 +298,26 @@ class _ScreenBookTableState extends ConsumerState<ScreenBookTable> {
               });
             },
             icon: const Icon(Icons.add_circle_outline),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // ✅ Widget helper cho dialog thành công
+  Widget _buildSuccessInfo(String label, String value) {
+    if (value.isEmpty) return const SizedBox.shrink(); // Ẩn nếu không có giá trị
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110, // Fixed width for labels
+            child: Text(label, style: TextStyle(color: Colors.grey[700])),
+          ),
+          Expanded(
+            child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
           ),
         ],
       ),
