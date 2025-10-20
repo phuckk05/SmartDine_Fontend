@@ -3,8 +3,6 @@ import 'package:mart_dine/core/style.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:mart_dine/features/branch_management/screen/order_list_screen.dart';
 import 'package:mart_dine/features/branch_management/screen/branch_performance_screen.dart';
-import 'package:mart_dine/features/branch_management/screen/settings_screen.dart';
-import 'package:mart_dine/features/branch_management/screen/notifications_screen.dart';
 import 'package:mart_dine/features/branch_management/screen/today_activities_screen.dart';
 import 'package:mart_dine/features/branch_management/screen/dish_statistics_screen.dart';
 
@@ -136,26 +134,7 @@ class _BranchDashboardScreenState extends State<BranchDashboardScreen> {
         elevation: 0,
         centerTitle: true,
         title: Text('Dashboard', style: Style.fontTitle),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.settings_outlined, color: textColor),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.notifications_outlined, color: textColor),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const NotificationsScreen()),
-              );
-            },
-          ),
-        ],
+        automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
         child: Padding(

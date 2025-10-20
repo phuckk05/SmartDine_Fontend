@@ -1,9 +1,8 @@
 // import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mart_dine/features/start/screen/screen_start.dart';
 import 'package:mart_dine/providers/mode_provider.dart';
-import 'features/branch_management/screen/branch_dashboard.dart';
+import 'features/branch_management/screen/branch_navigation.dart';
 
 void main() async {
   //Cấu hình để sử dụng firebase
@@ -30,7 +29,7 @@ class MeTalkApp extends ConsumerWidget {
       ),
 
       // Thiết lập chệ độ sáng tối
-      home: const BranchDashboardScreen(),
+      home: const BranchManagementNavigation(),
     );
   }
 }

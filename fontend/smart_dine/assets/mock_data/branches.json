@@ -1,0 +1,73 @@
+{
+  "branch_statuses": [
+    {
+      "id": "branch-status-active-001",
+      "code": "ACTIVE",
+      "name": "Đang hoạt động"
+    },
+    {
+      "id": "branch-status-inactive-001",
+      "code": "INACTIVE",
+      "name": "Tạm ngưng"
+    }
+  ],
+  "branches": [
+    {
+      "id": "branch-001",
+      "company_id": "company-001",
+      "name": "SmartDine Nguyễn Kim",
+      "branch_code": "SD-NK-001",
+      "address": "123 Nguyễn Kim, Quận 10, TP.HCM",
+      "image": "https://example.com/images/branch-nguyen-kim.jpg",
+      "phone": "02812345678",
+      "status_id": "branch-status-active-001",
+      "manager_id": "employee-001",
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-10-20T08:00:00Z",
+      "status": {
+        "id": "branch-status-active-001",
+        "code": "ACTIVE",
+        "name": "Đang hoạt động"
+      },
+      "manager_name": "Nguyễn Văn An"
+    },
+    {
+      "id": "branch-002",
+      "company_id": "company-001",
+      "name": "SmartDine Vincom",
+      "branch_code": "SD-VC-002",
+      "address": "72 Lê Thánh Tôn, Quận 1, TP.HCM",
+      "image": "https://example.com/images/branch-vincom.jpg",
+      "phone": "02887654321",
+      "status_id": "branch-status-active-001",
+      "manager_id": "employee-007",
+      "created_at": "2025-02-01T00:00:00Z",
+      "updated_at": "2025-10-20T08:00:00Z",
+      "status": {
+        "id": "branch-status-active-001",
+        "code": "ACTIVE",
+        "name": "Đang hoạt động"
+      },
+      "manager_name": "Võ Thị Giang"
+    },
+    {
+      "id": "branch-003",
+      "company_id": "company-001",
+      "name": "SmartDine Thủ Đức",
+      "branch_code": "SD-TD-003",
+      "address": "456 Võ Văn Ngân, Thủ Đức, TP.HCM",
+      "image": "https://example.com/images/branch-thuduc.jpg",
+      "phone": "02898765432",
+      "status_id": "branch-status-inactive-001",
+      "manager_id": "employee-008",
+      "created_at": "2025-03-01T00:00:00Z",
+      "updated_at": "2025-10-15T14:00:00Z",
+      "status": {
+        "id": "branch-status-inactive-001",
+        "code": "INACTIVE",
+        "name": "Tạm ngưng"
+      },
+      "manager_name": "Lý Văn Hoàng"
+    }
+  ]
+}

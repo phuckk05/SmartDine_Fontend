@@ -1,18 +1,51 @@
 import 'dart:convert';
 
+class BranchStatus {
+  final String id;
+  final String code; // ACTIVE, INACTIVE
+  final String name;
+
+  BranchStatus({
+    required this.id,
+    required this.code,
+    required this.name,
+  });
+
+  factory BranchStatus.fromJson(Map<String, dynamic> json) {
+    return BranchStatus(
+      id: json['id'],
+      code: json['code'],
+      name: json['name'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'code': code,
+      'name': name,
+    };
+  }
+}
+
 class Branch {
   //Properties
-  final int id;
-  final int companyId;
+  final String id;
+  final String companyId;
   final String name;
   final String branchCode;
   final String address;
   final String image;
   final String phone;
-  final int statusId;
-  final int managerId;
+  final String statusId;
+  final String managerId;
   final DateTime createdAt;
   final DateTime updatedAt;
+
+  // Relations
+  BranchStatus? status;
+  String? managerName;
+
   //Constructor
   Branch({
     required this.id,
@@ -26,20 +59,24 @@ class Branch {
     required this.managerId,
     required this.createdAt,
     required this.updatedAt,
+    this.status,
+    this.managerName,
   });
 
   Branch copyWith({
-    int? id,
-    int? companyId,
+    String? id,
+    String? companyId,
     String? name,
     String? branchCode,
     String? address,
     String? image,
     String? phone,
-    int? statusId,
-    int? managerId,
+    String? statusId,
+    String? managerId,
     DateTime? createdAt,
     DateTime? updatedAt,
+    BranchStatus? status,
+    String? managerName,
   }) {
     return Branch(
       id: id ?? this.id,
@@ -67,30 +104,48 @@ class Branch {
       'phone': phone,
       'statusId': statusId,
       'managerId': managerId,
-      'createdAt': createdAt.millisecondsSinceEpoch,
-      'updatedAt': updatedAt.millisecondsSinceEpoch,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      if (status != null) 'status': status!.toJson(),
+      if (managerName != null) 'managerName': managerName,
     };
   }
 
   factory Branch.fromMap(Map<String, dynamic> map) {
     return Branch(
-      id: int.tryParse(map['id'].toString()) ?? 0,
-      companyId: int.tryParse(map['companyId'].toString()) ?? 0,
+      id: map['id']?.toString() ?? '',
+      companyId: map['companyId']?.toString() ?? map['company_id']?.toString() ?? '',
       name: map['name'] ?? '',
-      branchCode: map['branchCode'] ?? '',
+      branchCode: map['branchCode'] ?? map['branch_code'] ?? '',
       address: map['address'] ?? '',
       image: map['image'] ?? '',
       phone: map['phone'] ?? '',
-      statusId: int.tryParse(map['statusId'].toString()) ?? 0,
-      managerId: int.tryParse(map['managerId'].toString()) ?? 0,
-      createdAt: DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(map['updatedAt'] ?? '') ?? DateTime.now(),
+      statusId: map['statusId']?.toString() ?? map['status_id']?.toString() ?? '',
+      managerId: map['managerId']?.toString() ?? map['manager_id']?.toString() ?? '',
+      createdAt: map['createdAt'] != null 
+          ? DateTime.parse(map['createdAt']) 
+          : (map['created_at'] != null 
+              ? DateTime.parse(map['created_at']) 
+              : DateTime.now()),
+      updatedAt: map['updatedAt'] != null 
+          ? DateTime.parse(map['updatedAt']) 
+          : (map['updated_at'] != null 
+              ? DateTime.parse(map['updated_at']) 
+              : DateTime.now()),
+      status: map['status'] != null ? BranchStatus.fromJson(map['status']) : null,
+      managerName: map['managerName'] ?? map['manager_name'],
     );
   }
 
   String toJson() => json.encode(toMap());
 
   factory Branch.fromJson(String source) => Branch.fromMap(json.decode(source));
+
+  // Helper methods
+  bool isActive() => status?.code == 'ACTIVE';
+  bool isInactive() => status?.code == 'INACTIVE';
+
+  String getStatusName() => status?.name ?? 'Unknown';
 
   @override
   String toString() {

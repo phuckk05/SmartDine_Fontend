@@ -4,7 +4,9 @@ import 'package:mart_dine/widgets/appbar.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class DishStatisticsScreen extends StatefulWidget {
-  const DishStatisticsScreen({super.key});
+  final bool showBackButton;
+  
+  const DishStatisticsScreen({super.key, this.showBackButton = true});
 
   @override
   State<DishStatisticsScreen> createState() => _DishStatisticsScreenState();
@@ -101,9 +103,17 @@ class _DishStatisticsScreenState extends State<DishStatisticsScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
-      appBar: AppBarCus(
-        title: 'Thống kê món',
-      ),
+      appBar: widget.showBackButton 
+        ? AppBarCus(
+            title: 'Thống kê món',
+          )
+        : AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: true,
+            title: Text('Thống kê món', style: Style.fontTitle),
+            automaticallyImplyLeading: false,
+          ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(

@@ -83,6 +83,7 @@ flutter:
    - assets/images/logoApp.png
    - assets/images/LogoApp2.png
    - assets/images/daidien.jpg
+   - assets/mock_data/
   # fonts:
   #   - family: Schyler
   #     fonts:

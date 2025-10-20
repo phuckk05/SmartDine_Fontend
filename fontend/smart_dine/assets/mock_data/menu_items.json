@@ -1,0 +1,266 @@
+{
+  "menu_item_statuses": [
+    {
+      "id": "menu-status-available-001",
+      "code": "AVAILABLE",
+      "name": "Còn hàng"
+    },
+    {
+      "id": "menu-status-unavailable-001",
+      "code": "UNAVAILABLE",
+      "name": "Hết hàng"
+    }
+  ],
+  "category_statuses": [
+    {
+      "id": "category-status-active-001",
+      "code": "ACTIVE",
+      "name": "Đang hoạt động"
+    },
+    {
+      "id": "category-status-inactive-001",
+      "code": "INACTIVE",
+      "name": "Tạm ngưng"
+    }
+  ],
+  "categories": [
+    {
+      "id": "category-001",
+      "company_id": "company-001",
+      "name": "Món chính",
+      "status_id": "category-status-active-001",
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-10-20T08:00:00Z",
+      "deleted_at": null,
+      "status": {
+        "id": "category-status-active-001",
+        "code": "ACTIVE",
+        "name": "Đang hoạt động"
+      }
+    },
+    {
+      "id": "category-002",
+      "company_id": "company-001",
+      "name": "Khai vị",
+      "status_id": "category-status-active-001",
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-10-20T08:00:00Z",
+      "deleted_at": null,
+      "status": {
+        "id": "category-status-active-001",
+        "code": "ACTIVE",
+        "name": "Đang hoạt động"
+      }
+    },
+    {
+      "id": "category-003",
+      "company_id": "company-001",
+      "name": "Đồ uống",
+      "status_id": "category-status-active-001",
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-10-20T08:00:00Z",
+      "deleted_at": null,
+      "status": {
+        "id": "category-status-active-001",
+        "code": "ACTIVE",
+        "name": "Đang hoạt động"
+      }
+    },
+    {
+      "id": "category-004",
+      "company_id": "company-001",
+      "name": "Tráng miệng",
+      "status_id": "category-status-active-001",
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-10-20T08:00:00Z",
+      "deleted_at": null,
+      "status": {
+        "id": "category-status-active-001",
+        "code": "ACTIVE",
+        "name": "Đang hoạt động"
+      }
+    }
+  ],
+  "menu_items": [
+    {
+      "id": "item-001",
+      "company_id": "company-001",
+      "name": "Phở bò đặc biệt",
+      "price": 85000,
+      "status_id": "menu-status-available-001",
+      "created_at": "2025-01-05T00:00:00Z",
+      "updated_at": "2025-10-20T08:00:00Z",
+      "deleted_at": null,
+      "status": {
+        "id": "menu-status-available-001",
+        "code": "AVAILABLE",
+        "name": "Còn hàng"
+      },
+      "images": [
+        "https://example.com/images/pho-bo.jpg"
+      ],
+      "category_name": "Món chính"
+    },
+    {
+      "id": "item-002",
+      "company_id": "company-001",
+      "name": "Trà đá",
+      "price": 5000,
+      "status_id": "menu-status-available-001",
+      "created_at": "2025-01-05T00:00:00Z",
+      "updated_at": "2025-10-20T08:00:00Z",
+      "deleted_at": null,
+      "status": {
+        "id": "menu-status-available-001",
+        "code": "AVAILABLE",
+        "name": "Còn hàng"
+      },
+      "images": [],
+      "category_name": "Đồ uống"
+    },
+    {
+      "id": "item-003",
+      "company_id": "company-001",
+      "name": "Gỏi cuốn tôm thịt",
+      "price": 45000,
+      "status_id": "menu-status-available-001",
+      "created_at": "2025-01-05T00:00:00Z",
+      "updated_at": "2025-10-20T08:00:00Z",
+      "deleted_at": null,
+      "status": {
+        "id": "menu-status-available-001",
+        "code": "AVAILABLE",
+        "name": "Còn hàng"
+      },
+      "images": [
+        "https://example.com/images/goi-cuon.jpg"
+      ],
+      "category_name": "Khai vị"
+    },
+    {
+      "id": "item-004",
+      "company_id": "company-001",
+      "name": "Bún chả Hà Nội",
+      "price": 75000,
+      "status_id": "menu-status-available-001",
+      "created_at": "2025-01-05T00:00:00Z",
+      "updated_at": "2025-10-20T08:00:00Z",
+      "deleted_at": null,
+      "status": {
+        "id": "menu-status-available-001",
+        "code": "AVAILABLE",
+        "name": "Còn hàng"
+      },
+      "images": [
+        "https://example.com/images/bun-cha.jpg"
+      ],
+      "category_name": "Món chính"
+    },
+    {
+      "id": "item-005",
+      "company_id": "company-001",
+      "name": "Cơm tấm sườn bì",
+      "price": 65000,
+      "status_id": "menu-status-available-001",
+      "created_at": "2025-01-05T00:00:00Z",
+      "updated_at": "2025-10-20T08:00:00Z",
+      "deleted_at": null,
+      "status": {
+        "id": "menu-status-available-001",
+        "code": "AVAILABLE",
+        "name": "Còn hàng"
+      },
+      "images": [
+        "https://example.com/images/com-tam.jpg"
+      ],
+      "category_name": "Món chính"
+    },
+    {
+      "id": "item-006",
+      "company_id": "company-001",
+      "name": "Coca Cola",
+      "price": 15000,
+      "status_id": "menu-status-available-001",
+      "created_at": "2025-01-05T00:00:00Z",
+      "updated_at": "2025-10-20T08:00:00Z",
+      "deleted_at": null,
+      "status": {
+        "id": "menu-status-available-001",
+        "code": "AVAILABLE",
+        "name": "Còn hàng"
+      },
+      "images": [],
+      "category_name": "Đồ uống"
+    },
+    {
+      "id": "item-007",
+      "company_id": "company-001",
+      "name": "Lẩu Thái hải sản",
+      "price": 450000,
+      "status_id": "menu-status-available-001",
+      "created_at": "2025-01-05T00:00:00Z",
+      "updated_at": "2025-10-20T08:00:00Z",
+      "deleted_at": null,
+      "status": {
+        "id": "menu-status-available-001",
+        "code": "AVAILABLE",
+        "name": "Còn hàng"
+      },
+      "images": [
+        "https://example.com/images/lau-thai.jpg"
+      ],
+      "category_name": "Món chính"
+    },
+    {
+      "id": "item-008",
+      "company_id": "company-001",
+      "name": "Nước cam vắt",
+      "price": 25000,
+      "status_id": "menu-status-available-001",
+      "created_at": "2025-01-05T00:00:00Z",
+      "updated_at": "2025-10-20T08:00:00Z",
+      "deleted_at": null,
+      "status": {
+        "id": "menu-status-available-001",
+        "code": "AVAILABLE",
+        "name": "Còn hàng"
+      },
+      "images": [],
+      "category_name": "Đồ uống"
+    },
+    {
+      "id": "item-009",
+      "company_id": "company-001",
+      "name": "Bánh flan",
+      "price": 20000,
+      "status_id": "menu-status-unavailable-001",
+      "created_at": "2025-01-05T00:00:00Z",
+      "updated_at": "2025-10-20T11:00:00Z",
+      "deleted_at": null,
+      "status": {
+        "id": "menu-status-unavailable-001",
+        "code": "UNAVAILABLE",
+        "name": "Hết hàng"
+      },
+      "images": [],
+      "category_name": "Tráng miệng"
+    },
+    {
+      "id": "item-010",
+      "company_id": "company-001",
+      "name": "Kem ly",
+      "price": 15000,
+      "status_id": "menu-status-available-001",
+      "created_at": "2025-01-05T00:00:00Z",
+      "updated_at": "2025-10-20T08:00:00Z",
+      "deleted_at": null,
+      "status": {
+        "id": "menu-status-available-001",
+        "code": "AVAILABLE",
+        "name": "Còn hàng"
+      },
+      "images": [],
+      "category_name": "Tráng miệng"
+    }
+  ]
+}

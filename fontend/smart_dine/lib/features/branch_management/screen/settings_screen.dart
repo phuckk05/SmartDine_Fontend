@@ -3,7 +3,9 @@ import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/widgets/appbar.dart';
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
+  final bool showBackButton;
+  
+  const SettingsScreen({super.key, this.showBackButton = true});
 
   @override
   Widget build(BuildContext context) {
@@ -13,9 +15,17 @@ class SettingsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
-      appBar: AppBarCus(
-        title: 'Cài đặt',
-      ),
+      appBar: showBackButton 
+        ? AppBarCus(
+            title: 'Cài đặt',
+          )
+        : AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: true,
+            title: Text('Cài đặt', style: Style.fontTitle),
+            automaticallyImplyLeading: false,
+          ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
