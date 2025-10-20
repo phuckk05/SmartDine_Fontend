@@ -4,43 +4,138 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mart_dine/API/cloudinary_API.dart';
 import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
+import 'package:mart_dine/features/signin/screen_signin.dart';
+import 'package:mart_dine/models/company.dart';
+import 'package:mart_dine/providers/company_provider.dart';
+import 'package:mart_dine/providers/internet_provider.dart';
+import 'package:mart_dine/providers/loading_provider.dart';
+import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets/appbar.dart';
 import 'package:mart_dine/widgets/loading.dart';
 
 //Các state provider
+final _isCanPop = StateProvider.autoDispose<bool>((ref) => false);
 final _isLoadingProvider = StateProvider<bool>((ref) => false);
-final _imageProvider = StateProvider<File?>((ref) => null);
+
+final _imageProvider = StateProvider.autoDispose<File?>((ref) => null);
+final _imageUrlProvider = StateProvider.autoDispose<String>((ref) => "");
 
 //Giao diện đăng kí chủ nhà hàng
 class ScreenOwnerSignup extends ConsumerStatefulWidget {
   final String? title;
-  const ScreenOwnerSignup({super.key, this.title});
+  final int userId;
+  const ScreenOwnerSignup({super.key, this.title, required this.userId});
   @override
   ConsumerState<ConsumerStatefulWidget> createState() =>
       _ScreenOwnerSignupState();
 }
 
 class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
+  //Cloudinary
+  CloudinaryAPI cloudinaryAPI = CloudinaryAPI();
   //Controllers
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _codeController = TextEditingController();
-  final TextEditingController _passwordController2 = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    print(" id : ${widget.userId}");
+  }
 
   //Hàm lấy ảnh
-  Future<void> _getImage(StateProvider<File?> _image) async {
-    //Khia báo
-    final ImagePicker picker = ImagePicker();
-    //Lấy ảnh
-    final XFile? pickedFile = await picker.pickImage(
-      source: ImageSource.gallery,
-    );
-    if (pickedFile != null) {
-      //Cập nhật state
-      ref.read(_image.notifier).state = File(pickedFile.path);
+  Future<void> _getCCCDImage(
+    AutoDisposeStateProvider<File?> image,
+    AutoDisposeStateProvider<String?> imageUrl,
+    BuildContext context,
+  ) async {
+    if (!ref.watch(internetProvider)) {
+      Constrats.showThongBao(context, "Không có internet !");
+    } else {
+      //Khia báo
+      final ImagePicker picker = ImagePicker();
+      //Lấy ảnh
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        //Cập nhật state
+        final changeImage = File(pickedFile.path);
+        ref.read(image.notifier).state = File(pickedFile.path);
+        ref.read(isLoadingNotifierProvider.notifier).toggle(true);
+        await _changeUrl(changeImage, context);
+        ref.read(_isCanPop.notifier).state = false;
+        ref.read(isLoadingNotifierProvider.notifier).toggle(false);
+      }
     }
+  }
+
+  //Chuyển đổi ành
+  Future<void> _changeUrl(File? file, BuildContext context) async {
+    final result = await cloudinaryAPI.getURL(file);
+
+    if (!mounted) return;
+
+    if (result != "0") {
+      ref.read(_imageUrlProvider.notifier).state = result.toString();
+      print("anh day :${result}");
+    } else {
+      Constrats.showThongBao(context, "Lỗi chọn ảnh");
+    }
+  }
+
+  //hàm signup staff
+  Future<void> siginUpCompany(Company company, BuildContext context) async {
+    final register = await ref
+        .read(companyNotifierProvider.notifier)
+        .signUpComapny(company, widget.userId);
+    if (register == 0) {
+      ref.read(_isLoadingProvider.notifier).state = false;
+      Constrats.showThongBao(context, 'Đăng kí nhà hàng thất bại !');
+    } else {
+      Constrats.showThongBao(
+        context,
+        'Đăng kí thành công ,đợi duyệt trong 24h !',
+      );
+    }
+  }
+
+  //Hàm check value trước khi đăng kí
+  Future<void> checkControllers(BuildContext context, Company company) async {
+    if (!ref.watch(internetProvider)) {
+      Constrats.showThongBao(context, "Không có internet !");
+    } else {
+      /*  &&
+            ref.watch(_fontImageUrlProvider) != null &&
+            ref.watch(_backImageUrlProvider) != null */
+      if (_nameController.text.isNotEmpty &&
+          _addressController.text.isNotEmpty &&
+          _codeController.text.isNotEmpty) {
+        //Chuyển hướng đăng kí qua role khác
+        ref.read(isLoadingNotifierProvider.notifier).toggle(true);
+        siginUpCompany(company, context);
+        await Future.delayed(Duration(seconds: 4));
+        ref.read(isLoadingNotifierProvider.notifier).toggle(false);
+        Routes.pushAndRemoveUntil(context, ScreenSignIn());
+      } else {
+        Constrats.showThongBao(context, "Vui lòng nhập đủ thông stin !");
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _addressController.dispose();
+    _nameController.dispose();
+    _codeController.dispose();
+
+    // reset lại state khi thoát
+    if (!mounted) {
+      ref.read(isLoadingNotifierProvider.notifier).toggle(false);
+    }
+    super.dispose();
   }
 
   @override
@@ -50,55 +145,71 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
     // final _obscureText2 = ref.watch(_obscureText2Provider);
 
     //Build giao diện
-    return Scaffold(
-      appBar: AppBarCus(title: widget.title ?? ''),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Style.paddingPhone),
-            child: Column(
-              children: [
-                SizedBox(height: 10),
-                _label("Tên nhà hàng*"),
-                _textFiled(
-                  1,
-                  null,
-                  Icon(Icons.location_city, color: Colors.grey[600]),
-                  null,
-                  _nameController,
-                  null,
+    return PopScope(
+      canPop: ref.watch(_isCanPop),
+      child: Scaffold(
+        appBar: AppBarCus(
+          title: widget.title ?? '',
+          isCanpop: false,
+          isButtonEnabled: false,
+        ),
+        body: SafeArea(
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Style.paddingPhone,
+                  ),
+                  child: Column(
+                    children: [
+                      SizedBox(height: 10),
+                      _label("Tên nhà hàng*"),
+                      _textFiled(
+                        1,
+                        null,
+                        Icon(Icons.location_city, color: Colors.grey[600]),
+                        null,
+                        _nameController,
+                        null,
+                      ),
+                      SizedBox(height: 10),
+                      _label("Địa chị*"),
+                      _textFiled(
+                        2,
+                        null,
+                        Icon(Icons.local_attraction, color: Colors.grey[600]),
+                        null,
+                        _addressController,
+                        null,
+                      ),
+                      SizedBox(height: 10),
+                      _label("Mã code nhà hàng*"),
+                      _textFiled(
+                        3,
+                        null,
+                        Icon(Icons.code, color: Colors.grey[600]),
+                        null,
+                        _codeController,
+                        null,
+                      ),
+                      SizedBox(height: 10),
+                      _label("Giấy phép kinh doanh*"),
+                      SizedBox(height: 10),
+                      _getCCCD(),
+                      SizedBox(height: 30),
+                      _note(),
+                      SizedBox(height: 30),
+                      _signinButton(context),
+                      SizedBox(height: 20),
+                    ],
+                  ),
                 ),
-                SizedBox(height: 10),
-                _label("Địa chị*"),
-                _textFiled(
-                  2,
-                  null,
-                  Icon(Icons.local_attraction, color: Colors.grey[600]),
-                  null,
-                  _addressController,
-                  null,
-                ),
-                SizedBox(height: 10),
-                _label("Mã code nhà hàng*"),
-                _textFiled(
-                  3,
-                  null,
-                  Icon(Icons.code, color: Colors.grey[600]),
-                  null,
-                  _codeController,
-                  null,
-                ),
-                SizedBox(height: 10),
-                _label("Giấy phép kinh doanh*"),
-                SizedBox(height: 10),
-                _getCCCD(),
-                SizedBox(height: 30),
-                _note(),
-                SizedBox(height: 30),
-                _signinButton(context),
-                SizedBox(height: 20),
-              ],
-            ),
+              ),
+              ref.watch(isLoadingNotifierProvider)
+                  ? Positioned.fill(child: Loading(index: 1))
+                  : SizedBox(),
+            ],
           ),
         ),
       ),
@@ -168,13 +279,13 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
 
   //Phần Lấy CCCD
   Widget _getCCCD() {
-    final _Image = ref.watch(_imageProvider);
+    final _image = ref.watch(_imageProvider);
     return Container(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 0),
         child: InkWell(
           onTap: () {
-            _getImage(_imageProvider);
+            _getCCCDImage(_imageProvider, _imageUrlProvider, context);
           },
           child: Stack(
             children: [
@@ -193,7 +304,7 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
                     height: 100,
                     alignment: Alignment.center,
                     child:
-                        _Image == null
+                        _image == null
                             ? Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -206,12 +317,12 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
                             )
                             : ClipRRect(
                               borderRadius: BorderRadius.circular(6.0),
-                              child: Image.file(_Image, fit: BoxFit.fill),
+                              child: Image.file(_image, fit: BoxFit.fill),
                             ),
                   ),
                 ),
               ),
-              _Image == null
+              _image == null
                   ? SizedBox()
                   : Positioned(
                     top: 0,
@@ -243,12 +354,17 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
         padding: EdgeInsets.zero, // Padding handled by MaterialButton
         child: MaterialButton(
           onPressed: () async {
-            ref.read(_isLoadingProvider.notifier).state = true;
-            await Future.delayed(
-              Duration(seconds: 5),
-              () => ref.read(_isLoadingProvider.notifier).state = false,
+            final anh = ref.watch(_imageUrlProvider);
+            print(" danh : ${anh}");
+            Company company = Company.create(
+              name: _nameController.text,
+              address: _addressController.text,
+              image: "765",
+              companyCode: _codeController.text,
             );
+            checkControllers(context, company);
           },
+
           // Set button color to transparent so NeumorphicContainer's color shows
           color: Colors.transparent,
           elevation: 0, // Remove default elevation

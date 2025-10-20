@@ -22,7 +22,7 @@ class CloudinaryAPI {
       var data = jsonDecode(res.body);
       return data['secure_url'];
     } else {
-      throw Exception('Failed to upload image: ${response.statusCode}');
+      throw Exception('Lỗi upload ảnh : ${response.statusCode}');
     }
   }
 

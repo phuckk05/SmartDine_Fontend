@@ -1,25 +1,27 @@
 import 'dart:io';
 
 import 'package:dotted_border/dotted_border.dart';
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/API/cloudinary_API.dart';
 import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
+import 'package:mart_dine/features/signin/screen_signin.dart';
 import 'package:mart_dine/features/signup/screen_manager_signup.dart';
 import 'package:mart_dine/features/signup/screen_owner_signup.dart';
 import 'package:mart_dine/models/user.dart';
+import 'package:mart_dine/providers/internet_provider.dart';
 import 'package:mart_dine/providers/loading_provider.dart';
 import 'package:mart_dine/providers/user_provider.dart';
 import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets/appbar.dart';
 import 'package:mart_dine/widgets/loading.dart';
 import 'package:image_picker/image_picker.dart';
-// import 'package:path/path.dart';
 
 //Các state provider
-final _isCanPop = StateProvider.autoDispose<bool>((ref) => false);
+final _isCanPop = StateProvider.autoDispose<bool>((ref) => true);
 final _isLoadingProvider = StateProvider.autoDispose<bool>((ref) => false);
 final _obscureText1Provider = StateProvider.autoDispose<bool>((ref) => true);
 final _obscureText2Provider = StateProvider.autoDispose<bool>((ref) => true);
@@ -43,6 +45,7 @@ class ScreenInformationSignup extends ConsumerStatefulWidget {
 class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
   //Cloudinary
   CloudinaryAPI cloudinaryAPI = CloudinaryAPI();
+
   //Controllers
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
@@ -51,6 +54,8 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
   late final TextEditingController _passwordController2;
   late final TextEditingController _codeBranchController;
 
+  //Bien user tam
+  User? newUser;
   @override
   void initState() {
     _nameController = TextEditingController();
@@ -63,101 +68,176 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
   }
 
   //hàm signup staff
-  Future<void> siginUpStaff(User user, BuildContext context) async {
+  Future<void> siginUpInfor(User user, BuildContext context) async {
     final register = await ref
         .read(userNotifierProvider.notifier)
-        .signUp(user, _codeBranchController.text);
+        .signUpInfor(user, _codeBranchController.text, widget.index!);
+    if (!mounted) {
+      return;
+    }
     if (register == 1) {
       ref.read(_isLoadingProvider.notifier).state = false;
-      ref.read(isLoadingNotifierProvider.notifier).toggle();
+      ref.read(isLoadingNotifierProvider.notifier).toggle(false);
       Constrats.showThongBao(context, 'Mã chi nhánh không đúng !');
     } else if (register == 2) {
       ref.read(_isLoadingProvider.notifier).state = false;
-      ref.read(isLoadingNotifierProvider.notifier).toggle();
-      Constrats.showThongBao(context, 'Đăng kí thành công !');
+
+      Constrats.showThongBao(
+        context,
+        widget.index == 1 || widget.index == 2
+            ? 'Đã lưu thông tin !'
+            : 'Đăng kí thành công !',
+      );
+      await Future.delayed(Duration(seconds: 4));
+      if (!mounted) {
+        return;
+      }
+      ref.read(isLoadingNotifierProvider.notifier).toggle(false);
+      Routes.pushAndRemoveUntil(context, ScreenSignIn());
     } else if (register == 3) {
       ref.read(_isLoadingProvider.notifier).state = false;
-      ref.read(isLoadingNotifierProvider.notifier).toggle();
+      ref.read(isLoadingNotifierProvider.notifier).toggle(false);
       Constrats.showThongBao(context, 'Số điện thoại & email đã tồn tại !');
+    } else if (register == 4) {
+      ref.read(_isLoadingProvider.notifier).state = false;
+      ref.read(isLoadingNotifierProvider.notifier).toggle(false);
+      Constrats.showThongBao(context, 'Lỗi Đăng kí chi nhánh !');
     } else {
       ref.read(_isLoadingProvider.notifier).state = false;
-      ref.read(isLoadingNotifierProvider.notifier).toggle();
+      ref.read(isLoadingNotifierProvider.notifier).toggle(false);
       Constrats.showThongBao(context, 'Đăng kí thất bại !');
     }
+    if (!mounted) {
+      return;
+    }
+    final newUser = ref.read(userNotifierProvider);
+    print("new User ${newUser!.id}");
   }
 
   //Hàm check email
-  bool isValidEmail(String? input) {
-    if (input == null) return false;
-    final email = input.trim();
-    if (email.isEmpty) return false;
-    // tổng độ dài tối đa 254, local-part tối đa 64,
-    // cho phép ký tự thông dụng trong local-part: . + - _ và các ký tự hợp lệ theo RFC-ish
-    final regex = RegExp(
-      r"^(?=.{1,254}$)(?=.{1,64}@)[A-Za-z0-9!#$%&'*+/=?^_`{|}~.-]+"
-      r"@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
-      r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*\.[A-Za-z]{2,}$",
-    );
-    return regex.hasMatch(email);
+  //Hàm check email
+  bool isValidEmail(String email) {
+    return EmailValidator.validate(email);
   }
 
   //Hàm check value trước khi đăng kí
   Future<void> checkControllers(BuildContext context, User user) async {
-    // Check passwords match (not just both non-empty)
-    if (_passwordController1.text == _passwordController2.text) {
-      if (_nameController.text.isNotEmpty &&
-          _emailController.text.isNotEmpty &&
-          _codeBranchController.text.isNotEmpty &&
-          _phoneController.text.isNotEmpty &&
-          ref.watch(_fontImageUrlProvider) != null &&
-          ref.watch(_backImageUrlProvider) != null) {
-        //Chuyển hướng đăng kí qua role khác
-        if (_phoneController.text.length == 10) {
-          if (isValidEmail(_emailController.text)) {
-            if (_nameController.text.length > 1) {
-              if (widget.index == 1) {
-                Routes.pushRightLeftConsumerFul(
-                  context,
-                  ScreenOwnerSignup(title: "Đăng kí nhà hàng"),
-                );
-              } else if (widget.index == 2) {
-                Routes.pushRightLeftConsumerFul(
-                  context,
-                  ScreenManagerSignup(title: "Đăng kí chi nhánh"),
-                );
-              } else {
-                ref.read(isLoadingNotifierProvider.notifier).toggle();
-                ref.read(_isCanPop.notifier).state = true;
-                try {
-                  await siginUpStaff(user, context);
-                } catch (e) {
-                  // Show server error message if any
-                  final msg = e.toString();
-                  Constrats.showThongBao(context, msg);
-                } finally {
-                  if (mounted) {
-                    ref.read(isLoadingNotifierProvider.notifier).toggle();
-                    ref.read(_isCanPop.notifier).state = false;
+    final hasInternet = ref.read(internetProvider);
+    final fontImageUrl = ref.read(_fontImageUrlProvider);
+    final backImageUrl = ref.read(_backImageUrlProvider);
+    if (!hasInternet) {
+      Constrats.showThongBao(context, "Không có internet !");
+    } else {
+      // Check passwords match (not just both non-empty)
+      if (_passwordController1.text == _passwordController2.text) {
+        if (_passwordController1.text.length < 6) {
+          Constrats.showThongBao(context, "Mật khẩu phải có ít nhất 6 ký tự !");
+          return;
+        } else {
+          if (_nameController.text.isNotEmpty &&
+              _emailController.text.isNotEmpty &&
+              (widget.index == 1 || widget.index == 2
+                  ? _codeBranchController.text.isEmpty
+                  : _codeBranchController.text.isNotEmpty) &&
+              _phoneController.text.isNotEmpty &&
+              fontImageUrl != null &&
+              backImageUrl != null) {
+            if (_phoneController.text.length == 10) {
+              if (isValidEmail(_emailController.text)) {
+                if (_nameController.text.length > 1) {
+                  if (widget.index == 1) {
+                    ref.read(isLoadingNotifierProvider.notifier).toggle(true);
+                    ref.read(_isCanPop.notifier).state = true;
+                    try {
+                      await siginUpInfor(user, context);
+                      if (!mounted) {
+                        return;
+                      }
+                      newUser = ref.read(userNotifierProvider);
+                    } catch (e) {
+                      final msg = e.toString();
+                      Constrats.showThongBao(context, msg);
+                    } finally {
+                      if (mounted) {
+                        ref.read(_isCanPop.notifier).state = false;
+                      }
+                    }
+                    if (newUser != null) {
+                      if (!mounted) {
+                        return;
+                      }
+                      Routes.pushRightLeftConsumerFul(
+                        context,
+                        ScreenOwnerSignup(
+                          title: "Đăng kí nhà hàng",
+                          userId: newUser!.id ?? 0,
+                        ),
+                      );
+                    }
+                  } else if (widget.index == 2) {
+                    ref.read(isLoadingNotifierProvider.notifier).toggle(true);
+                    ref.read(_isCanPop.notifier).state = true;
+                    try {
+                      await siginUpInfor(user, context);
+                      if (!mounted) {
+                        return;
+                      }
+                      newUser = ref.read(userNotifierProvider);
+                    } catch (e) {
+                      // Show server error message if any
+                      final msg = e.toString();
+                      Constrats.showThongBao(context, msg);
+                    } finally {
+                      if (mounted) {
+                        ref.read(_isCanPop.notifier).state = false;
+                      }
+                    }
+                    if (newUser != null) {
+                      if (!mounted) {
+                        return;
+                      }
+                      Routes.pushRightLeftConsumerFul(
+                        context,
+                        ScreenManagerSignup(
+                          title: "Đăng kí chi nhánh",
+                          userId: newUser!.id ?? 0,
+                        ),
+                      );
+                    }
+                  } else {
+                    ref.read(isLoadingNotifierProvider.notifier).toggle(true);
+                    ref.read(_isCanPop.notifier).state = true;
+                    try {
+                      await siginUpInfor(user, context);
+                    } catch (e) {
+                      // Show server error message if any
+                      final msg = e.toString();
+                      Constrats.showThongBao(context, msg);
+                    } finally {
+                      if (mounted) {
+                        ref.read(_isCanPop.notifier).state = false;
+                      }
+                    }
                   }
+                } else {
+                  Constrats.showThongBao(context, "Tên quá ngắn !");
                 }
+              } else {
+                Constrats.showThongBao(context, "email chưa đúng định dạng !");
               }
             } else {
-              Constrats.showThongBao(context, "Tên quá ngắn !");
+              Constrats.showThongBao(
+                context,
+                "Số điện thoại chưa đúng định dạng !",
+              );
             }
           } else {
-            Constrats.showThongBao(context, "email chưa đúng định dạng !");
+            Constrats.showThongBao(context, "Vui lòng nhập đủ thông tin !");
           }
-        } else {
-          Constrats.showThongBao(
-            context,
-            "Số điện thoại chưa đúng định dạng !",
-          );
         }
       } else {
-        Constrats.showThongBao(context, "Vui lòng nhập đủ thông tin !");
+        Constrats.showThongBao(context, "Mật khẩu không đúng !");
       }
-    } else {
-      Constrats.showThongBao(context, "Mật khẩu không đúng !");
     }
   }
 
@@ -167,17 +247,36 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
     AutoDisposeStateProvider<String?> imageUrl,
     BuildContext context,
   ) async {
-    //Khia báo
-    final ImagePicker picker = ImagePicker();
-    //Lấy ảnh
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      //Cập nhật state
-      final changeImage = File(pickedFile.path);
-      ref.read(image.notifier).state = File(pickedFile.path);
-      _changeUrl(imageUrl, changeImage, ref, context);
-      ref.read(isLoadingNotifierProvider.notifier).toggle();
-      ref.read(_isCanPop.notifier).state = false;
+    final hasInternet = ref.read(internetProvider);
+    if (!hasInternet) {
+      Constrats.showThongBao(context, "Không có internet !");
+    } else {
+      //Khia báo
+      final ImagePicker picker = ImagePicker();
+      //Lấy ảnh
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        final changeImage = File(pickedFile.path);
+        if (!mounted) return;
+        final imageNotifier = ref.read(image.notifier);
+        final canPopNotifier = ref.read(_isCanPop.notifier);
+        final loadingNotifier = ref.read(isLoadingNotifierProvider.notifier);
+        imageNotifier.state = changeImage;
+        canPopNotifier.state = false;
+        loadingNotifier.toggle(true);
+        try {
+          await _changeUrl(imageUrl, changeImage, ref, context);
+        } catch (e) {
+          if (mounted) {
+            Constrats.showThongBao(context, e.toString());
+          }
+        } finally {
+          loadingNotifier.toggle(false);
+          if (mounted) {
+            canPopNotifier.state = true;
+          }
+        }
+      }
     }
   }
 
@@ -194,9 +293,7 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
 
     if (result != "0") {
       ref.read(image.notifier).state = result;
-      if (ref.watch(image) != null) {
-        ref.read(isLoadingNotifierProvider.notifier).toggle();
-      }
+      print("anh day :${result}");
     } else {
       Constrats.showThongBao(context, "Lỗi chọn ảnh");
     }
@@ -210,12 +307,6 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
     _passwordController1.dispose();
     _emailController.dispose();
     _passwordController2.dispose();
-
-    // reset lại state khi thoát
-    if (!mounted) {
-      ref.read(isLoadingNotifierProvider.notifier).toggle();
-      ref.read(_isCanPop.notifier).state = false;
-    }
     super.dispose();
   }
 
@@ -224,13 +315,16 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
     //Xem các state
     final _obscureText1 = ref.watch(_obscureText1Provider);
     final _obscureText2 = ref.watch(_obscureText2Provider);
+    final isCanPop = ref.watch(_isCanPop);
+    final isGlobalLoading = ref.watch(isLoadingNotifierProvider);
     //Build giao diện
     return PopScope(
-      canPop: ref.watch(_isCanPop),
+      canPop: isCanPop,
       child: Scaffold(
         appBar: AppBarCus(
           title: widget.title ?? '',
-          isCanpop: ref.watch(_isCanPop),
+          isCanpop: isCanPop,
+          isButtonEnabled: isCanPop,
         ),
         body: SafeArea(
           child: Stack(
@@ -352,7 +446,7 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
                   ),
                 ),
               ),
-              ref.watch(isLoadingNotifierProvider)
+              isGlobalLoading
                   ? Positioned.fill(child: Loading(index: 1))
                   : SizedBox(),
             ],
@@ -604,6 +698,12 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
               phone: _phoneController.text,
               password: _passwordController1.text,
               statusId: 3,
+              role:
+                  widget.index == 1
+                      ? 5
+                      : widget.index == 2
+                      ? 2
+                      : 3,
               fontImage: _fontImageUrl ?? "Chưa có",
               backImage: _backImageUrl ?? "Chưa có",
             );

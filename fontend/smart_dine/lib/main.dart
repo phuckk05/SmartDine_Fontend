@@ -4,16 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/features/start/screen/screen_start.dart';
 import 'package:mart_dine/providers/mode_provider.dart';
 
-void main() async {
+void main() {
   //Cấu hình để sử dụng firebase
-  // WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
   // // Khởi tạo Firebase
   // await Firebase.initializeApp();
-  runApp(ProviderScope(child: MeTalkApp()));
+  runApp(ProviderScope(child: SmartDineApp()));
 }
 
-class MeTalkApp extends ConsumerWidget {
-  const MeTalkApp({super.key});
+class SmartDineApp extends ConsumerWidget {
+  const SmartDineApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

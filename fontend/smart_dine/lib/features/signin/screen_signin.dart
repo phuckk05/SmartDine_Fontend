@@ -1,3 +1,4 @@
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +6,8 @@ import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/forgot_passwork/screens/screen_findaccuont.dart';
 import 'package:mart_dine/features/signup/screen_select_signup.dart';
+import 'package:mart_dine/providers/loading_provider.dart';
+import 'package:mart_dine/providers/user_provider.dart';
 import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets/loading.dart';
 
@@ -18,27 +21,62 @@ final _obscureText = StateProvider<bool>((ref) => true);
 final _isLoadingProvider = StateProvider<bool>((ref) => false);
 
 class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
-  final Constrats constrats = Constrats();
-  // State to toggle password visibility
+  // final Constrats constrats = Constrats();
+  late final TextEditingController _emailController;
+  late final TextEditingController _passwordController;
 
-  //method to handle login logic
+  //Hàm load
+  @override
+  void initState() {
+    _emailController = TextEditingController();
+    _passwordController = TextEditingController();
+    super.initState();
+  }
 
-  // void toSignUp() {
-  //   //show sign-up modal
-  //   showModalBottomSheet(
-  //     isScrollControlled: true, // Allow full screen height
-  //     context: context,
-  //     shape: const RoundedRectangleBorder(
-  //       borderRadius: BorderRadius.only(
-  //         topLeft: Radius.circular(180),
-  //         topRight: Radius.circular(180),
-  //       ),
-  //     ),
-  //     builder:
-  //         (context) =>
-  //             FractionallySizedBox(heightFactor: 0.8, child: ScreenSignup()),
-  //   );
-  // }
+  //Hàm check email
+  bool isValidEmail(String email) {
+    return EmailValidator.validate(email);
+  }
+
+  //Hàm sigin
+  void toSignIn() async {
+    if (isValidEmail(_emailController.text) == false) {
+      Constrats.showThongBao(context, 'Vui lòng nhập đúng định dạng email.');
+      return;
+    }
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      Constrats.showThongBao(
+        context,
+        'Vui lòng nhập đầy đủ thông tin đăng nhập.',
+      );
+      return;
+    }
+
+    ref.read(isLoadingNotifierProvider.notifier).toggle(true);
+    final user = await ref
+        .watch(userNotifierProvider.notifier)
+        .signInInfor(_emailController.text, _passwordController.text);
+    if (user != null) {
+      Constrats.showThongBao(
+        context,
+        'Đăng nhập thành công. Chào mừng bạn trở lại!',
+      );
+    } else {
+      Constrats.showThongBao(
+        context,
+        'Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin.',
+      );
+    }
+    ref.read(isLoadingNotifierProvider.notifier).toggle(false);
+  }
+
+  //Hàm dispose
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,31 +85,39 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
       backgroundColor: Style.backgroundColor,
       //Body
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: Style.paddingPhone,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment:
-                    CrossAxisAlignment.center, // Center content horizontally
-                children: [
-                  _logo(),
-                  const SizedBox(height: 30),
-                  _textFiledName(),
-                  const SizedBox(height: 15), // Space between inputs
-                  _textFiledPass(),
-                  const SizedBox(height: 10), // Space before buttons
-                  _forgot_signup(),
-                  const SizedBox(height: 10), // Space before buttons
-                  _signinButton(),
-                ],
+        child: Stack(
+          children: [
+            Center(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Style.paddingPhone,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment:
+                        CrossAxisAlignment
+                            .center, // Center content horizontally
+                    children: [
+                      _logo(),
+                      const SizedBox(height: 30),
+                      _textFiledName(),
+                      const SizedBox(height: 15), // Space between inputs
+                      _textFiledPass(),
+                      const SizedBox(height: 10), // Space before buttons
+                      _forgot_signup(),
+                      const SizedBox(height: 10), // Space before buttons
+                      _signinButton(),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
+            ref.watch(isLoadingNotifierProvider)
+                ? Positioned.fill(child: Loading(index: 1))
+                : SizedBox(),
+          ],
         ),
       ),
     );
@@ -88,11 +134,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
         padding: EdgeInsets.zero, // Padding handled by MaterialButton
         child: MaterialButton(
           onPressed: () {
-            ref.read(_isLoadingProvider.notifier).state = true;
-            Future.delayed(
-              Duration(seconds: 5),
-              () => ref.read(_isLoadingProvider.notifier).state = false,
-            );
+            toSignIn();
           },
           // Set button color to transparent so NeumorphicContainer's color shows
           color: Colors.transparent,
@@ -126,7 +168,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
             style: TextStyle(
               fontSize: Style.headingFontSize,
               fontWeight: FontWeight.bold,
-              color: Colors.blue, // Use a distinct color for emphasis
+              color: Colors.blue,
               fontFamily: Style.fontFamily,
             ),
           ),
@@ -154,9 +196,10 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
         child: Hero(
           tag: 'tendangnhap',
           child: TextField(
+            controller: _emailController,
             decoration: InputDecoration(
-              prefixIcon: Icon(Icons.person, color: Colors.grey[600]),
-              hintText: 'Tên đăng nhập', // Use hintText instead of labelText
+              prefixIcon: Icon(Icons.email, color: Colors.grey[600]),
+              hintText: 'Email', // Use hintText instead of labelText
               hintStyle: const TextStyle(color: kTextColorLight),
               border: InputBorder.none, // Remove default border
               contentPadding: const EdgeInsets.only(
@@ -185,6 +228,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
         borderRadius: 10.0,
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
         child: TextField(
+          controller: _passwordController,
           obscureText: _isObscureText, // Toggle visibility
           decoration: InputDecoration(
             prefixIcon: Icon(Icons.lock, color: Colors.grey[600]),
@@ -222,7 +266,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
       children: [
         TextButton(
           onPressed: () {
-            Routes.pushRightLeftConsumerLess(context, ScreenFindaccuont());
+            Routes.pushRightLeftConsumerFul(context, const ScreenFindaccuont());
           },
           child: Text(
             'Quên mật khẩu?',

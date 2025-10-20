@@ -4,20 +4,35 @@ import 'package:mart_dine/widgets/icon_back.dart';
 
 class AppBarCus extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
-  final bool? isCanpop;
-  const AppBarCus({super.key, this.title, this.isCanpop});
+  final bool isCanpop;
+  final bool isButtonEnabled;
+  const AppBarCus({
+    super.key,
+    this.title,
+    required this.isCanpop,
+    required this.isButtonEnabled,
+  });
 
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: isCanpop ?? true,
-      child: AppBar(
-        leading: IconBack.back(context),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(title!, style: Style.fontTitle),
-      ),
+      canPop: isCanpop,
+      child:
+          isButtonEnabled
+              ? AppBar(
+                leading: IconBack.back(context),
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                centerTitle: true,
+                title: Text(title!, style: Style.fontTitle),
+              )
+              : AppBar(
+                automaticallyImplyLeading: false,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                centerTitle: true,
+                title: Text(title!, style: Style.fontTitle),
+              ),
     );
   }
 
