@@ -3,10 +3,11 @@
 import 'package:flutter/material.dart'; // Import Material cho Color (nếu cần dùng Color trong model)
 import 'package:mart_dine/models/menu.dart'; // Đảm bảo đã import MenuItemModel
 
+// Enum trạng thái bàn
 enum TableStatus {
-  available, // Thay vì empty
-  reserved,
-  serving,
+  available, // trống
+  reserved, // đã đặt trước
+  serving, // đang phục vụ
 }
 
 // ✅ Thêm Enum cho khu vực bàn
@@ -36,10 +37,10 @@ class TableModel {
     this.customerCount,
     this.totalAmount = 0.0,
     this.existingItems = const [],
-    this.zone = TableZone.indoor, // ✅ Gán giá trị mặc định cho khu vực
+    this.zone = TableZone.indoor, 
   });
 
-  TableModel copyWith({
+  TableModel copyWith({ 
     String? id,
     String? name,
     int? seats,
@@ -47,7 +48,7 @@ class TableModel {
     int? customerCount,
     double? totalAmount,
     List<MenuItemModel>? existingItems,
-    TableZone? zone, // ✅ Thêm vào copyWith
+    TableZone? zone, 
   }) {
     return TableModel(
       id: id ?? this.id,
@@ -57,7 +58,7 @@ class TableModel {
       customerCount: customerCount ?? this.customerCount,
       totalAmount: totalAmount ?? this.totalAmount,
       existingItems: existingItems ?? this.existingItems,
-      zone: zone ?? this.zone, // ✅ Cập nhật zone
+      zone: zone ?? this.zone, 
     );
   }
 }

@@ -5,20 +5,20 @@ enum MenuCategory { all, mainCourse, drink }
 class MenuItemModel {
   final String id;
   final String name;
-  final double price; // ✅ Thay đổi từ String sang double
+  final double price; 
   final MenuCategory category;
 
   MenuItemModel({
     required this.id,
     required this.name,
-    required this.price, // ✅ Thay đổi từ String sang double
+    required this.price, 
     required this.category,
   });
 
   MenuItemModel copyWith({
     String? id,
     String? name,
-    double? price, // ✅ Cập nhật kiểu dữ liệu
+    double? price, 
     MenuCategory? category,
   }) {
     return MenuItemModel(

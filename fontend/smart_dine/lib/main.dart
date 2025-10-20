@@ -13,7 +13,7 @@ void main() async {
   // await Firebase.initializeApp();
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('vi_VN', null);
-  runApp(ProviderScope(child: MeTalkApp()));
+  runApp(const ProviderScope(child: MeTalkApp()));
 }
 
 class MeTalkApp extends ConsumerWidget {

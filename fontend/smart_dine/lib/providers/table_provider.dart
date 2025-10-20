@@ -4,19 +4,19 @@ import 'package:mart_dine/models/menu.dart';
 import 'package:mart_dine/models/table.dart';
 import 'package:uuid/uuid.dart';
 
-
 //________________________________________________________________________________
 //
 //         🔹 STATE AND NOTIFIER 🔹
 //________________________________________________________________________________
 
+/// Đại diện cho trạng thái của các bàn và các đơn hàng đã hoàn thành.
 class TableState {
   final List<TableModel> tables;
-  final TableModel? selectedTable;
-  final String searchQuery;
-  final TableStatus? filterStatus;
-  final TableZone filterZone;
-  final List<CompletedOrderModel> completedOrders;
+  final TableModel? selectedTable; // Bàn đang được chọn/thao tác
+  final String searchQuery; // Chuỗi tìm kiếm hiện tại
+  final TableStatus? filterStatus; // Trạng thái lọc hiện tại
+  final TableZone filterZone; // Khu vực lọc hiện tại
+  final List<CompletedOrderModel> completedOrders; // Danh sách các đơn hàng đã thanh toán
 
   TableState({
     required this.tables,
@@ -24,10 +24,10 @@ class TableState {
     this.searchQuery = '',
     this.filterStatus,
     this.filterZone = TableZone.all,
-    List<CompletedOrderModel>? completedOrders, // 1. Tham số này giờ là tùy chọn và có thể null
-  }) : this.completedOrders = completedOrders ?? _initialCompletedOrders; // 2. Dùng initializer list để gán giá trị mặc định
-  
+    List<CompletedOrderModel>? completedOrders, // Khởi tạo nếu không có
+  }) : this.completedOrders = completedOrders ?? _initialCompletedOrders;
 
+  /// Phương thức giúp tạo một bản sao của TableState với các thuộc tính được cập nhật.
   TableState copyWith({
     List<TableModel>? tables,
     TableModel? selectedTable,
@@ -47,36 +47,51 @@ class TableState {
   }
 }
 
+/// [TableNotifier] là một StateNotifier quản lý TableState.
+/// Nó chứa các logic nghiệp vụ để thao tác với danh sách bàn ăn.
 class TableNotifier extends StateNotifier<TableState> {
   TableNotifier() : super(TableState(tables: _initialTables));
 
-  final Uuid _uuid = const Uuid();
+  final Uuid _uuid = const Uuid(); // Dùng để tạo ID duy nhất
 
+  /// Trả về danh sách bàn đã được lọc và tìm kiếm dựa trên trạng thái hiện tại.
   List<TableModel> get filteredTables {
     List<TableModel> currentTables = state.tables;
+
+    // Lọc theo trạng thái
     if (state.filterStatus != null) {
       currentTables = currentTables.where((table) => table.status == state.filterStatus).toList();
     }
+    // Lọc theo khu vực
     if (state.filterZone != TableZone.all) {
       currentTables = currentTables.where((table) => table.zone == state.filterZone).toList();
     }
+    // Tìm kiếm theo tên bàn
     if (state.searchQuery.isNotEmpty) {
       currentTables = currentTables.where((table) => table.name.toLowerCase().contains(state.searchQuery.toLowerCase())).toList();
     }
     return currentTables;
   }
 
+  /// Cập nhật chuỗi tìm kiếm.
   void setSearchQuery(String query) => state = state.copyWith(searchQuery: query);
+
+  /// Cập nhật trạng thái lọc.
   void setFilterStatus(TableStatus? status) => state = state.copyWith(filterStatus: status);
+
+  /// Cập nhật khu vực lọc.
   void setFilterZone(TableZone zone) => state = state.copyWith(filterZone: zone);
+
+  /// Đặt bàn được chọn hiện tại.
   void selectTable(TableModel table) => state = state.copyWith(selectedTable: table);
 
+  /// Cập nhật số lượng khách và trạng thái của một bàn.
   void setCustomerCount(String tableId, int count) {
     final updatedTables = state.tables.map((table) {
       if (table.id == tableId) {
         return table.copyWith(
           customerCount: count,
-          status: TableStatus.reserved,
+          status: TableStatus.reserved, // Ban đầu là reserved khi nhập số khách
         );
       }
       return table;
@@ -84,6 +99,7 @@ class TableNotifier extends StateNotifier<TableState> {
     state = state.copyWith(tables: updatedTables);
   }
 
+  /// Cập nhật danh sách món ăn và tổng tiền cho một bàn, đồng thời chuyển trạng thái sang "serving".
   void updateTableOrder(String tableId, List<MenuItemModel> newItems) {
     final updatedTables = state.tables.map((table) {
       if (table.id == tableId) {
@@ -100,32 +116,48 @@ class TableNotifier extends StateNotifier<TableState> {
     state = state.copyWith(tables: updatedTables);
   }
 
+  /// Xử lý quá trình thanh toán cho một bàn.
+  /// Chuyển bàn về trạng thái "available", reset thông tin khách và món ăn.
+  /// Thêm đơn hàng vào danh sách `completedOrders`.
   void checkout(String tableId) {
-    final tableToCheckout = state.tables.firstWhere((t) => t.id == tableId);
-
+    TableModel? tableToCheckout;
+    try {
+      // Tìm bàn cần thanh toán. Sử dụng try-catch để an toàn hơn
+      // nếu vì lý do nào đó không tìm thấy ID bàn.
+      tableToCheckout = state.tables.firstWhere((t) => t.id == tableId);
+    } catch (e) {
+      // In lỗi ra console và thoát nếu không tìm thấy bàn.
+      print('Error: Could not find table with ID $tableId for checkout: $e');
+      return;
+    }
+    
+    // Nếu tìm thấy bàn (tableToCheckout không null), tiếp tục xử lý
     final newCompletedOrder = CompletedOrderModel(
-      id: _uuid.v4(),
+      id: _uuid.v4(), // Tạo ID duy nhất cho đơn hàng hoàn thành
       tableName: tableToCheckout.name,
       customerCount: tableToCheckout.customerCount ?? 0,
-      items: List.from(tableToCheckout.existingItems),
+      items: List.from(tableToCheckout.existingItems), // Sao chép danh sách món
       totalAmount: tableToCheckout.totalAmount,
       checkoutTime: DateTime.now(),
     );
 
+    // Thêm đơn hàng mới vào danh sách các đơn hàng đã hoàn thành
     final updatedCompletedOrders = [...state.completedOrders, newCompletedOrder];
 
+    // Cập nhật trạng thái của bàn sau khi thanh toán
     final updatedTables = state.tables.map((table) {
       if (table.id == tableId) {
         return table.copyWith(
-          status: TableStatus.available,
-          customerCount: 0,
-          totalAmount: 0.0,
-          existingItems: [],
+          status: TableStatus.available, // Chuyển về trạng thái trống
+          customerCount: 0, // Reset số khách
+          totalAmount: 0.0, // Reset tổng tiền
+          existingItems: [], // Xóa danh sách món đã đặt
         );
       }
       return table;
     }).toList();
-
+    
+    // Cập nhật trạng thái của notifier
     state = state.copyWith(
       tables: updatedTables,
       completedOrders: updatedCompletedOrders,
@@ -138,21 +170,31 @@ class TableNotifier extends StateNotifier<TableState> {
 //         🔹 PROVIDERS AND SAMPLE DATA 🔹
 //________________________________________________________________________________
 
+/// [tableProvider] cung cấp quyền truy cập vào [TableNotifier] và [TableState] của nó.
 final tableProvider = StateNotifierProvider<TableNotifier, TableState>((ref) {
   return TableNotifier();
 });
 
+/// [filteredTablesProvider] cung cấp danh sách bàn đã được lọc và tìm kiếm.
+/// Nó lắng nghe thay đổi từ [tableProvider] và gọi getter `filteredTables`.
 final filteredTablesProvider = Provider<List<TableModel>>((ref) {
+  // watch tableProvider để provider này được cập nhật khi TableState thay đổi
   ref.watch(tableProvider);
   return ref.read(tableProvider.notifier).filteredTables;
 });
 
+/// [completedOrdersProvider] cung cấp danh sách các đơn hàng đã hoàn thành.
+/// Nó lắng nghe thay đổi từ thuộc tính `completedOrders` của [TableState].
 final completedOrdersProvider = Provider<List<CompletedOrderModel>>((ref) {
   return ref.watch(tableProvider).completedOrders;
 });
 
+//________________________________________________________________________________
+//
+//         🔹 INITIAL DATA (Dữ liệu mẫu) 🔹
+//________________________________________________________________________________
 
-// ✅ BƯỚC 1: ĐỊNH NGHĨA DỮ LIỆU MÓN ĂN TRƯỚC
+// Dữ liệu mẫu cho các món ăn trong menu
 final _menuItemsData = {
   'pho_bo': MenuItemModel(id: 'M1', name: 'Phở bò', price: 50000, category: MenuCategory.mainCourse),
   'bun_cha': MenuItemModel(id: 'M2', name: 'Bún chả', price: 45000, category: MenuCategory.mainCourse),
@@ -168,7 +210,7 @@ final _menuItemsData = {
   'coca_cola': MenuItemModel(id: 'D4', name: 'Coca-Cola', price: 15000, category: MenuCategory.drink),
 };
 
-// ✅ BƯỚC 2: SỬ DỤNG DỮ LIỆU MÓN ĂN ĐỂ TẠO LỊCH SỬ ĐƠN HÀNG
+// Dữ liệu mẫu cho các đơn hàng đã hoàn thành
 final List<CompletedOrderModel> _initialCompletedOrders = [
   CompletedOrderModel(
     id: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
@@ -209,8 +251,7 @@ final List<CompletedOrderModel> _initialCompletedOrders = [
   ),
 ];
 
-
-/// Dữ liệu bàn mẫu
+// Dữ liệu mẫu cho các bàn ăn ban đầu
 final List<TableModel> _initialTables = [
   // Khu A - Trong nhà
   TableModel(id: 'T1', name: 'A-1', seats: 4, status: TableStatus.available, zone: TableZone.indoor),
