@@ -17,6 +17,12 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    // Lấy user theo email
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    // Thêm mới user
     public User createUser(User user) {
 
         if (userRepository.existsByEmail(user.getEmail())) {

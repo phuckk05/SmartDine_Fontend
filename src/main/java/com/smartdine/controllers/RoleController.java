@@ -27,4 +27,15 @@ public class RoleController {
             return ResponseEntity.internalServerError().body("Lỗi " + e.getMessage());
         }
     }
+
+    // Lấy role theo id
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getRoleById(@PathVariable Integer id) {
+        try {
+            Role role = roleServices.getById(id);
+            return ResponseEntity.ok(role);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Lỗi " + e.getMessage());
+        }
+    }
 }

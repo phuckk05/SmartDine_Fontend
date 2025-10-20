@@ -21,4 +21,9 @@ public class UserBranchSevices {
     public UserBranch create(UserBranch userBranch) {
         return userBranchRepository.save(userBranch);
     }
+
+    // Lấy UserBranch theo userId
+    public UserBranch getByUserId(Integer userId) {
+        return userBranchRepository.findByUserId(userId);
+    }
 }

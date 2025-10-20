@@ -13,7 +13,14 @@ public class RoleServices {
     @Autowired
     RoleRepository roleRepository;
 
+    // Lấy tất cả role
     public List<Role> getAll() {
         return roleRepository.findAll();
     }
+
+    // Lấy role theo id
+    public Role getById(Integer id) {
+        return roleRepository.findById(id).orElse(null);
+    }
+
 }

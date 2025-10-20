@@ -22,6 +22,12 @@ public class UserController {
         return userService.getAllUsers();
     }
 
+    // Lấy user theo email
+    @GetMapping("/email/{email}")
+    public User getUserByEmail(@PathVariable String email) {
+        return userService.getUserByEmail(email);
+    }
+
     // Tạo user
     @PostMapping
     public ResponseEntity<?> createUser(@RequestBody User user) {
