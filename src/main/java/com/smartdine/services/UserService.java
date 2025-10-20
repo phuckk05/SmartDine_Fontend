@@ -5,7 +5,9 @@ import com.smartdine.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -15,6 +17,19 @@ public class UserService {
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    // update password
+    public User updatePassword(Integer id, String newPassword) {
+        Optional<User> user = userRepository.findById(id);
+        if (user.isEmpty()) {
+            throw new IllegalArgumentException("User not found with id: " + id);
+        }
+
+        User u = user.get();
+        u.setPassworkHash(newPassword);
+        u.setUpdatedAt(LocalDateTime.now());
+        return userRepository.save(u);
     }
 
     // Lấy user theo email

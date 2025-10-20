@@ -52,4 +52,15 @@ public class UserController {
         userService.deleteUser(id);
     }
 
+    // Cập nhật mật khẩu
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updatePassword(@PathVariable Integer id, @RequestParam String newPassword) {
+        try {
+            User updatedUser = userService.updatePassword(id, newPassword);
+            return ResponseEntity.ok(updatedUser);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 }
