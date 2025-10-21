@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mart_dine/features/branch_management/screen/branch_dashboard.dart';
 import 'package:mart_dine/features/branch_management/screen/employee_management_screen.dart';
 import 'package:mart_dine/features/branch_management/screen/table_management_screen.dart';
-import 'package:mart_dine/features/branch_management/screen/dish_statistics_screen.dart';
+import 'package:mart_dine/features/branch_management/screen/branch_reports_screen.dart';
 
 class BranchManagementNavigation extends StatefulWidget {
   const BranchManagementNavigation({super.key});
@@ -19,7 +19,7 @@ class _BranchManagementNavigationState extends State<BranchManagementNavigation>
     const BranchDashboardScreen(),
     const EmployeeManagementScreen(showBackButton: false),
     const TableManagementScreen(showBackButton: false),
-    const DishStatisticsScreen(showBackButton: false),
+    const BranchReportsScreen(showBackButton: false),
   ];
 
   void _onItemTapped(int index) {
@@ -69,9 +69,9 @@ class _BranchManagementNavigationState extends State<BranchManagementNavigation>
             label: 'Bàn ăn',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            activeIcon: Icon(Icons.bar_chart, color: Colors.blue),
-            label: 'Thống kê',
+            icon: Icon(Icons.analytics_outlined),
+            activeIcon: Icon(Icons.analytics, color: Colors.blue),
+            label: 'Báo cáo',
           ),
         ],
       ),

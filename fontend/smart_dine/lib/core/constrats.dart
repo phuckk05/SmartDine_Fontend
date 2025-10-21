@@ -82,7 +82,7 @@ class ShadowCus extends StatelessWidget {
       // Concave (inset) effect for input fields
       shadows = [
         BoxShadow(
-          color: kDarkShadowColor.withOpacity(0.25), // Dark inner shadow
+          color: kDarkShadowColor.withValues(alpha: 0.25), // Dark inner shadow
           offset: offset,
           blurRadius: blurRadius,
           spreadRadius: spreadRadius,
@@ -98,7 +98,7 @@ class ShadowCus extends StatelessWidget {
       // Convex (embossed/raised) effect for cards and buttons
       shadows = [
         BoxShadow(
-          color: kDarkShadowColor.withOpacity(0.2), // Dark shadow
+          color: kDarkShadowColor.withValues(alpha: 0.2), // Dark shadow
           offset: offset,
           blurRadius: blurRadius,
           spreadRadius: spreadRadius,

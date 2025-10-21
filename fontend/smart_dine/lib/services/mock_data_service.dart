@@ -8,6 +8,7 @@ import '../models/payment.dart';
 import '../models/menu_item.dart';
 import '../models/branch.dart';
 import '../models/notification.dart';
+import '../models/statistics.dart';
 
 /// Service class để load và parse mock data từ JSON files
 /// Sử dụng để test UI trước khi có API thật
@@ -36,6 +37,14 @@ class MockDataService {
   List<BranchStatus>? _cachedBranchStatuses;
   List<Notification>? _cachedNotifications;
   List<NotificationCategory>? _cachedNotificationCategories;
+  
+  // Statistics cache
+  Map<String, BranchMetrics>? _cachedBranchMetrics;
+  Map<String, List<RevenueTrend>>? _cachedRevenueTrends;
+  List<TopDish>? _cachedTopDishes;
+  List<EmployeePerformance>? _cachedEmployeePerformance;
+  List<PeakHourData>? _cachedPeakHoursData;
+  CustomerSatisfaction? _cachedCustomerSatisfaction;
 
   /// Load tables từ JSON
   Future<List<Table>> loadTables() async {
@@ -261,6 +270,103 @@ class MockDataService {
     return _cachedNotificationCategories!;
   }
 
+  /// Load branch metrics by period
+  Future<BranchMetrics> loadBranchMetrics(String period) async {
+    if (_cachedBranchMetrics != null && _cachedBranchMetrics!.containsKey(period)) {
+      return _cachedBranchMetrics![period]!;
+    }
+
+    final String jsonString = await rootBundle.loadString('assets/mock_data/statistics.json');
+    final Map<String, dynamic> jsonData = json.decode(jsonString);
+
+    _cachedBranchMetrics = {};
+    final metricsData = jsonData['branch_metrics'] as Map<String, dynamic>;
+    
+    for (final entry in metricsData.entries) {
+      _cachedBranchMetrics![entry.key] = BranchMetrics.fromJson(entry.value);
+    }
+
+    return _cachedBranchMetrics![period] ?? _cachedBranchMetrics!['monthly']!;
+  }
+
+  /// Load revenue trends by period
+  Future<List<RevenueTrend>> loadRevenueTrends(String period) async {
+    final periodKey = period == 'Tuần này' ? 'weekly' : 
+                     period == 'Tháng này' ? 'monthly' : 'quarterly';
+    
+    if (_cachedRevenueTrends != null && _cachedRevenueTrends!.containsKey(periodKey)) {
+      return _cachedRevenueTrends![periodKey]!;
+    }
+
+    final String jsonString = await rootBundle.loadString('assets/mock_data/statistics.json');
+    final Map<String, dynamic> jsonData = json.decode(jsonString);
+
+    _cachedRevenueTrends = {};
+    final trendsData = jsonData['revenue_trends'] as Map<String, dynamic>;
+    
+    for (final entry in trendsData.entries) {
+      _cachedRevenueTrends![entry.key] = (entry.value as List)
+          .map((json) => RevenueTrend.fromJson(json))
+          .toList();
+    }
+
+    return _cachedRevenueTrends![periodKey] ?? [];
+  }
+
+  /// Load top dishes
+  Future<List<TopDish>> loadTopDishes() async {
+    if (_cachedTopDishes != null) return _cachedTopDishes!;
+
+    final String jsonString = await rootBundle.loadString('assets/mock_data/statistics.json');
+    final Map<String, dynamic> jsonData = json.decode(jsonString);
+
+    _cachedTopDishes = (jsonData['top_dishes'] as List)
+        .map((json) => TopDish.fromJson(json))
+        .toList();
+
+    return _cachedTopDishes!;
+  }
+
+  /// Load employee performance
+  Future<List<EmployeePerformance>> loadEmployeePerformance() async {
+    if (_cachedEmployeePerformance != null) return _cachedEmployeePerformance!;
+
+    final String jsonString = await rootBundle.loadString('assets/mock_data/statistics.json');
+    final Map<String, dynamic> jsonData = json.decode(jsonString);
+
+    _cachedEmployeePerformance = (jsonData['employee_performance'] as List)
+        .map((json) => EmployeePerformance.fromJson(json))
+        .toList();
+
+    return _cachedEmployeePerformance!;
+  }
+
+  /// Load peak hours data
+  Future<List<PeakHourData>> loadPeakHoursData() async {
+    if (_cachedPeakHoursData != null) return _cachedPeakHoursData!;
+
+    final String jsonString = await rootBundle.loadString('assets/mock_data/statistics.json');
+    final Map<String, dynamic> jsonData = json.decode(jsonString);
+
+    _cachedPeakHoursData = (jsonData['peak_hours_analysis']['hourly_data'] as List)
+        .map((json) => PeakHourData.fromJson(json))
+        .toList();
+
+    return _cachedPeakHoursData!;
+  }
+
+  /// Load customer satisfaction
+  Future<CustomerSatisfaction> loadCustomerSatisfaction() async {
+    if (_cachedCustomerSatisfaction != null) return _cachedCustomerSatisfaction!;
+
+    final String jsonString = await rootBundle.loadString('assets/mock_data/statistics.json');
+    final Map<String, dynamic> jsonData = json.decode(jsonString);
+
+    _cachedCustomerSatisfaction = CustomerSatisfaction.fromJson(jsonData['customer_satisfaction']);
+
+    return _cachedCustomerSatisfaction!;
+  }
+
   /// Clear all cached data
   void clearCache() {
     _cachedTables = null;
@@ -279,6 +385,14 @@ class MockDataService {
     _cachedBranchStatuses = null;
     _cachedNotifications = null;
     _cachedNotificationCategories = null;
+    
+    // Clear statistics cache
+    _cachedBranchMetrics = null;
+    _cachedRevenueTrends = null;
+    _cachedTopDishes = null;
+    _cachedEmployeePerformance = null;
+    _cachedPeakHoursData = null;
+    _cachedCustomerSatisfaction = null;
   }
 
   /// Reload all data (clear cache và load lại)

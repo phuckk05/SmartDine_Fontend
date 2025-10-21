@@ -1,0 +1,207 @@
+{
+  "branch_metrics": {
+    "weekly": {
+      "period": "Tuần này",
+      "date_range": "14/10/2025 - 20/10/2025",
+      "total_revenue": 62450000,
+      "total_orders": 287,
+      "avg_order_value": 217650,
+      "new_customers": 23,
+      "customer_satisfaction": 4.5,
+      "growth_rates": {
+        "revenue": 8.3,
+        "orders": 5.2,
+        "avg_order_value": 2.9,
+        "new_customers": 12.8,
+        "satisfaction": 3.1
+      }
+    },
+    "monthly": {
+      "period": "Tháng này",
+      "date_range": "1/10/2025 - 20/10/2025",
+      "total_revenue": 245800000,
+      "total_orders": 1247,
+      "avg_order_value": 197200,
+      "new_customers": 89,
+      "customer_satisfaction": 4.6,
+      "growth_rates": {
+        "revenue": 12.5,
+        "orders": 8.2,
+        "avg_order_value": 3.8,
+        "new_customers": 15.6,
+        "satisfaction": 5.2
+      }
+    },
+    "quarterly": {
+      "period": "Quý này",
+      "date_range": "1/7/2025 - 20/10/2025",
+      "total_revenue": 756300000,
+      "total_orders": 3821,
+      "avg_order_value": 197880,
+      "new_customers": 267,
+      "customer_satisfaction": 4.7,
+      "growth_rates": {
+        "revenue": 18.7,
+        "orders": 14.3,
+        "avg_order_value": 3.9,
+        "new_customers": 22.4,
+        "satisfaction": 8.6
+      }
+    }
+  },
+  "revenue_trends": {
+    "weekly": [
+      {"day": "T2", "revenue": 28000000, "orders": 142},
+      {"day": "T3", "revenue": 32000000, "orders": 165},
+      {"day": "T4", "revenue": 35000000, "orders": 178},
+      {"day": "T5", "revenue": 38000000, "orders": 189},
+      {"day": "T6", "revenue": 42000000, "orders": 215},
+      {"day": "T7", "revenue": 45000000, "orders": 234},
+      {"day": "CN", "revenue": 41000000, "orders": 201}
+    ],
+    "monthly": [
+      {"period": "Tuần 1", "revenue": 58500000, "orders": 297},
+      {"period": "Tuần 2", "revenue": 62300000, "orders": 315},
+      {"period": "Tuần 3", "revenue": 59800000, "orders": 302},
+      {"period": "Tuần 4", "revenue": 65200000, "orders": 333}
+    ],
+    "quarterly": [
+      {"period": "Tháng 7", "revenue": 218500000, "orders": 1109},
+      {"period": "Tháng 8", "revenue": 235600000, "orders": 1198},
+      {"period": "Tháng 9", "revenue": 228900000, "orders": 1164},
+      {"period": "Tháng 10", "revenue": 245800000, "orders": 1247}
+    ]
+  },
+  "top_dishes": [
+    {
+      "id": "menu-item-001",
+      "name": "Phở Bò Tái",
+      "category": "Món chính",
+      "orders_count": 156,
+      "total_revenue": 4680000,
+      "profit": 1872000,
+      "profit_margin": 40,
+      "growth_rate": 12.0,
+      "rank": 1
+    },
+    {
+      "id": "menu-item-002", 
+      "name": "Bún Bò Huế",
+      "category": "Món chính",
+      "orders_count": 134,
+      "total_revenue": 4020000,
+      "profit": 1608000,
+      "profit_margin": 40,
+      "growth_rate": 8.0,
+      "rank": 2
+    },
+    {
+      "id": "menu-item-003",
+      "name": "Cơm Tấm Sườn",
+      "category": "Món chính", 
+      "orders_count": 128,
+      "total_revenue": 3840000,
+      "profit": 1536000,
+      "profit_margin": 40,
+      "growth_rate": 5.0,
+      "rank": 3
+    },
+    {
+      "id": "menu-item-004",
+      "name": "Bánh Mỳ Thịt",
+      "category": "Ăn nhẹ",
+      "orders_count": 98,
+      "total_revenue": 1960000,
+      "profit": 882000,
+      "profit_margin": 45,
+      "growth_rate": 15.0,
+      "rank": 4
+    },
+    {
+      "id": "menu-item-005",
+      "name": "Gỏi Cuốn Tôm",
+      "category": "Khai vị",
+      "orders_count": 87,
+      "total_revenue": 2175000,
+      "profit": 1087500,
+      "profit_margin": 50,
+      "growth_rate": -2.0,
+      "rank": 5
+    }
+  ],
+  "employee_performance": [
+    {
+      "id": "employee-001",
+      "name": "Nguyễn Văn An",
+      "position": "Phục vụ",
+      "orders_served": 89,
+      "total_revenue": 17580000,
+      "rating": 4.8,
+      "efficiency": 95,
+      "bonus": 1200000
+    },
+    {
+      "id": "employee-002",
+      "name": "Trần Thị Bình", 
+      "position": "Thu ngân",
+      "orders_served": 156,
+      "total_revenue": 30576000,
+      "rating": 4.9,
+      "efficiency": 98,
+      "bonus": 2100000
+    },
+    {
+      "id": "employee-003",
+      "name": "Lê Văn Chi",
+      "position": "Phục vụ",
+      "orders_served": 67,
+      "total_revenue": 13206000,
+      "rating": 4.7,
+      "efficiency": 88,
+      "bonus": 950000
+    },
+    {
+      "id": "employee-004",
+      "name": "Phạm Thị Dũng",
+      "position": "Bếp trưởng",
+      "orders_served": 203,
+      "total_revenue": 40194000,
+      "rating": 4.6,
+      "efficiency": 92,
+      "bonus": 2800000
+    },
+    {
+      "id": "employee-005",
+      "name": "Võ Thị Em",
+      "position": "Phục vụ",
+      "orders_served": 54,
+      "total_revenue": 10692000,
+      "rating": 4.5,
+      "efficiency": 85,
+      "bonus": 750000
+    }
+  ],
+  "peak_hours_analysis": {
+    "hourly_data": [
+      {"time_slot": "6-8h", "orders": 25, "level": "normal"},
+      {"time_slot": "8-10h", "orders": 35, "level": "normal"},
+      {"time_slot": "10-12h", "orders": 45, "level": "normal"},
+      {"time_slot": "12-14h", "orders": 95, "level": "peak"},
+      {"time_slot": "14-16h", "orders": 55, "level": "normal"},
+      {"time_slot": "16-18h", "orders": 65, "level": "busy"},
+      {"time_slot": "18-20h", "orders": 90, "level": "peak"},
+      {"time_slot": "20-22h", "orders": 75, "level": "busy"}
+    ]
+  },
+  "customer_satisfaction": {
+    "ratings": [
+      {"level": "Rất hài lòng", "percentage": 68, "count": 289, "color": "#4CAF50"},
+      {"level": "Hài lòng", "percentage": 22, "count": 94, "color": "#8BC34A"},
+      {"level": "Bình thường", "percentage": 7, "count": 30, "color": "#FF9800"},
+      {"level": "Không hài lòng", "percentage": 3, "count": 12, "color": "#F44336"}
+    ],
+    "average_rating": 4.6,
+    "total_reviews": 425,
+    "growth_rate": 5.2
+  }
+}
