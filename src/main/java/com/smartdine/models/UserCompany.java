@@ -1,21 +1,27 @@
 package com.smartdine.models;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+
 @Entity
 @Table(name = "user_companys")
-@IdClass(UserCompany.class)
 public class UserCompany {
     @Id
+    @Column(name = "user_id")
     private Integer userId;
 
-    @Id
+    @Column(name = "company_id")
     private Integer companyId;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
+    @Column(name = "assigned_at")
     private LocalDateTime assignedAt;
 
     public UserCompany() {
@@ -35,11 +41,11 @@ public class UserCompany {
         this.userId = userId;
     }
 
-    public Integer getBranchId() {
+    public Integer getCompanyId() {
         return companyId;
     }
 
-    public void setBranchId(Integer companyId) {
+    public void setCompanyId(Integer companyId) {
         this.companyId = companyId;
     }
 

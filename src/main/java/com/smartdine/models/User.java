@@ -3,7 +3,6 @@ package com.smartdine.models;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.*;
@@ -24,7 +23,10 @@ public class User {
     private String fontImage;
     private String backImage;
     private Integer statusId;
-    private Integer role;
+    @Column(name = "role_id")
+    private Integer roleId;
+    @Column(name = "company_id")
+    private Integer companyId;
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private LocalDateTime createdAt;
     @JsonFormat(shape = JsonFormat.Shape.STRING)
@@ -39,7 +41,8 @@ public class User {
     public User(Integer id, String fullName, String email, String phone,
             String passworkHash, String fontImage, String backImage,
             Integer statusId,
-            Integer role,
+            Integer roleId,
+            Integer companyId,
             LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
         this.id = id;
         this.fullName = fullName;
@@ -49,7 +52,8 @@ public class User {
         this.fontImage = fontImage;
         this.backImage = backImage;
         this.statusId = statusId;
-        this.role = role;
+        this.roleId = roleId;
+        this.companyId = companyId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.deletedAt = deletedAt;
@@ -60,12 +64,20 @@ public class User {
         return id;
     }
 
-    public void setRole(Integer role) {
-        this.role = role;
+    public Integer getRoleId() {
+        return roleId;
     }
 
-    public Integer getRole() {
-        return role;
+    public void setRoleId(Integer roleId) {
+        this.roleId = roleId;
+    }
+
+    public Integer getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(Integer companyId) {
+        this.companyId = companyId;
     }
 
     public void setId(Integer id) {
