@@ -1,4 +1,4 @@
-package com.smartdine.controllers;
+package com.smartdine.controllers.status;
 
 import java.util.List;
 
@@ -9,20 +9,20 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.smartdine.models.OrderStatus;
-import com.smartdine.services.OrderStatusServices;
+import com.smartdine.models.status.ReservationStatus;
+import com.smartdine.services.ReservationStatusServices;
 
 @RestController
-@RequestMapping("/api/order-statuses")
-public class OrderStatusController {
+@RequestMapping("/api/reservation-statuses")
+public class ReservationStatusController {
 
     @Autowired
-    private OrderStatusServices orderStatusServices;
+    private ReservationStatusServices reservationStatusServices;
 
     @GetMapping("/all")
     public ResponseEntity<?> getAll() {
         try {
-            List<OrderStatus> statuses = orderStatusServices.getAll();
+            List<ReservationStatus> statuses = reservationStatusServices.getAll();
             return ResponseEntity.ok(statuses);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
@@ -32,7 +32,7 @@ public class OrderStatusController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Integer id) {
         try {
-            OrderStatus status = orderStatusServices.getById(id);
+            ReservationStatus status = reservationStatusServices.getById(id);
             if (status == null) {
                 return ResponseEntity.notFound().build();
             }

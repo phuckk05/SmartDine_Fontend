@@ -1,4 +1,4 @@
-package com.smartdine.controllers;
+package com.smartdine.controllers.status;
 
 import java.util.List;
 
@@ -9,20 +9,20 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.smartdine.models.CompanyPaymentMethodStatus;
-import com.smartdine.services.CompanyPaymentMethodStatusServices;
+import com.smartdine.models.status.DiscountStatus;
+import com.smartdine.services.DiscountStatusServices;
 
 @RestController
-@RequestMapping("/api/company-payment-method-statuses")
-public class CompanyPaymentMethodStatusController {
+@RequestMapping("/api/discount-statuses")
+public class DiscountStatusController {
 
     @Autowired
-    private CompanyPaymentMethodStatusServices statusServices;
+    private DiscountStatusServices discountStatusServices;
 
     @GetMapping("/all")
     public ResponseEntity<?> getAll() {
         try {
-            List<CompanyPaymentMethodStatus> statuses = statusServices.getAll();
+            List<DiscountStatus> statuses = discountStatusServices.getAll();
             return ResponseEntity.ok(statuses);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
@@ -32,7 +32,7 @@ public class CompanyPaymentMethodStatusController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Integer id) {
         try {
-            CompanyPaymentMethodStatus status = statusServices.getById(id);
+            DiscountStatus status = discountStatusServices.getById(id);
             if (status == null) {
                 return ResponseEntity.notFound().build();
             }

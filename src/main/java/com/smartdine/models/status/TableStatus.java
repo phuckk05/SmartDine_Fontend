@@ -1,4 +1,4 @@
-package com.smartdine.models;
+package com.smartdine.models.status;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -7,8 +7,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "order_statuses")
-public class OrderStatus {
+@Table(name = "table_statuses")
+public class TableStatus {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,10 +18,10 @@ public class OrderStatus {
 
     private String name;
 
-    public OrderStatus() {
+    public TableStatus() {
     }
 
-    public OrderStatus(Integer id, String code, String name) {
+    public TableStatus(Integer id, String code, String name) {
         this.id = id;
         this.code = code;
         this.name = name;

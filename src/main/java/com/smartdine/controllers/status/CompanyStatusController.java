@@ -1,4 +1,4 @@
-package com.smartdine.controllers;
+package com.smartdine.controllers.status;
 
 import java.util.List;
 
@@ -9,20 +9,20 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.smartdine.models.PromotionStatus;
-import com.smartdine.services.PromotionStatusServices;
+import com.smartdine.models.status.CompanyStatus;
+import com.smartdine.services.CompanyStatusServices;
 
 @RestController
-@RequestMapping("/api/promotion-statuses")
-public class PromotionStatusController {
+@RequestMapping("/api/company-statuses")
+public class CompanyStatusController {
 
     @Autowired
-    private PromotionStatusServices promotionStatusServices;
+    private CompanyStatusServices companyStatusServices;
 
     @GetMapping("/all")
     public ResponseEntity<?> getAll() {
         try {
-            List<PromotionStatus> statuses = promotionStatusServices.getAll();
+            List<CompanyStatus> statuses = companyStatusServices.getAll();
             return ResponseEntity.ok(statuses);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
@@ -32,7 +32,7 @@ public class PromotionStatusController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Integer id) {
         try {
-            PromotionStatus status = promotionStatusServices.getById(id);
+            CompanyStatus status = companyStatusServices.getById(id);
             if (status == null) {
                 return ResponseEntity.notFound().build();
             }

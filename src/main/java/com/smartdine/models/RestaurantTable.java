@@ -29,8 +29,6 @@ public class RestaurantTable {
 
     private String description;
 
-    private Integer capacity;
-
     @Column(name = "status_id")
     private Integer statusId;
 
@@ -44,13 +42,12 @@ public class RestaurantTable {
     }
 
     public RestaurantTable(Integer id, Integer branchId, String name, Integer typeId, String description,
-            Integer capacity, Integer statusId, LocalDateTime createdAt, LocalDateTime updatedAt) {
+            Integer statusId, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.branchId = branchId;
         this.name = name;
         this.typeId = typeId;
         this.description = description;
-        this.capacity = capacity;
         this.statusId = statusId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -94,14 +91,6 @@ public class RestaurantTable {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public Integer getCapacity() {
-        return capacity;
-    }
-
-    public void setCapacity(Integer capacity) {
-        this.capacity = capacity;
     }
 
     public Integer getStatusId() {

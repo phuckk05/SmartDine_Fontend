@@ -15,23 +15,39 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(name = "full_name")
     private String fullName;
+
     private String email;
+
     private String phone;
-    @Column(name = "passworkHash")
+
+    @Column(name = "passwork_hash")
     private String passworkHash;
+
+    @Column(name = "font_image")
     private String fontImage;
+
+    @Column(name = "back_image")
     private String backImage;
+
+    @Column(name = "status_id")
     private Integer statusId;
+
+    @Column(name = "role")
+    private Integer role;
     @Column(name = "role_id")
     private Integer roleId;
     @Column(name = "company_id")
     private Integer companyId;
     @JsonFormat(shape = JsonFormat.Shape.STRING)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
     @JsonFormat(shape = JsonFormat.Shape.STRING)
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     @JsonFormat(shape = JsonFormat.Shape.STRING)
+    @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
     // Constructor
@@ -40,8 +56,7 @@ public class User {
 
     public User(Integer id, String fullName, String email, String phone,
             String passworkHash, String fontImage, String backImage,
-            Integer statusId,
-            Integer roleId,
+            Integer statusId, Integer role, Integer roleId,
             Integer companyId,
             LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
         this.id = id;
@@ -52,11 +67,20 @@ public class User {
         this.fontImage = fontImage;
         this.backImage = backImage;
         this.statusId = statusId;
+        this.role = role;
         this.roleId = roleId;
         this.companyId = companyId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.deletedAt = deletedAt;
+    }
+
+    public Integer getRole() {
+        return role;
+    }
+
+    public void setRole(Integer role) {
+        this.role = role;
     }
 
     // Getters & Setters

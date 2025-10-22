@@ -20,6 +20,7 @@ public class Company {
 
     private String address;
 
+    @Column(name = "status_id")
     private Integer statusId;
     @Column(name = "created_at")
     private LocalDateTime createdAt;

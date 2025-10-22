@@ -1,4 +1,4 @@
-package com.smartdine.controllers;
+package com.smartdine.controllers.status;
 
 import java.util.List;
 
@@ -9,20 +9,20 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.smartdine.models.BranchStatus;
-import com.smartdine.services.BranchStatusServices;
+import com.smartdine.models.status.CompanyPaymentMethodStatus;
+import com.smartdine.services.CompanyPaymentMethodStatusServices;
 
 @RestController
-@RequestMapping("/api/branch-statuses")
-public class BranchStatusController {
+@RequestMapping("/api/company-payment-method-statuses")
+public class CompanyPaymentMethodStatusController {
 
     @Autowired
-    private BranchStatusServices branchStatusServices;
+    private CompanyPaymentMethodStatusServices statusServices;
 
     @GetMapping("/all")
     public ResponseEntity<?> getAll() {
         try {
-            List<BranchStatus> statuses = branchStatusServices.getAll();
+            List<CompanyPaymentMethodStatus> statuses = statusServices.getAll();
             return ResponseEntity.ok(statuses);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
@@ -32,7 +32,7 @@ public class BranchStatusController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Integer id) {
         try {
-            BranchStatus status = branchStatusServices.getById(id);
+            CompanyPaymentMethodStatus status = statusServices.getById(id);
             if (status == null) {
                 return ResponseEntity.notFound().build();
             }

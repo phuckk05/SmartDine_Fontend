@@ -9,10 +9,10 @@ public class Branch {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id; // Mã chi nhánh
+    private Integer id; // Mã chi nhánh
 
     @Column(name = "company_id")
-    private int companyId; // Mã công ty
+    private Integer companyId; // Mã công ty
     @Column(name = "name")
     private String name; // Tên chi nhánh
     @Column(name = "branch_code")
@@ -22,9 +22,9 @@ public class Branch {
     @Column(name = "image")
     private String image; // Ảnh (ví dụ: ảnh CCCD hoặc logo)
     @Column(name = "status_id")
-    private int statusId; // Mã trạng thái
+    private Integer statusId; // Mã trạng thái
     @Column(name = "manager_id")
-    private int managerId; // Mã quản lý
+    private Integer managerId; // Mã quản lý
     @Column(name = "created_at")
     private LocalDateTime createdAt; // Ngày tạo
     @Column(name = "updated_at")
@@ -34,8 +34,8 @@ public class Branch {
     public Branch() {
     }
 
-    public Branch(int id, int companyId, String name, String branchCode, String address,
-            String image, int statusId, int managerId,
+    public Branch(Integer id, Integer companyId, String name, String branchCode, String address,
+            String image, Integer statusId, Integer managerId,
             LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.companyId = companyId;
@@ -50,19 +50,19 @@ public class Branch {
     }
 
     // ===== Getter & Setter =====
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
-    public int getCompanyId() {
+    public Integer getCompanyId() {
         return companyId;
     }
 
-    public void setCompanyId(int companyId) {
+    public void setCompanyId(Integer companyId) {
         this.companyId = companyId;
     }
 
@@ -98,19 +98,19 @@ public class Branch {
         this.image = image;
     }
 
-    public int getStatusId() {
+    public Integer getStatusId() {
         return statusId;
     }
 
-    public void setStatusId(int statusId) {
+    public void setStatusId(Integer statusId) {
         this.statusId = statusId;
     }
 
-    public int getManagerId() {
+    public Integer getManagerId() {
         return managerId;
     }
 
-    public void setManagerId(int managerId) {
+    public void setManagerId(Integer managerId) {
         this.managerId = managerId;
     }
 
@@ -128,6 +128,21 @@ public class Branch {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+        if (this.updatedAt == null) {
+            this.updatedAt = LocalDateTime.now();
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 
     @Override

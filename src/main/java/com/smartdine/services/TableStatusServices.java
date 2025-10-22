@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.smartdine.models.TableStatus;
+import com.smartdine.models.status.TableStatus;
 import com.smartdine.repository.TableStatusRepository;
 
 @Service

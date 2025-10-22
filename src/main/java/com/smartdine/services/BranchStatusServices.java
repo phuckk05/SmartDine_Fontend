@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.smartdine.models.BranchStatus;
+import com.smartdine.models.status.BranchStatus;
 import com.smartdine.repository.BranchStatusRepository;
 
 @Service
