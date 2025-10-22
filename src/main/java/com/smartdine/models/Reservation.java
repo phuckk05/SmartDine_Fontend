@@ -7,7 +7,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -41,7 +40,7 @@ public class Reservation {
     @Column(name = "status_id")
     private Integer statusId;
 
-    @Lob
+    @Column(name = "note", columnDefinition = "TEXT")
     private String note;
 
     @Column(name = "created_at")
