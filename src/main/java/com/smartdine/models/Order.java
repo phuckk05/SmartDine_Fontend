@@ -35,7 +35,6 @@ public class Order {
     @Column(name = "promotion_id")
     private Integer promotionId;
 
-    @Lob
     private String note;
 
     @Column(name = "status_id")
