@@ -1,4 +1,3 @@
-// import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/features/bottom_Navigation/screen/bottom_navigation.dart';
@@ -28,8 +27,8 @@ class SmartDineApp extends ConsumerWidget {
         ),
       ),
 
-      //home: const ScreenBottomNavigation(index: 2), // Chạy Admin
-      home: const ScreenBottomNavigation(index: 1), // Chạy Kitchen
+      home: const ScreenBottomNavigation(index: 2), // Chạy Admin
+      //home: const ScreenBottomNavigation(index: 1), // Chạy Kitchen
     );
   }
 }

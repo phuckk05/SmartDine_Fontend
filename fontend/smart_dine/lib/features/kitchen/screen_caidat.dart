@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mart_dine/models/user_profile_model.dart';
 import 'package:mart_dine/providers/caidat_provider.dart';
 import '../../../core/style.dart';
 
@@ -8,16 +9,8 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Lấy state từ providers
     final settings = ref.watch(settingsProvider);
-
-    // Dữ liệu cứng để test UI
-    final userInfo = {
-      'name': 'Nguyễn Đình Phúc',
-      'id': '234234235253325',
-      'email': 'phuckk3423@gmail.com',
-      'role': 'Bếp',
-    };
+    final userProfile = ref.watch(currentUserProfileProvider);
 
     final screenWidth = MediaQuery.of(context).size.width;
     final isWeb = screenWidth > 600;
@@ -43,33 +36,20 @@ class SettingsScreen extends ConsumerWidget {
           children: [
             const SizedBox(height: 20),
 
-            // Thông tin tài khoản
+            // Thông tin tài khoản (Không có avatar)
             _buildSection(
               title: 'Tài khoản',
               isWeb: isWeb,
-              children: [_buildProfileCard(userInfo, isWeb)],
+              children: [_buildProfileCard(userProfile, isWeb)],
             ),
 
             const SizedBox(height: 20),
 
-            // Cài đặt thông báo
+            // Cài đặt âm thanh
             _buildSection(
-              title: 'Thông báo',
+              title: 'Cài đặt chung',
               isWeb: isWeb,
               children: [
-                _buildSwitchTile(
-                  ref: ref,
-                  icon: Icons.notifications,
-                  title: 'Thông báo đẩy',
-                  subtitle: 'Nhận thông báo về đơn hàng mới',
-                  value: settings.notificationEnabled,
-                  onChanged: (value) {
-                    ref
-                        .read(settingsProvider.notifier)
-                        .toggleNotification(value);
-                  },
-                  isWeb: isWeb,
-                ),
                 _buildSwitchTile(
                   ref: ref,
                   icon: Icons.volume_up,
@@ -134,7 +114,6 @@ class SettingsScreen extends ConsumerWidget {
 
   // ==================== WIDGETS ====================
 
-  // Build section
   Widget _buildSection({
     required String title,
     required List<Widget> children,
@@ -177,57 +156,97 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  // Profile card
-  Widget _buildProfileCard(Map<String, String> userInfo, bool isWeb) {
+  Widget _buildProfileCard(UserProfile userProfile, bool isWeb) {
     return Padding(
       padding: EdgeInsets.all(isWeb ? 20 : Style.paddingPhone),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  userInfo['name']!,
-                  style: Style.fontTitleMini.copyWith(
-                    fontSize: isWeb ? 18 : 16,
-                    fontWeight: FontWeight.bold,
+          // Tên
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      userProfile.name,
+                      style: Style.fontTitleMini.copyWith(
+                        fontSize: isWeb ? 18 : 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'ID: ${userProfile.id}',
+                      style: Style.fontCaption.copyWith(
+                        fontSize: isWeb ? 14 : 13,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.blue[100],
+                  borderRadius: BorderRadius.circular(Style.buttonBorderRadius),
+                ),
+                child: Text(
+                  userProfile.roleName,
+                  style: Style.fontTitleSuperMini.copyWith(
+                    fontSize: isWeb ? 14 : 13,
+                    color: Colors.blue[700],
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  userInfo['id']!,
-                  style: Style.fontCaption.copyWith(fontSize: isWeb ? 14 : 13),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  userInfo['email']!,
-                  style: Style.fontCaption.copyWith(fontSize: isWeb ? 14 : 13),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(Style.spacingSmall),
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(Style.buttonBorderRadius),
-            ),
-            child: Text(
-              userInfo['role']!,
-              style: Style.fontTitleSuperMini.copyWith(
-                fontSize: isWeb ? 14 : 13,
-                color: Colors.grey[700],
-                fontWeight: FontWeight.w600,
               ),
-            ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+          const Divider(),
+          const SizedBox(height: 12),
+
+          // Email
+          Row(
+            children: [
+              Icon(Icons.email_outlined, size: 18, color: Colors.grey[600]),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  userProfile.email,
+                  style: Style.fontCaption.copyWith(fontSize: isWeb ? 14 : 13),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          // Phone
+          Row(
+            children: [
+              Icon(Icons.phone_outlined, size: 18, color: Colors.grey[600]),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  userProfile.phone,
+                  style: Style.fontCaption.copyWith(fontSize: isWeb ? 14 : 13),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  // Switch tile
   Widget _buildSwitchTile({
     required WidgetRef ref,
     required IconData icon,
@@ -259,7 +278,6 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  // List tile
   Widget _buildListTile({
     required BuildContext context,
     required WidgetRef ref,
@@ -295,7 +313,6 @@ class SettingsScreen extends ConsumerWidget {
 
   // ==================== HANDLERS ====================
 
-  // Show logout dialog
   void _showLogoutDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
@@ -315,19 +332,25 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
               TextButton(
-                onPressed: () {
+                onPressed: () async {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Đã đăng xuất',
-                        style: Style.fontNormal.copyWith(
-                          color: Style.textColorWhite,
+
+                  // Call logout
+                  await ref.read(logoutProvider)();
+
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Đã đăng xuất',
+                          style: Style.fontNormal.copyWith(
+                            color: Style.textColorWhite,
+                          ),
                         ),
+                        backgroundColor: Colors.green,
                       ),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+                    );
+                  }
                 },
                 child: Text(
                   'Đăng xuất',

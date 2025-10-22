@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mart_dine/models/phongbep_models.dart';
-import 'package:mart_dine/providers/phongbep_providers.dart';
+import 'package:mart_dine/features/kitchen/screen_thongbao.dart';
+import 'package:mart_dine/providers/notification_provider.dart';
 import '../../../core/style.dart';
+import '../../models/kitchen_order.dart';
+import '../../models/kitchen_order_status.dart';
+import '../../providers/kitchen_providers.dart';
 
 class KitchenScreen extends ConsumerWidget {
   const KitchenScreen({super.key});
@@ -12,6 +15,7 @@ class KitchenScreen extends ConsumerWidget {
     final filteredOrders = ref.watch(filteredOrdersProvider);
     final selectedTab = ref.watch(selectedTabProvider);
     final searchQuery = ref.watch(searchQueryProvider);
+    final orderCounts = ref.watch(orderCountByStatusProvider);
 
     final screenWidth = MediaQuery.of(context).size.width;
     final isWeb = screenWidth > 600;
@@ -37,7 +41,7 @@ class KitchenScreen extends ConsumerWidget {
             ),
             const SizedBox(width: Style.spacingSmall),
             Text(
-              '23-01-2025',
+              _getCurrentDate(),
               style: Style.fontNormal.copyWith(
                 color: Style.textColorWhite.withOpacity(0.9),
               ),
@@ -45,20 +49,73 @@ class KitchenScreen extends ConsumerWidget {
           ],
         ),
         actions: [
-          IconButton(
-            icon: Icon(
-              Icons.notifications_outlined,
-              color: Style.textColorWhite,
-            ),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Không có thông báo mới',
+          // Hiển thị số orders pending
+          if (orderCounts[KitchenOrderStatus.pending]! > 0)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.orange[600],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${orderCounts[KitchenOrderStatus.pending]} món chờ',
                     style: Style.fontNormal.copyWith(
                       color: Style.textColorWhite,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
                     ),
                   ),
+                ),
+              ),
+            ),
+          IconButton(
+            icon: Stack(
+              children: [
+                Icon(Icons.notifications_outlined, color: Style.textColorWhite),
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      final unreadCount = ref.watch(unreadCountProvider);
+                      if (unreadCount == 0) return const SizedBox.shrink();
+
+                      return Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          '$unreadCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationScreen(),
                 ),
               );
             },
@@ -73,8 +130,8 @@ class KitchenScreen extends ConsumerWidget {
           child: Column(
             children: [
               _buildSearchBar(ref, isWeb, searchQuery),
-              _buildTabs(ref, isWeb),
-              _buildHeader(isWeb, filteredOrders.length),
+              _buildTabs(ref, isWeb, orderCounts),
+              _buildHeader(isWeb, filteredOrders.length, selectedTab),
               _buildOrdersList(ref, filteredOrders, selectedTab, isWeb),
             ],
           ),
@@ -83,7 +140,8 @@ class KitchenScreen extends ConsumerWidget {
     );
   }
 
-  /// Build search bar
+  // ==================== BUILD METHODS ====================
+
   Widget _buildSearchBar(WidgetRef ref, bool isWeb, String searchQuery) {
     return Container(
       padding: EdgeInsets.all(isWeb ? 20 : Style.paddingPhone),
@@ -117,16 +175,155 @@ class KitchenScreen extends ConsumerWidget {
     );
   }
 
-  /// Build tabs
-  Widget _buildTabs(WidgetRef ref, bool isWeb) {
+  /// Build tabs - 4 TABS
+  Widget _buildTabs(
+    WidgetRef ref,
+    bool isWeb,
+    Map<KitchenOrderStatus, int> counts,
+  ) {
     return Container(
       color: Style.colorLight,
-      child: isWeb ? _buildWebTabs(ref) : _buildMobileTabs(ref),
+      child: isWeb ? _buildWebTabs(ref, counts) : _buildMobileTabs(ref, counts),
     );
   }
 
-  /// Build header with count
-  Widget _buildHeader(bool isWeb, int count) {
+  Widget _buildWebTabs(WidgetRef ref, Map<KitchenOrderStatus, int> counts) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildTab(
+          ref,
+          'Chưa làm',
+          0,
+          counts[KitchenOrderStatus.pending]!,
+          minWidth: 150,
+        ),
+        _buildTab(
+          ref,
+          'Đã làm',
+          1,
+          counts[KitchenOrderStatus.completed]!,
+          minWidth: 150,
+        ),
+        _buildTab(
+          ref,
+          'Hết món',
+          2,
+          counts[KitchenOrderStatus.outOfStock]!,
+          minWidth: 150,
+        ),
+        _buildTab(
+          ref,
+          'Đã hủy',
+          3,
+          counts[KitchenOrderStatus.cancelled]!,
+          minWidth: 150,
+        ),
+      ],
+    );
+  }
+
+  /// Mobile tabs
+  Widget _buildMobileTabs(WidgetRef ref, Map<KitchenOrderStatus, int> counts) {
+    return Row(
+      children: [
+        _buildTab(ref, 'Chưa làm', 0, counts[KitchenOrderStatus.pending]!),
+        _buildTab(ref, 'Đã làm', 1, counts[KitchenOrderStatus.completed]!),
+        _buildTab(ref, 'Hết món', 2, counts[KitchenOrderStatus.outOfStock]!),
+        _buildTab(ref, 'Đã hủy', 3, counts[KitchenOrderStatus.cancelled]!),
+      ],
+    );
+  }
+
+  Widget _buildTab(
+    WidgetRef ref,
+    String title,
+    int index,
+    int count, {
+    double? minWidth,
+  }) {
+    final selectedTab = ref.watch(selectedTabProvider);
+    final isSelected = selectedTab == index;
+
+    return Expanded(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minWidth: minWidth ?? 0),
+        child: GestureDetector(
+          onTap: () => ref.read(selectedTabProvider.notifier).state = index,
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: isSelected ? Colors.blue[700]! : Colors.transparent,
+                    width: 3,
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: Style.fontTitleSuperMini.copyWith(
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
+                      color:
+                          isSelected ? Colors.blue[700] : Style.textColorGray,
+                    ),
+                  ),
+                  if (count > 0) ...[
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected ? Colors.blue[700] : Colors.grey[400],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '$count',
+                        style: Style.fontCaption.copyWith(
+                          color: Style.textColorWhite,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(bool isWeb, int count, int selectedTab) {
+    String title;
+    switch (selectedTab) {
+      case 0:
+        title = 'Món cần làm';
+        break;
+      case 1:
+        title = 'Món đã làm xong';
+        break;
+      case 2:
+        title = 'Món hết nguyên liệu';
+        break;
+      case 3:
+        title = 'Món đã bị hủy';
+        break;
+      default:
+        title = 'Danh sách các món';
+    }
+
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isWeb ? 20 : Style.paddingPhone,
@@ -137,7 +334,7 @@ class KitchenScreen extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Danh sách các món*',
+            title,
             style: Style.fontTitleMini.copyWith(
               fontSize: isWeb ? 18 : 16,
               fontWeight: FontWeight.w500,
@@ -161,7 +358,6 @@ class KitchenScreen extends ConsumerWidget {
     );
   }
 
-  /// Build orders list
   Widget _buildOrdersList(
     WidgetRef ref,
     List<KitchenOrder> orders,
@@ -171,81 +367,32 @@ class KitchenScreen extends ConsumerWidget {
     return Expanded(
       child:
           orders.isEmpty
-              ? _buildEmptyState()
+              ? _buildEmptyState(selectedTab)
               : (isWeb
                   ? _buildWebGrid(ref, orders, selectedTab)
                   : _buildMobileList(ref, orders, selectedTab)),
     );
   }
 
-  // ==================== TAB WIDGETS ====================
+  Widget _buildEmptyState(int selectedTab) {
+    String message;
+    switch (selectedTab) {
+      case 0:
+        message = 'Không có món nào cần làm';
+        break;
+      case 1:
+        message = 'Không có món nào đã hoàn thành';
+        break;
+      case 2:
+        message = 'Không có món nào hết';
+        break;
+      case 3:
+        message = 'Không có món nào bị hủy';
+        break;
+      default:
+        message = 'Không có món nào';
+    }
 
-  /// Web tabs
-  Widget _buildWebTabs(WidgetRef ref) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildTab(ref, 'Chưa làm', 0, minWidth: 150),
-        _buildTab(ref, 'Đã làm', 1, minWidth: 150),
-        _buildTab(ref, 'Hết món', 2, minWidth: 150),
-        _buildTab(ref, 'Đã hủy', 3, minWidth: 150),
-      ],
-    );
-  }
-
-  /// Mobile tabs
-  Widget _buildMobileTabs(WidgetRef ref) {
-    return Row(
-      children: [
-        _buildTab(ref, 'Chưa làm', 0),
-        _buildTab(ref, 'Đã làm', 1),
-        _buildTab(ref, 'Hết món', 2),
-        _buildTab(ref, 'Đã hủy', 3),
-      ],
-    );
-  }
-
-  /// Single tab item
-  Widget _buildTab(WidgetRef ref, String title, int index, {double? minWidth}) {
-    final selectedTab = ref.watch(selectedTabProvider);
-    final isSelected = selectedTab == index;
-
-    return Expanded(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(minWidth: minWidth ?? 0),
-        child: GestureDetector(
-          onTap: () => ref.read(selectedTabProvider.notifier).state = index,
-          child: MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: isSelected ? Colors.blue[700]! : Colors.transparent,
-                    width: 3,
-                  ),
-                ),
-              ),
-              child: Text(
-                title,
-                textAlign: TextAlign.center,
-                style: Style.fontTitleSuperMini.copyWith(
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? Colors.blue[700] : Style.textColorGray,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ==================== LIST/GRID WIDGETS ====================
-
-  /// Empty state
-  Widget _buildEmptyState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -253,7 +400,7 @@ class KitchenScreen extends ConsumerWidget {
           Icon(Icons.restaurant_menu, size: 64, color: Colors.grey[400]),
           const SizedBox(height: Style.spacingMedium),
           Text(
-            'Không có món nào',
+            message,
             style: Style.fontTitleMini.copyWith(color: Style.textColorGray),
           ),
         ],
@@ -261,7 +408,6 @@ class KitchenScreen extends ConsumerWidget {
     );
   }
 
-  /// Mobile list view
   Widget _buildMobileList(
     WidgetRef ref,
     List<KitchenOrder> orders,
@@ -276,7 +422,6 @@ class KitchenScreen extends ConsumerWidget {
     );
   }
 
-  /// Web grid view
   Widget _buildWebGrid(
     WidgetRef ref,
     List<KitchenOrder> orders,
@@ -299,7 +444,6 @@ class KitchenScreen extends ConsumerWidget {
 
   // ==================== DISH CARD ====================
 
-  /// Dish card
   Widget _buildDishCard(
     WidgetRef ref,
     KitchenOrder order,
@@ -329,57 +473,90 @@ class KitchenScreen extends ConsumerWidget {
     );
   }
 
-  /// Dish info (name, time, table)
   Widget _buildDishInfo(KitchenOrder order, bool isWeb) {
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            order.dishName,
-            style: Style.fontTitleMini.copyWith(
-              fontSize: isWeb ? 18 : 16,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  order.dishName,
+                  style: Style.fontTitleMini.copyWith(
+                    fontSize: isWeb ? 18 : 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (order.quantity > 1)
+                Container(
+                  margin: const EdgeInsets.only(left: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[100],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'x${order.quantity}',
+                    style: Style.fontCaption.copyWith(
+                      color: Colors.blue[700],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(
-            'Giờ tạo : ${order.createdTime}',
+            'Giờ tạo: ${order.createdTime}',
             style: Style.fontCaption.copyWith(fontSize: isWeb ? 14 : 13),
           ),
           const SizedBox(height: 2),
           Text(
-            'Bàn : ${order.tableNumber}',
+            'Bàn: ${order.tableNumber}',
             style: Style.fontCaption.copyWith(fontSize: isWeb ? 14 : 13),
           ),
+          if (order.note != null && order.note!.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              'Ghi chú: ${order.note}',
+              style: Style.fontCaption.copyWith(
+                fontSize: isWeb ? 14 : 13,
+                color: Colors.orange[700],
+                fontStyle: FontStyle.italic,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ],
       ),
     );
   }
 
-  /// Dish actions (buttons or status)
   Widget _buildDishActions(
     WidgetRef ref,
     KitchenOrder order,
     int selectedTab,
     bool isWeb,
   ) {
-    // Tab "Chưa làm" - hiển thị buttons
     if (selectedTab == 0) {
       return Wrap(
         spacing: Style.spacingSmall,
         runSpacing: Style.spacingSmall,
         children: [
           _buildActionButton(
-            ref: ref,
             label: 'Xong',
             color: Colors.blue[600]!,
             onPressed: () => _handleComplete(ref, order),
             isWeb: isWeb,
           ),
           _buildActionButton(
-            ref: ref,
             label: 'Hết',
             color: Colors.orange[300]!,
             onPressed: () => _handleOutOfStock(ref, order),
@@ -389,7 +566,6 @@ class KitchenScreen extends ConsumerWidget {
       );
     }
 
-    // Tab "Đã làm" - hiển thị status "Chờ lấy"
     if (selectedTab == 1) {
       return Container(
         padding: EdgeInsets.symmetric(
@@ -397,7 +573,7 @@ class KitchenScreen extends ConsumerWidget {
           vertical: isWeb ? 12 : 10,
         ),
         decoration: BoxDecoration(
-          color: Colors.grey[200],
+          color: Colors.green[100],
           borderRadius: BorderRadius.circular(Style.buttonBorderRadius),
         ),
         child: Text(
@@ -405,13 +581,12 @@ class KitchenScreen extends ConsumerWidget {
           style: Style.fontButton.copyWith(
             fontSize: isWeb ? 15 : 14,
             fontWeight: FontWeight.w600,
-            color: Colors.grey[700],
+            color: Colors.green[700],
           ),
         ),
       );
     }
 
-    // Tab "Hết món" - hiển thị text "Đã hết"
     if (selectedTab == 2) {
       return Text(
         'Đã hết',
@@ -423,7 +598,6 @@ class KitchenScreen extends ConsumerWidget {
       );
     }
 
-    // Tab "Đã hủy" - hiển thị text "Đã hủy"
     return Text(
       'Đã hủy',
       style: Style.fontTitleMini.copyWith(
@@ -434,9 +608,7 @@ class KitchenScreen extends ConsumerWidget {
     );
   }
 
-  /// Action button (Xong, Hết)
   Widget _buildActionButton({
-    required WidgetRef ref,
     required String label,
     required Color color,
     required VoidCallback onPressed,
@@ -456,9 +628,7 @@ class KitchenScreen extends ConsumerWidget {
         ),
         elevation: 0,
       ).copyWith(
-        overlayColor: WidgetStateProperty.resolveWith<Color?>((
-          Set<WidgetState> states,
-        ) {
+        overlayColor: WidgetStateProperty.resolveWith<Color?>((states) {
           if (states.contains(WidgetState.hovered)) {
             return Colors.white.withOpacity(0.1);
           }
@@ -472,47 +642,49 @@ class KitchenScreen extends ConsumerWidget {
     );
   }
 
-  // ==================== HANDLERS ====================
-
-  /// Handle complete order
   void _handleComplete(WidgetRef ref, KitchenOrder order) {
     if (!order.canBeProcessed) {
       _showSnackBar(ref, 'Chỉ có thể xử lý món ở tab "Chưa làm"', Colors.red);
       return;
     }
 
-    final orders = ref.read(ordersProvider);
-    final updatedOrders =
-        orders.map((o) {
-          return o == order ? o.markAsCompleted() : o;
-        }).toList();
+    ref.read(completeOrderProvider(order.id))();
 
-    ref.read(ordersProvider.notifier).state = updatedOrders;
+    _showSnackBar(
+      ref,
+      'Đã hoàn thành món ${order.dishName}. Đã tạo thông báo!',
+      Colors.green,
+    );
 
-    _showSnackBar(ref, 'Đã hoàn thành món ${order.dishName}', Colors.green);
+    Future.delayed(const Duration(milliseconds: 500), () {
+      ref.read(selectedTabProvider.notifier).state = 1;
+    });
   }
 
-  /// Handle out of stock
   void _handleOutOfStock(WidgetRef ref, KitchenOrder order) {
     if (!order.canBeProcessed) {
       _showSnackBar(ref, 'Chỉ có thể xử lý món ở tab "Chưa làm"', Colors.red);
       return;
     }
 
-    final orders = ref.read(ordersProvider);
-    final updatedOrders =
-        orders.map((o) {
-          return o == order ? o.markAsOutOfStock() : o;
-        }).toList();
+    ref.read(outOfStockOrderProvider(order.id))();
 
-    ref.read(ordersProvider.notifier).state = updatedOrders;
+    _showSnackBar(
+      ref,
+      'Món ${order.dishName} đã hết. Đã tạo thông báo!',
+      Colors.orange,
+    );
 
-    _showSnackBar(ref, 'Món ${order.dishName} đã hết', Colors.orange);
+    Future.delayed(const Duration(milliseconds: 500), () {
+      ref.read(selectedTabProvider.notifier).state = 2;
+    });
   }
 
-  /// Show snackbar helper
   void _showSnackBar(WidgetRef ref, String message, Color backgroundColor) {
-    ScaffoldMessenger.of(ref.context).showSnackBar(
+    final context = ref.context;
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           message,
@@ -520,7 +692,13 @@ class KitchenScreen extends ConsumerWidget {
         ),
         backgroundColor: backgroundColor,
         duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  String _getCurrentDate() {
+    final now = DateTime.now();
+    return '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
   }
 }

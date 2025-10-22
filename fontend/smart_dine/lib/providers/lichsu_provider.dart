@@ -1,185 +1,119 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/lichsu_models.dart';
+import '../models/history_order.dart';
 
-/// Provider cho danh sách lịch sử orders
-final historyOrdersProvider = StateProvider<List<HistoryOrderModel>>((ref) {
-  // Dữ liệu mẫu - sau này thay bằng dữ liệu từ database
-  return [
-    HistoryOrderModel(
-      id: 1,
-      dishName: 'Bánh mì',
-      tableNumber: 'B-5',
-      staffName: 'Nguyễn Văn A',
-      time: DateTime.now().subtract(const Duration(hours: 2)),
-      dishCategory: 'Món chính',
-      orderId: 101,
-      dishId: 1,
-      staffId: 1,
-    ),
-    HistoryOrderModel(
-      id: 2,
-      dishName: 'Bánh mì',
-      tableNumber: 'A-2',
-      staffName: 'Nguyễn Văn B',
-      time: DateTime.now().subtract(const Duration(hours: 3)),
-      dishCategory: 'Món chính',
-      orderId: 102,
-      dishId: 1,
-      staffId: 2,
-    ),
-    HistoryOrderModel(
-      id: 3,
-      dishName: 'Salad',
-      tableNumber: 'B-5',
-      staffName: 'Nguyễn Văn C',
-      time: DateTime.now().subtract(const Duration(hours: 4)),
-      dishCategory: 'Món khai vị',
-      orderId: 103,
-      dishId: 2,
-      staffId: 3,
-    ),
-    HistoryOrderModel(
-      id: 4,
-      dishName: 'Kem',
-      tableNumber: 'B-5',
-      staffName: 'Nguyễn Văn A',
-      time: DateTime.now().subtract(const Duration(hours: 5)),
-      dishCategory: 'Món tráng miệng',
-      orderId: 104,
-      dishId: 3,
-      staffId: 1,
-    ),
-    HistoryOrderModel(
-      id: 5,
-      dishName: 'Phở bò',
-      tableNumber: 'C-3',
-      staffName: 'Nguyễn Văn D',
-      time: DateTime.now().subtract(const Duration(days: 1)),
-      dishCategory: 'Món chính',
-      orderId: 105,
-      dishId: 4,
-      staffId: 4,
-    ),
-  ];
+// ==================== STATE PROVIDERS ====================
+
+/// Provider cho danh sách lịch sử - BẮT ĐẦU RỖNG
+final historyProvider = StateProvider<List<HistoryOrder>>((ref) {
+  return []; // Không có dữ liệu cứng
+});
+
+/// Provider để thêm order vào lịch sử
+final addHistoryOrderProvider = Provider<void Function(HistoryOrder)>((ref) {
+  return (HistoryOrder order) {
+    final currentHistory = ref.read(historyProvider);
+    ref.read(historyProvider.notifier).state = [order, ...currentHistory];
+  };
 });
 
 /// Provider cho search query
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
-/// Provider cho time filter (today, week, custom)
+/// Provider cho time filter
 final selectedTimeFilterProvider = StateProvider<String>((ref) => 'today');
 
-/// Provider cho custom date range (khi chọn "Chọn ngày")
+/// Provider cho custom date range
 final customDateRangeProvider = StateProvider<DateTimeRange?>((ref) => null);
 
 /// Provider cho staff filter
 final staffFilterProvider = StateProvider<Map<String, bool>>((ref) {
-  return {
-    'Nguyễn Văn A': false,
-    'Nguyễn Văn B': false,
-    'Nguyễn Văn C': false,
-    'Nguyễn Văn D': false,
-  };
+  return {'Nguyễn Văn A': false, 'Trần Thị B': false, 'Lê Văn C': false};
 });
 
 /// Provider cho dish category filter
 final dishCategoryFilterProvider = StateProvider<Map<String, bool>>((ref) {
-  return {'Món khai vị': false, 'Món chính': false, 'Món tráng miệng': false};
+  return {
+    'Bún': false,
+    'Phở': false,
+    'Cơm': false,
+    'Bánh mì': false,
+    'Mì': false,
+  };
 });
 
-/// Provider để lấy danh sách staff từ history
-final availableStaffProvider = Provider<List<String>>((ref) {
-  final orders = ref.watch(historyOrdersProvider);
-  final staffSet = orders.map((order) => order.staffName).toSet();
-  return staffSet.toList()..sort();
-});
+// ==================== COMPUTED PROVIDERS ====================
 
-/// Provider để lấy danh sách dish categories từ history
-final availableDishCategoriesProvider = Provider<List<String>>((ref) {
-  final orders = ref.watch(historyOrdersProvider);
-  final categorySet = orders.map((order) => order.dishCategory).toSet();
-  return categorySet.toList()..sort();
-});
-
-/// Provider cho filtered history với tất cả filters
-final filteredHistoryProvider = Provider<List<HistoryOrderModel>>((ref) {
-  final orders = ref.watch(historyOrdersProvider);
+/// Provider cho filtered history
+final filteredHistoryProvider = Provider<List<HistoryOrder>>((ref) {
+  var history = ref.watch(historyProvider);
   final searchQuery = ref.watch(searchQueryProvider);
   final timeFilter = ref.watch(selectedTimeFilterProvider);
-  final customDateRange = ref.watch(customDateRangeProvider);
+  final customRange = ref.watch(customDateRangeProvider);
   final staffFilter = ref.watch(staffFilterProvider);
-  final dishCategoryFilter = ref.watch(dishCategoryFilterProvider);
+  final dishFilter = ref.watch(dishCategoryFilterProvider);
 
-  List<HistoryOrderModel> filtered = orders;
-
-  // 1. Lọc theo thời gian
-  switch (timeFilter) {
-    case 'today':
-      filtered = filtered.where((order) => order.isToday).toList();
-      break;
-    case 'week':
-      filtered = filtered.where((order) => order.isThisWeek).toList();
-      break;
-    case 'custom':
-      if (customDateRange != null) {
-        filtered =
-            filtered.where((order) {
-              return order.time.isAfter(customDateRange.start) &&
-                  order.time.isBefore(
-                    customDateRange.end.add(const Duration(days: 1)),
-                  );
-            }).toList();
-      }
-      break;
-  }
-
-  // 2. Lọc theo nhân viên
-  final selectedStaff =
-      staffFilter.entries
-          .where((entry) => entry.value)
-          .map((entry) => entry.key)
-          .toList();
-
-  if (selectedStaff.isNotEmpty) {
-    filtered =
-        filtered.where((order) {
-          return selectedStaff.contains(order.staffName);
+  // Apply time filter
+  final now = DateTime.now();
+  if (timeFilter == 'today') {
+    final today = DateTime(now.year, now.month, now.day);
+    history =
+        history.where((h) {
+          final orderDate = DateTime(
+            h.servedAt.year,
+            h.servedAt.month,
+            h.servedAt.day,
+          );
+          return orderDate == today;
+        }).toList();
+  } else if (timeFilter == 'week') {
+    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+    final startDate = DateTime(
+      startOfWeek.year,
+      startOfWeek.month,
+      startOfWeek.day,
+    );
+    history = history.where((h) => h.servedAt.isAfter(startDate)).toList();
+  } else if (timeFilter == 'custom' && customRange != null) {
+    history =
+        history.where((h) {
+          return h.servedAt.isAfter(customRange.start) &&
+              h.servedAt.isBefore(customRange.end.add(const Duration(days: 1)));
         }).toList();
   }
 
-  // 3. Lọc theo loại món
-  final selectedCategories =
-      dishCategoryFilter.entries
-          .where((entry) => entry.value)
-          .map((entry) => entry.key)
-          .toList();
+  // Apply staff filter
+  final activeStaff =
+      staffFilter.entries.where((e) => e.value).map((e) => e.key).toList();
+  if (activeStaff.isNotEmpty) {
+    history = history.where((h) => activeStaff.contains(h.staffName)).toList();
+  }
 
-  if (selectedCategories.isNotEmpty) {
-    filtered =
-        filtered.where((order) {
-          return selectedCategories.contains(order.dishCategory);
+  // Apply dish filter
+  final activeDishes =
+      dishFilter.entries.where((e) => e.value).map((e) => e.key).toList();
+  if (activeDishes.isNotEmpty) {
+    history =
+        history.where((h) {
+          return activeDishes.any((dish) => h.dishName.contains(dish));
         }).toList();
   }
 
-  // 4. Lọc theo search query
+  // Apply search
   if (searchQuery.isNotEmpty) {
     final query = searchQuery.toLowerCase();
-    filtered =
-        filtered.where((order) {
-          return order.dishName.toLowerCase().contains(query) ||
-              order.tableNumber.toLowerCase().contains(query) ||
-              order.staffName.toLowerCase().contains(query);
+    history =
+        history.where((h) {
+          return h.dishName.toLowerCase().contains(query) ||
+              h.tableNumber.toLowerCase().contains(query) ||
+              h.staffName.toLowerCase().contains(query);
         }).toList();
   }
 
-  // 5. Sắp xếp theo thời gian mới nhất
-  filtered.sort((a, b) => b.time.compareTo(a.time));
-
-  return filtered;
+  return history;
 });
 
-/// Provider đếm số lượng active filters
+/// Provider đếm số filter đang active
 final activeFiltersCountProvider = Provider<int>((ref) {
   int count = 0;
 
@@ -198,8 +132,8 @@ final activeFiltersCountProvider = Provider<int>((ref) {
   return count;
 });
 
-/// Provider để clear tất cả filters
-final clearAllFiltersProvider = Provider<void Function()>((ref) {
+/// Provider để clear all filters
+final clearAllFiltersProvider = Provider<VoidCallback>((ref) {
   return () {
     // Reset search
     ref.read(searchQueryProvider.notifier).state = '';
@@ -210,65 +144,74 @@ final clearAllFiltersProvider = Provider<void Function()>((ref) {
 
     // Reset staff filter
     final staffFilter = ref.read(staffFilterProvider);
-    final clearedStaff = Map<String, bool>.from(staffFilter);
-    clearedStaff.updateAll((key, value) => false);
-    ref.read(staffFilterProvider.notifier).state = clearedStaff;
+    final resetStaff = Map<String, bool>.fromEntries(
+      staffFilter.keys.map((k) => MapEntry(k, false)),
+    );
+    ref.read(staffFilterProvider.notifier).state = resetStaff;
 
     // Reset dish filter
     final dishFilter = ref.read(dishCategoryFilterProvider);
-    final clearedDish = Map<String, bool>.from(dishFilter);
-    clearedDish.updateAll((key, value) => false);
-    ref.read(dishCategoryFilterProvider.notifier).state = clearedDish;
+    final resetDish = Map<String, bool>.fromEntries(
+      dishFilter.keys.map((k) => MapEntry(k, false)),
+    );
+    ref.read(dishCategoryFilterProvider.notifier).state = resetDish;
+
+    ref.read(searchQueryProvider.notifier).state = '';
   };
 });
 
-/// Provider để thêm history order mới
-final addHistoryOrderProvider = Provider<void Function(HistoryOrderModel)>((
-  ref,
-) {
-  return (HistoryOrderModel order) {
-    final currentOrders = ref.read(historyOrdersProvider);
-    ref.read(historyOrdersProvider.notifier).state = [order, ...currentOrders];
-  };
+/// Provider tổng số lịch sử
+final totalHistoryProvider = Provider<int>((ref) {
+  return ref.watch(historyProvider).length;
 });
 
-/// Provider để xóa history order
-final deleteHistoryOrderProvider = Provider<void Function(int)>((ref) {
-  return (int orderId) {
-    final currentOrders = ref.read(historyOrdersProvider);
-    ref.read(historyOrdersProvider.notifier).state =
-        currentOrders.where((order) => order.id != orderId).toList();
-  };
-});
-
-/// Provider để clear toàn bộ history
-final clearAllHistoryProvider = Provider<Future<void> Function()>((ref) {
-  return () async {
-    // TODO: Implement clear history from database
-    ref.read(historyOrdersProvider.notifier).state = [];
-  };
-});
-
-/// Provider lấy history count
-final historyCountProvider = Provider<int>((ref) {
-  final orders = ref.watch(historyOrdersProvider);
-  return orders.length;
-});
-
-/// Provider lấy filtered history count
-final filteredHistoryCountProvider = Provider<int>((ref) {
-  final filtered = ref.watch(filteredHistoryProvider);
-  return filtered.length;
-});
-
-/// Provider lấy today's history count
+/// Provider lịch sử hôm nay
 final todayHistoryCountProvider = Provider<int>((ref) {
-  final orders = ref.watch(historyOrdersProvider);
-  return orders.where((order) => order.isToday).length;
+  final history = ref.watch(historyProvider);
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+
+  return history.where((h) {
+    final orderDate = DateTime(
+      h.servedAt.year,
+      h.servedAt.month,
+      h.servedAt.day,
+    );
+    return orderDate == today;
+  }).length;
 });
 
-/// Provider lấy this week's history count
-final thisWeekHistoryCountProvider = Provider<int>((ref) {
-  final orders = ref.watch(historyOrdersProvider);
-  return orders.where((order) => order.isThisWeek).length;
+/// Provider nhân viên phục vụ nhiều nhất hôm nay
+final topStaffTodayProvider = Provider<String?>((ref) {
+  final history = ref.watch(historyProvider);
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+
+  final todayHistory =
+      history.where((h) {
+        final orderDate = DateTime(
+          h.servedAt.year,
+          h.servedAt.month,
+          h.servedAt.day,
+        );
+        return orderDate == today;
+      }).toList();
+
+  if (todayHistory.isEmpty) return null;
+
+  final staffCounts = <String, int>{};
+  for (final h in todayHistory) {
+    staffCounts[h.staffName] = (staffCounts[h.staffName] ?? 0) + 1;
+  }
+
+  var maxCount = 0;
+  String? topStaff;
+  staffCounts.forEach((staff, count) {
+    if (count > maxCount) {
+      maxCount = count;
+      topStaff = staff;
+    }
+  });
+
+  return topStaff;
 });
