@@ -1,6 +1,7 @@
 package com.smartdine.services;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,17 +28,22 @@ public class OrderServices {
 
     // Lấy danh sách tableId đã có order chưa thanh toán ngay hôm nay
     // statusId = 2 là "SERVING" (đang phục vụ, chưa thanh toán)
+    // Sử dụng múi giờ Việt Nam (Asia/Ho_Chi_Minh - GMT+7)
     public List<Integer> getUnpaidOrderTableIdsToday() {
-        return orderRepository.findDistinctTableIdByStatusIdAndCreatedAtBetween(2,
-                LocalDateTime.now().withHour(0).withMinute(0).withSecond(0),
-                LocalDateTime.now().withHour(23).withMinute(59).withSecond(59));
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+        LocalDateTime startOfDay = now.withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime endOfDay = now.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+        
+        return orderRepository.findDistinctTableIdByStatusIdAndCreatedAtBetween(2, startOfDay, endOfDay);
     }
 
     // Lấy danh sách order theo tableId ngay hôm nay
     public List<Order> getOrdersByTableIdToday(Integer tableId) {
-        return orderRepository.findByTableIdAndCreatedAtBetween(tableId,
-                LocalDateTime.now().withHour(0).withMinute(0).withSecond(0),
-                LocalDateTime.now().withHour(23).withMinute(59).withSecond(59));
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+        LocalDateTime startOfDay = now.withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime endOfDay = now.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+        
+        return orderRepository.findByTableIdAndCreatedAtBetween(tableId, startOfDay, endOfDay);
     }
 
 }
