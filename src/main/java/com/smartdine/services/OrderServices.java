@@ -25,9 +25,10 @@ public class OrderServices {
         return orderRepository.findById(id).orElse(null);
     }
 
-    // Lấy danh sách tableId đã có order chưa thanh toán ngay hôm nayzx
+    // Lấy danh sách tableId đã có order chưa thanh toán ngay hôm nay
+    // statusId = 2 là "SERVING" (đang phục vụ, chưa thanh toán)
     public List<Integer> getUnpaidOrderTableIdsToday() {
-        return orderRepository.findDistinctTableIdByStatusIdNotAndCreatedAtBetween(2,
+        return orderRepository.findDistinctTableIdByStatusIdAndCreatedAtBetween(2,
                 LocalDateTime.now().withHour(0).withMinute(0).withSecond(0),
                 LocalDateTime.now().withHour(23).withMinute(59).withSecond(59));
     }

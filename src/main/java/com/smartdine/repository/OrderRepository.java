@@ -17,7 +17,13 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     // Lấy danh sách order by tableId ngay hôm nay
     List<Order> findByTableIdAndCreatedAtBetween(Integer tableId, LocalDateTime startOfDay, LocalDateTime endOfDay);
 
-    // Lấy danh sách tableId đã có order chưa thanh toán ngay hôm nay
+    // Lấy danh sách tableId đã có order với statusId cụ thể ngay hôm nay
+    List<Integer> findDistinctTableIdByStatusIdAndCreatedAtBetween(Integer statusId, LocalDateTime startOfDay,
+            LocalDateTime endOfDay);
+
+    // Lấy danh sách tableId đã có order chưa thanh toán ngay hôm nay (deprecated -
+    // không dùng nữa)
+    @Deprecated
     List<Integer> findDistinctTableIdByStatusIdNotAndCreatedAtBetween(Integer statusId, LocalDateTime startOfDay,
             LocalDateTime endOfDay);
 }
