@@ -1,22 +1,21 @@
 // File: mart_dine/models/table.dart
 
-import 'package:flutter/material.dart'; // Import Material cho Color (nếu cần dùng Color trong model)
-import 'package:mart_dine/models/menu.dart'; // Đảm bảo đã import MenuItemModel
+import 'package:flutter/material.dart'; 
+import 'package:mart_dine/models/menu.dart'; 
 
-// Enum trạng thái bàn
+// Enum trạng thái bàn (KHÔNG THAY ĐỔI)
 enum TableStatus {
-  available, // trống
-  reserved, // đã đặt trước
-  serving, // đang phục vụ
+  available, 
+  reserved, 
+  serving, 
 }
 
-// ✅ Thêm Enum cho khu vực bàn
 enum TableZone {
-  all, // Mới: Để đại diện cho "Tất cả" trong bộ lọc
+  all, 
   vip,
-  quiet, // Yên tĩnh
-  indoor, // Trong nhà
-  outdoor, // Ngoài trời
+  quiet,
+  indoor, 
+  outdoor, 
 }
 
 class TableModel {
@@ -27,7 +26,8 @@ class TableModel {
   final int? customerCount;
   final double totalAmount;
   final List<MenuItemModel> existingItems;
-  final TableZone zone; // ✅ Thêm thuộc tính khu vực
+  final TableZone zone; 
+  final bool isPendingPayment; // ✅ THÊM CỜ (FLAG) NÀY
 
   TableModel({
     required this.id,
@@ -38,6 +38,7 @@ class TableModel {
     this.totalAmount = 0.0,
     this.existingItems = const [],
     this.zone = TableZone.indoor, 
+    this.isPendingPayment = false, // ✅ Thêm giá trị mặc định
   });
 
   TableModel copyWith({ 
@@ -49,6 +50,7 @@ class TableModel {
     double? totalAmount,
     List<MenuItemModel>? existingItems,
     TableZone? zone, 
+    bool? isPendingPayment, // ✅ Thêm vào copyWith
   }) {
     return TableModel(
       id: id ?? this.id,
@@ -59,6 +61,7 @@ class TableModel {
       totalAmount: totalAmount ?? this.totalAmount,
       existingItems: existingItems ?? this.existingItems,
       zone: zone ?? this.zone, 
+      isPendingPayment: isPendingPayment ?? this.isPendingPayment, // ✅
     );
   }
 }

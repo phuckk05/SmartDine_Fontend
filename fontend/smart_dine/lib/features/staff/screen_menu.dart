@@ -35,7 +35,8 @@ class _ScreenChooseMenuState extends ConsumerState<ScreenChooseMenu> {
   // --- WIDGETS ---
 
   // Card Món ăn
-  Widget _buildMenuItemCard(MenuItemModel item, int quantity, ChooseMenuNotifier notifier) {
+  Widget _buildMenuItemCard(
+      MenuItemModel item, int quantity, ChooseMenuNotifier notifier) {
     final isSelected = quantity > 0;
     final currencyFormatter = NumberFormat.decimalPattern('vi_VN');
 
@@ -129,7 +130,8 @@ class _ScreenChooseMenuState extends ConsumerState<ScreenChooseMenu> {
                   ),
                   Text(
                     '$quantity',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   IconButton(
                     icon: const Icon(Icons.add, color: Colors.blue, size: 20),
@@ -150,9 +152,12 @@ class _ScreenChooseMenuState extends ConsumerState<ScreenChooseMenu> {
 
     String getCategoryLabel(MenuCategory category) {
       switch (category) {
-        case MenuCategory.all: return 'Tất cả';
-        case MenuCategory.mainCourse: return 'Món chính';
-        case MenuCategory.drink: return 'Đồ uống';
+        case MenuCategory.all:
+          return 'Tất cả';
+        case MenuCategory.mainCourse:
+          return 'Món chính';
+        case MenuCategory.drink:
+          return 'Đồ uống';
       }
     }
 
@@ -168,7 +173,8 @@ class _ScreenChooseMenuState extends ConsumerState<ScreenChooseMenu> {
               onSelected: (_) => notifier.setFilter(category),
               selectedColor: Colors.blue,
               labelStyle: TextStyle(
-                color: selectedCategory == category ? Colors.white : Colors.black,
+                color:
+                    selectedCategory == category ? Colors.white : Colors.black,
               ),
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(
@@ -206,7 +212,7 @@ class _ScreenChooseMenuState extends ConsumerState<ScreenChooseMenu> {
     );
   }
 
-  // Panel Tóm tắt Đơn hàng
+  // Panel Tóm tắt Đơn hàng (Đã cập nhật logic 2 nút)
   Widget _buildOrderSummaryPanel() {
     return ValueListenableBuilder<bool>(
       valueListenable: _isPanelOpen,
@@ -217,8 +223,10 @@ class _ScreenChooseMenuState extends ConsumerState<ScreenChooseMenu> {
         final tableNotifier = ref.read(tableProvider.notifier);
         final currencyFormatter = NumberFormat.decimalPattern('vi_VN');
 
-        final selectedItemsWithDetails = menuState.selectedItems.entries.map((entry) {
-          final item = menuState.allMenuItems.firstWhere((i) => i.id == entry.key);
+        final selectedItemsWithDetails =
+            menuState.selectedItems.entries.map((entry) {
+          final item =
+              menuState.allMenuItems.firstWhere((i) => i.id == entry.key);
           return MapEntry(item, entry.value);
         }).toList();
 
@@ -271,10 +279,12 @@ class _ScreenChooseMenuState extends ConsumerState<ScreenChooseMenu> {
                   children: [
                     Text(
                       'Đơn hàng - Bàn ${selectedTable?.name ?? ''}',
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
-                    Text('Số khách: ${widget.initialGuestCount}', style: TextStyle(color: Colors.grey[600])),
+                    Text('Số khách: ${widget.initialGuestCount}',
+                        style: TextStyle(color: Colors.grey[600])),
                     const Divider(height: 24),
                     Expanded(
                       child: ListView.builder(
@@ -286,9 +296,12 @@ class _ScreenChooseMenuState extends ConsumerState<ScreenChooseMenu> {
                             title: Text(entry.key.name),
                             leading: Text(
                               '${entry.value}x',
-                              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue),
                             ),
-                            trailing: Text('${currencyFormatter.format(entry.key.price * entry.value)}đ'),
+                            trailing: Text(
+                                '${currencyFormatter.format(entry.key.price * entry.value)}đ'),
                           );
                         },
                       ),
@@ -297,34 +310,92 @@ class _ScreenChooseMenuState extends ConsumerState<ScreenChooseMenu> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Tổng cộng', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        const Text('Tổng cộng',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
                         Text(
                           '${currencyFormatter.format(totalAmount)}đ',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue),
+                          style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue),
                         ),
                       ],
                     ),
                     const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                           if (selectedTable != null) {
-                            final newItems = selectedItemsWithDetails.expand((entry) {
-                               return List.generate(entry.value, (_) => entry.key);
-                            }).toList();
-                            tableNotifier.updateTableOrder(selectedTable.id, newItems);
-                          }
-                          menuNotifier.clearAllSelection();
-                          _isPanelOpen.value = false;
-                          Navigator.of(context).pop();
-                        },
-                        child: const Text('Xác nhận'),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 15),
+
+                    // --- KHU VỰC NÚT BẤM ĐÃ CẬP NHẬT ---
+                    Row(
+                      children: [
+                        // ✅ NÚT YÊU CẦU THANH TOÁN
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (selectedTable != null) {
+                                // 1. Lấy danh sách các món vừa chọn
+                                final newItems =
+                                    selectedItemsWithDetails.expand((entry) {
+                                  return List.generate(
+                                      entry.value, (_) => entry.key);
+                                }).toList();
+
+                                // 2. Gọi hàm mới: vừa thêm món VỪA yêu cầu TT
+                                tableNotifier.updateOrderAndRequestCheckout(
+                                    selectedTable.id, newItems);
+                              }
+                              // 3. Dọn dẹp và thoát
+                              menuNotifier.clearAllSelection();
+                              _isPanelOpen.value = false;
+                              Navigator.of(context).pop();
+
+                              // 4. Hiển thị thông báo
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      'Đã thêm món và gửi YC thanh toán cho ${selectedTable?.name ?? ''}'),
+                                  backgroundColor: Colors.blue,
+                                ),
+                              );
+                            },
+                            child: const Text('Yêu cầu TT'),
+                            style: ElevatedButton.styleFrom(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 15),
+                              backgroundColor: Colors.orange[700], // Màu cam
+                              foregroundColor: Colors.white, // Chữ trắng
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 16), // Khoảng cách
+
+                        // ✅ NÚT XÁC NHẬN (CHỈ THÊM MÓN)
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (selectedTable != null) {
+                                final newItems =
+                                    selectedItemsWithDetails.expand((entry) {
+                                  return List.generate(
+                                      entry.value, (_) => entry.key);
+                                }).toList();
+                                // Gọi hàm cũ (chỉ thêm món)
+                                tableNotifier.updateTableOrder(
+                                    selectedTable.id, newItems);
+                              }
+                              menuNotifier.clearAllSelection();
+                              _isPanelOpen.value = false;
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text('Xác nhận'),
+                            style: ElevatedButton.styleFrom(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 15),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
+                    // --- KẾT THÚC KHU VỰC CẬP NHẬT ---
                   ],
                 ),
               ),
@@ -340,15 +411,20 @@ class _ScreenChooseMenuState extends ConsumerState<ScreenChooseMenu> {
   Widget build(BuildContext context) {
     final filteredMenuItems = ref.watch(filteredMenuItemsProvider);
     final selectedItems = ref.watch(selectedItemsProvider);
-    final totalItemsSelected = ref.watch(chooseMenuProvider.select((s) => s.totalItemsSelected));
+    final totalItemsSelected =
+        ref.watch(chooseMenuProvider.select((s) => s.totalItemsSelected));
     final notifier = ref.read(chooseMenuProvider.notifier);
 
-    ref.listen<int>(chooseMenuProvider.select((s) => s.totalItemsSelected), (previous, next) {
-        if (previous == 0 && next > 0) {
-            _isPanelOpen.value = true;
-        } else if (next == 0) {
-            _isPanelOpen.value = false;
-        }
+    // Lắng nghe tổng số món được chọn để tự động mở/đóng panel
+    ref.listen<int>(chooseMenuProvider.select((s) => s.totalItemsSelected),
+        (previous, next) {
+      if (previous == 0 && next > 0) {
+        // Nếu bắt đầu chọn từ 0, mở panel
+        _isPanelOpen.value = true;
+      } else if (next == 0) {
+        // Nếu xóa về 0, đóng panel
+        _isPanelOpen.value = false;
+      }
     });
 
     return Scaffold(
@@ -375,9 +451,10 @@ class _ScreenChooseMenuState extends ConsumerState<ScreenChooseMenu> {
                 const SizedBox(height: 16),
                 Expanded(
                   child: GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      childAspectRatio: 1.5, // <-- GIÁ TRỊ ĐÃ ĐƯỢC CHỈNH LẠI
+                      childAspectRatio: 1.5,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
                     ),
@@ -392,11 +469,12 @@ class _ScreenChooseMenuState extends ConsumerState<ScreenChooseMenu> {
               ],
             ),
           ),
-          
+
           // Lớp 2: Lớp phủ làm mờ
           _buildDimmingOverlay(),
 
           // Lớp 3: Panel đơn hàng
+          // Panel chỉ hiện khi có món *mới* được chọn
           if (totalItemsSelected > 0) _buildOrderSummaryPanel(),
         ],
       ),

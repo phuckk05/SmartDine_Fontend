@@ -11,7 +11,7 @@ import 'package:mart_dine/features/staff/table_filter_dialog.dart';
 class ScreenChooseTable extends ConsumerWidget {
   const ScreenChooseTable({Key? key}) : super(key: key);
 
-  // 🎨 Màu sắc cho từng trạng thái bàn
+  // 🎨 Màu sắc cho từng trạng thái bàn (Không thay đổi)
   Color _getTableColor(TableStatus status) {
     switch (status) {
       case TableStatus.available:
@@ -23,7 +23,7 @@ class ScreenChooseTable extends ConsumerWidget {
     }
   }
 
-  // 🏷️ Văn bản cho từng trạng thái bàn
+  // 🏷️ Văn bản cho từng trạng thái bàn (Không thay đổi)
   String _getStatusText(TableStatus status) {
     switch (status) {
       case TableStatus.available:
@@ -51,7 +51,7 @@ class ScreenChooseTable extends ConsumerWidget {
     }
   }
 
-  // 🧩 Dialog nhập số khách khi bàn trống
+  // 🧩 Dialog nhập số khách khi bàn trống (Không thay đổi)
   void _showGuestDialog(BuildContext context, TableModel table, WidgetRef ref) {
     final controller = TextEditingController();
     showDialog(
@@ -103,7 +103,7 @@ class ScreenChooseTable extends ConsumerWidget {
     );
   }
 
-  // 📋 Panel hiển thị thông tin bàn đang phục vụ
+  // 📋 Panel hiển thị thông tin bàn đang phục vụ (✅ CẬP NHẬT)
   void _showServingPanel(BuildContext context, TableModel table, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
@@ -113,6 +113,8 @@ class ScreenChooseTable extends ConsumerWidget {
       ),
       builder: (context) {
         final dishes = table.existingItems;
+        // ✅ Kiểm tra cờ (flag)
+        final isPending = table.isPendingPayment;
 
         return Padding(
           padding: const EdgeInsets.all(20),
@@ -137,43 +139,70 @@ class ScreenChooseTable extends ConsumerWidget {
               if (dishes.isEmpty)
                 const Text('Chưa có món nào.')
               else
-                ...dishes.map((e) =>
-                    Text('• ${e.name} (${e.price.toStringAsFixed(0)}đ)')),
+                ...dishes.map((e) => Text(
+                      '• ${e.name} (${e.price.toStringAsFixed(0)}đ)',
+                      // Làm mờ text nếu đang chờ thanh toán
+                      style: TextStyle(
+                          color: isPending ? Colors.grey : Colors.black),
+                    )),
               const SizedBox(height: 16),
               Text('Tổng tiền: ${table.totalAmount.toStringAsFixed(0)}đ'),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
+                  // ✅ VÔ HIỆU HÓA NÚT "THÊM MÓN" KHI ĐANG CHỜ
                   ElevatedButton.icon(
                     icon: const Icon(Icons.add),
                     label: const Text('Thêm món'),
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blueAccent),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ScreenChooseMenu(
-                            tableName: table.name,
-                            initialGuestCount: table.customerCount ?? 1,
-                            existingItems:
-                                table.existingItems.map((item) => item.id).toList(),
-                          ),
-                        ),
-                      );
-                    },
+                    // Nếu đang chờ (isPending) thì onPressed là null (vô hiệu hóa)
+                    onPressed: isPending
+                        ? null
+                        : () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ScreenChooseMenu(
+                                  tableName: table.name,
+                                  initialGuestCount: table.customerCount ?? 1,
+                                  existingItems: table.existingItems
+                                      .map((item) => item.id)
+                                      .toList(),
+                                ),
+                              ),
+                            );
+                          },
                   ),
+
+                  // ✅ THAY THẾ NÚT "THANH TOÁN" BẰNG "YÊU CẦU TT"
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.payment),
-                    label: const Text('Thanh toán'),
+                    icon: Icon(isPending
+                        ? Icons.hourglass_top
+                        : Icons.request_page),
+                    label: Text(isPending ? 'Đang chờ' : 'Yêu cầu TT'),
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green[700]),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _showCheckoutDialog(context, table, ref);
-                    },
+                        backgroundColor:
+                            isPending ? Colors.grey : Colors.green[700]),
+                    // Vô hiệu hóa nếu đang chờ
+                    onPressed: isPending
+                        ? null
+                        : () {
+                            // Gọi hàm mới trong provider
+                            ref
+                                .read(tableProvider.notifier)
+                                .requestCheckout(table.id);
+                            Navigator.pop(context); // Đóng bottom sheet
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    'Đã gửi yêu cầu thanh toán cho ${table.name}'),
+                                backgroundColor: Colors.blue,
+                              ),
+                            );
+                          },
                   ),
                 ],
               ),
@@ -185,74 +214,60 @@ class ScreenChooseTable extends ConsumerWidget {
     );
   }
 
-  // 💰 Dialog xác nhận thanh toán
-  // 💰 Dialog xác nhận thanh toán
+  // 💰 Dialog xác nhận thanh toán (BỊ XÓA/COMMENT OUT VÌ NHÂN VIÊN KHÔNG CÒN DÙNG)
+  /*
   void _showCheckoutDialog(
       BuildContext context, TableModel initialTable, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog( // ✅ Sử dụng dialogContext ở đây
-        // Lấy lại bàn từ provider để đảm bảo dữ liệu luôn cập nhật
-        // (Cách này tốt cho việc hiển thị dữ liệu mới nhất, không phải nguyên nhân lỗi crash)
-        title: Text('Thanh toán - ${initialTable.name}'), // Dùng initialTable.name
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Số khách: ${initialTable.customerCount ?? 0}'),
-            const SizedBox(height: 6),
-            Text('Tổng tiền: ${initialTable.totalAmount.toStringAsFixed(0)}đ'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext), // ✅ Pop dialogContext
-            child: const Text('Hủy'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // Lấy lại bàn từ provider để đảm bảo dữ liệu luôn cập nhật
-              // (Quan trọng hơn ở đây để đảm bảo checkout đúng bàn nếu có thay đổi)
-              final table = ref.read(tableProvider).tables.firstWhere(
-                (t) => t.id == initialTable.id,
-                orElse: () => initialTable, // Fallback an toàn
-              );
-
-              ref.read(tableProvider.notifier).checkout(table.id);
-              Navigator.pop(dialogContext); // ✅ Pop dialogContext ngay sau khi xử lý
-              ScaffoldMessenger.of(dialogContext).showSnackBar( // ✅ Sử dụng dialogContext
-                SnackBar(
-                  content: Text('Đã thanh toán cho ${table.name}'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            },
-            child: const Text('Xác nhận'),
-          ),
-        ],
-      ),
-    );
+    // ... (logic cũ)
   }
+  */
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(tableProvider.notifier);
     final filteredTables = ref.watch(filteredTablesProvider);
-    final currentFilterStatus = ref.watch(tableProvider.select((s) => s.filterStatus));
-    final currentFilterZone = ref.watch(tableProvider.select((s) => s.filterZone));
-    final currentSearchQuery = ref.watch(tableProvider.select((s) => s.searchQuery));
+    final currentFilterStatus =
+        ref.watch(tableProvider.select((s) => s.filterStatus));
+    final currentFilterZone =
+        ref.watch(tableProvider.select((s) => s.filterZone));
+    final currentSearchQuery =
+        ref.watch(tableProvider.select((s) => s.searchQuery));
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Chọn bàn', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Chọn bàn',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: false,
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: Colors.black,
         actions: [
-          IconButton(onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const ScreenBookTable())); }, icon: const Icon(Icons.table_restaurant), tooltip: 'Đặt bàn'),
-          IconButton(onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const ScreenNotifications())); }, icon: const Icon(Icons.notifications_none), tooltip: 'Thông báo'),
-          IconButton(onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const ScreenSettings())); }, icon: const Icon(Icons.settings), tooltip: 'Cài đặt'),
+          IconButton(
+              onPressed: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const ScreenBookTable()));
+              },
+              icon: const Icon(Icons.table_restaurant),
+              tooltip: 'Đặt bàn'),
+          IconButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const ScreenNotifications()));
+              },
+              icon: const Icon(Icons.notifications_none),
+              tooltip: 'Thông báo'),
+          IconButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const ScreenSettings()));
+              },
+              icon: const Icon(Icons.settings),
+              tooltip: 'Cài đặt'),
           const SizedBox(width: 8),
         ],
       ),
@@ -261,7 +276,7 @@ class ScreenChooseTable extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Thanh tìm kiếm và nút lọc
+            // Thanh tìm kiếm và nút lọc (Không thay đổi)
             Row(
               children: [
                 Expanded(
@@ -308,7 +323,7 @@ class ScreenChooseTable extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
 
-            // Chú giải màu sắc
+            // Chú giải màu sắc (Không thay đổi)
             _buildLegend(),
             const SizedBox(height: 16),
 
@@ -318,50 +333,130 @@ class ScreenChooseTable extends ConsumerWidget {
                   ? const Center(child: Text('Không tìm thấy bàn nào phù hợp.'))
                   : GridView.builder(
                       padding: const EdgeInsets.only(bottom: 16),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, childAspectRatio: 0.85, crossAxisSpacing: 12, mainAxisSpacing: 12),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              childAspectRatio: 0.85,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12),
                       itemCount: filteredTables.length,
                       itemBuilder: (context, index) {
                         final table = filteredTables[index];
                         final color = _getTableColor(table.status);
                         final zoneText = _getZoneText(table.zone);
-                        final isAvailable = table.status == TableStatus.available;
+                        final isAvailable =
+                            table.status == TableStatus.available;
                         return GestureDetector(
                           onTap: () {
                             notifier.selectTable(table);
                             switch (table.status) {
-                              case TableStatus.available: _showGuestDialog(context, table, ref); break;
-                              case TableStatus.reserved: Navigator.push(context, MaterialPageRoute(builder: (_) => ScreenChooseMenu(tableName: table.name, initialGuestCount: table.customerCount ?? 1, existingItems: table.existingItems.map((item) => item.id).toList()))); break;
-                              case TableStatus.serving: _showServingPanel(context, table, ref); break;
+                              case TableStatus.available:
+                                _showGuestDialog(context, table, ref);
+                                break;
+                              case TableStatus.reserved:
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) => ScreenChooseMenu(
+                                            tableName: table.name,
+                                            initialGuestCount:
+                                                table.customerCount ?? 1,
+                                            existingItems: table.existingItems
+                                                .map((item) => item.id)
+                                                .toList())));
+                                break;
+                              case TableStatus.serving: // Chỉ cần case serving
+                                _showServingPanel(context, table, ref);
+                                break;
                             }
                           },
-                          child: Container(
-                            decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(12)),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Align(alignment: Alignment.center, child: Text(table.name, style: TextStyle(color: isAvailable ? Colors.black : Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                          // ✅ SỬ DỤNG STACK ĐỂ THÊM ICON
+                          child: Stack(
+                            children: [
+                              // Card bàn ăn (như cũ)
+                              Container(
+                                decoration: BoxDecoration(
+                                    color: color,
+                                    borderRadius: BorderRadius.circular(12)),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Row(children: [
-                                        Icon(Icons.person, size: 14, color: isAvailable ? Colors.black54 : Colors.white),
-                                        const SizedBox(width: 4),
-                                        Text('${table.seats} chỗ', style: TextStyle(color: isAvailable ? Colors.black54 : Colors.white, fontSize: 12)),
-                                      ]),
-                                      const SizedBox(height: 4),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(color: isAvailable ? Colors.grey[300] : Colors.white24, borderRadius: BorderRadius.circular(10)),
-                                        child: Text(zoneText, style: TextStyle(color: isAvailable ? Colors.black87 : Colors.white, fontSize: 10)),
+                                      Align(
+                                          alignment: Alignment.center,
+                                          child: Text(table.name,
+                                              style: TextStyle(
+                                                  color: isAvailable
+                                                      ? Colors.black
+                                                      : Colors.white,
+                                                  fontSize: 16,
+                                                  fontWeight:
+                                                      FontWeight.bold))),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(children: [
+                                            Icon(Icons.person,
+                                                size: 14,
+                                                color: isAvailable
+                                                    ? Colors.black54
+                                                    : Colors.white),
+                                            const SizedBox(width: 4),
+                                            Text('${table.seats} chỗ',
+                                                style: TextStyle(
+                                                    color: isAvailable
+                                                        ? Colors.black54
+                                                        : Colors.white,
+                                                    fontSize: 12)),
+                                          ]),
+                                          const SizedBox(height: 4),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 2),
+                                            decoration: BoxDecoration(
+                                                color: isAvailable
+                                                    ? Colors.grey[300]
+                                                    : Colors.white24,
+                                                borderRadius:
+                                                    BorderRadius.circular(10)),
+                                            child: Text(zoneText,
+                                                style: TextStyle(
+                                                    color: isAvailable
+                                                        ? Colors.black87
+                                                        : Colors.white,
+                                                    fontSize: 10)),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
+
+                              // ✅ ICON CHỜ THANH TOÁN
+                              if (table.isPendingPayment)
+                                Positioned(
+                                  top: 8,
+                                  right: 8,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.5),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.monetization_on, // Icon tiền tệ
+                                      color: Colors.yellowAccent,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         );
                       },
@@ -373,7 +468,7 @@ class ScreenChooseTable extends ConsumerWidget {
     );
   }
 
-  // Widget xây dựng phần chú giải màu sắc
+  // Widget xây dựng phần chú giải màu sắc (Không thay đổi)
   Widget _buildLegend() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
@@ -387,17 +482,19 @@ class ScreenChooseTable extends ConsumerWidget {
     );
   }
 
-  // Widget cho một mục trong chú giải
+  // Widget cho một mục trong chú giải (Không thay đổi)
   Widget _buildLegendItem(Color color, String text) {
     return Row(
       children: [
         Container(
           width: 20,
           height: 20,
-          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
+          decoration:
+              BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
         ),
         const SizedBox(width: 8),
-        Text(text, style: const TextStyle(fontSize: 12, color: Colors.black87)),
+        Text(text,
+            style: const TextStyle(fontSize: 12, color: Colors.black87)),
       ],
     );
   }

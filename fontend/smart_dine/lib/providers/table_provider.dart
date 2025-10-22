@@ -25,7 +25,7 @@ class TableState {
     this.filterStatus,
     this.filterZone = TableZone.all,
     List<CompletedOrderModel>? completedOrders, // Khởi tạo nếu không có
-  }) : this.completedOrders = completedOrders ?? _initialCompletedOrders;
+  }) : completedOrders = completedOrders ?? _initialCompletedOrders;
 
   /// Phương thức giúp tạo một bản sao của TableState với các thuộc tính được cập nhật.
   TableState copyWith({
@@ -60,15 +60,22 @@ class TableNotifier extends StateNotifier<TableState> {
 
     // Lọc theo trạng thái
     if (state.filterStatus != null) {
-      currentTables = currentTables.where((table) => table.status == state.filterStatus).toList();
+      currentTables = currentTables
+          .where((table) => table.status == state.filterStatus)
+          .toList();
     }
     // Lọc theo khu vực
     if (state.filterZone != TableZone.all) {
-      currentTables = currentTables.where((table) => table.zone == state.filterZone).toList();
+      currentTables = currentTables
+          .where((table) => table.zone == state.filterZone)
+          .toList();
     }
     // Tìm kiếm theo tên bàn
     if (state.searchQuery.isNotEmpty) {
-      currentTables = currentTables.where((table) => table.name.toLowerCase().contains(state.searchQuery.toLowerCase())).toList();
+      currentTables = currentTables
+          .where((table) =>
+              table.name.toLowerCase().contains(state.searchQuery.toLowerCase()))
+          .toList();
     }
     return currentTables;
   }
@@ -77,13 +84,15 @@ class TableNotifier extends StateNotifier<TableState> {
   void setSearchQuery(String query) => state = state.copyWith(searchQuery: query);
 
   /// Cập nhật trạng thái lọc.
-  void setFilterStatus(TableStatus? status) => state = state.copyWith(filterStatus: status);
+  void setFilterStatus(TableStatus? status) =>
+      state = state.copyWith(filterStatus: status);
 
   /// Cập nhật khu vực lọc.
   void setFilterZone(TableZone zone) => state = state.copyWith(filterZone: zone);
 
   /// Đặt bàn được chọn hiện tại.
-  void selectTable(TableModel table) => state = state.copyWith(selectedTable: table);
+  void selectTable(TableModel table) =>
+      state = state.copyWith(selectedTable: table);
 
   /// Cập nhật số lượng khách và trạng thái của một bàn.
   void setCustomerCount(String tableId, int count) {
@@ -100,15 +109,18 @@ class TableNotifier extends StateNotifier<TableState> {
   }
 
   /// Cập nhật danh sách món ăn và tổng tiền cho một bàn, đồng thời chuyển trạng thái sang "serving".
+  /// Nếu khách gọi thêm món, hủy cờ "chờ thanh toán".
   void updateTableOrder(String tableId, List<MenuItemModel> newItems) {
     final updatedTables = state.tables.map((table) {
       if (table.id == tableId) {
         final updatedItems = [...table.existingItems, ...newItems];
-        final newTotalAmount = updatedItems.fold(0.0, (sum, item) => sum + item.price);
+        final newTotalAmount =
+            updatedItems.fold(0.0, (sum, item) => sum + item.price);
         return table.copyWith(
           existingItems: updatedItems,
           totalAmount: newTotalAmount,
           status: TableStatus.serving,
+          isPendingPayment: false, // ✅ Nếu khách gọi thêm món, hủy yêu cầu TT
         );
       }
       return table;
@@ -116,21 +128,60 @@ class TableNotifier extends StateNotifier<TableState> {
     state = state.copyWith(tables: updatedTables);
   }
 
+  /// ✅ HÀM MỚI: Dành cho nút "Yêu cầu TT" bên màn hình Menu
+  /// Cập nhật món ăn VÀ yêu cầu thanh toán ngay lập tức.
+  void updateOrderAndRequestCheckout(String tableId, List<MenuItemModel> newItems) {
+    final updatedTables = state.tables.map((table) {
+      if (table.id == tableId) {
+        // 1. Logic thêm món (từ hàm updateTableOrder)
+        final updatedItems = [...table.existingItems, ...newItems];
+        final newTotalAmount =
+            updatedItems.fold(0.0, (sum, item) => sum + item.price);
+        
+        return table.copyWith(
+          existingItems: updatedItems,
+          totalAmount: newTotalAmount,
+          status: TableStatus.serving, // Đảm bảo vẫn là 'serving'
+          
+          // 2. Logic yêu cầu TT (từ hàm requestCheckout)
+          isPendingPayment: true, // ✅ Set cờ chờ thanh toán ngay
+        );
+      }
+      return table;
+    }).toList();
+    state = state.copyWith(tables: updatedTables);
+  }
+
+
+  // ✅ HÀM Dành cho Nhân viên (từ màn hình Chi tiết bàn)
+  /// Nhân viên yêu cầu thanh toán, set cờ isPendingPayment = true.
+  void requestCheckout(String tableId) {
+    final updatedTables = state.tables.map((table) {
+      if (table.id == tableId && table.status == TableStatus.serving) {
+        return table.copyWith(
+          isPendingPayment: true, // Đánh dấu chờ thanh toán
+        );
+      }
+      return table;
+    }).toList();
+    state = state.copyWith(tables: updatedTables);
+  }
+
+  // ✅ HÀM NÀY DÀNH CHO THU NGÂN:
   /// Xử lý quá trình thanh toán cho một bàn.
   /// Chuyển bàn về trạng thái "available", reset thông tin khách và món ăn.
   /// Thêm đơn hàng vào danh sách `completedOrders`.
   void checkout(String tableId) {
     TableModel? tableToCheckout;
     try {
-      // Tìm bàn cần thanh toán. Sử dụng try-catch để an toàn hơn
-      // nếu vì lý do nào đó không tìm thấy ID bàn.
+      // Tìm bàn cần thanh toán.
       tableToCheckout = state.tables.firstWhere((t) => t.id == tableId);
     } catch (e) {
       // In lỗi ra console và thoát nếu không tìm thấy bàn.
       print('Error: Could not find table with ID $tableId for checkout: $e');
       return;
     }
-    
+
     // Nếu tìm thấy bàn (tableToCheckout không null), tiếp tục xử lý
     final newCompletedOrder = CompletedOrderModel(
       id: _uuid.v4(), // Tạo ID duy nhất cho đơn hàng hoàn thành
@@ -152,11 +203,12 @@ class TableNotifier extends StateNotifier<TableState> {
           customerCount: 0, // Reset số khách
           totalAmount: 0.0, // Reset tổng tiền
           existingItems: [], // Xóa danh sách món đã đặt
+          isPendingPayment: false, // ✅ Reset cờ khi thanh toán xong
         );
       }
       return table;
     }).toList();
-    
+
     // Cập nhật trạng thái của notifier
     state = state.copyWith(
       tables: updatedTables,
@@ -196,18 +248,66 @@ final completedOrdersProvider = Provider<List<CompletedOrderModel>>((ref) {
 
 // Dữ liệu mẫu cho các món ăn trong menu
 final _menuItemsData = {
-  'pho_bo': MenuItemModel(id: 'M1', name: 'Phở bò', price: 50000, category: MenuCategory.mainCourse),
-  'bun_cha': MenuItemModel(id: 'M2', name: 'Bún chả', price: 45000, category: MenuCategory.mainCourse),
-  'mi_quang': MenuItemModel(id: 'M3', name: 'Mì Quảng', price: 40000, category: MenuCategory.mainCourse),
-  'com_tam': MenuItemModel(id: 'M4', name: 'Cơm tấm sườn bì', price: 55000, category: MenuCategory.mainCourse),
-  'hu_tieu': MenuItemModel(id: 'M5', name: 'Hủ tiếu Nam Vang', price: 50000, category: MenuCategory.mainCourse),
-  'banh_xeo': MenuItemModel(id: 'M6', name: 'Bánh xèo', price: 35000, category: MenuCategory.mainCourse),
-  'lau_thai': MenuItemModel(id: 'M7', name: 'Lẩu Thái hải sản', price: 250000, category: MenuCategory.mainCourse),
-  'goi_cuon': MenuItemModel(id: 'M8', name: 'Gỏi cuốn', price: 30000, category: MenuCategory.mainCourse),
-  'ca_phe_sua': MenuItemModel(id: 'D1', name: 'Cà phê sữa', price: 25000, category: MenuCategory.drink),
-  'tra_dao': MenuItemModel(id: 'D2', name: 'Trà đào cam sả', price: 35000, category: MenuCategory.drink),
-  'nuoc_cam': MenuItemModel(id: 'D3', name: 'Nước cam ép', price: 30000, category: MenuCategory.drink),
-  'coca_cola': MenuItemModel(id: 'D4', name: 'Coca-Cola', price: 15000, category: MenuCategory.drink),
+  'pho_bo': MenuItemModel(
+      id: 'M1',
+      name: 'Phở bò',
+      price: 50000,
+      category: MenuCategory.mainCourse),
+  'bun_cha': MenuItemModel(
+      id: 'M2',
+      name: 'Bún chả',
+      price: 45000,
+      category: MenuCategory.mainCourse),
+  'mi_quang': MenuItemModel(
+      id: 'M3',
+      name: 'Mì Quảng',
+      price: 40000,
+      category: MenuCategory.mainCourse),
+  'com_tam': MenuItemModel(
+      id: 'M4',
+      name: 'Cơm tấm sườn bì',
+      price: 55000,
+      category: MenuCategory.mainCourse),
+  'hu_tieu': MenuItemModel(
+      id: 'M5',
+      name: 'Hủ tiếu Nam Vang',
+      price: 50000,
+      category: MenuCategory.mainCourse),
+  'banh_xeo': MenuItemModel(
+      id: 'M6',
+      name: 'Bánh xèo',
+      price: 35000,
+      category: MenuCategory.mainCourse),
+  'lau_thai': MenuItemModel(
+      id: 'M7',
+      name: 'Lẩu Thái hải sản',
+      price: 250000,
+      category: MenuCategory.mainCourse),
+  'goi_cuon': MenuItemModel(
+      id: 'M8',
+      name: 'Gỏi cuốn',
+      price: 30000,
+      category: MenuCategory.mainCourse),
+  'ca_phe_sua': MenuItemModel(
+      id: 'D1',
+      name: 'Cà phê sữa',
+      price: 25000,
+      category: MenuCategory.drink),
+  'tra_dao': MenuItemModel(
+      id: 'D2',
+      name: 'Trà đào cam sả',
+      price: 35000,
+      category: MenuCategory.drink),
+  'nuoc_cam': MenuItemModel(
+      id: 'D3',
+      name: 'Nước cam ép',
+      price: 30000,
+      category: MenuCategory.drink),
+  'coca_cola': MenuItemModel(
+      id: 'D4',
+      name: 'Coca-Cola',
+      price: 15000,
+      category: MenuCategory.drink),
 };
 
 // Dữ liệu mẫu cho các đơn hàng đã hoàn thành
@@ -252,45 +352,202 @@ final List<CompletedOrderModel> _initialCompletedOrders = [
 ];
 
 // Dữ liệu mẫu cho các bàn ăn ban đầu
+// (Trường isPendingPayment sẽ tự động là false do giá trị mặc định trong constructor)
 final List<TableModel> _initialTables = [
   // Khu A - Trong nhà
-  TableModel(id: 'T1', name: 'A-1', seats: 4, status: TableStatus.available, zone: TableZone.indoor),
-  TableModel(id: 'T2', name: 'A-2', seats: 6, status: TableStatus.serving, zone: TableZone.indoor, customerCount: 4,
-    existingItems: [_menuItemsData['pho_bo']!, _menuItemsData['tra_dao']!], totalAmount: 85000),
-  TableModel(id: 'T3', name: 'A-3', seats: 8, status: TableStatus.available, zone: TableZone.indoor),
-  TableModel(id: 'T4', name: 'A-4', seats: 4, status: TableStatus.reserved, zone: TableZone.indoor, customerCount: 2),
+  TableModel(
+      id: 'T1',
+      name: 'A-1',
+      seats: 4,
+      status: TableStatus.available,
+      zone: TableZone.indoor),
+  TableModel(
+      id: 'T2',
+      name: 'A-2',
+      seats: 6,
+      status: TableStatus.serving,
+      zone: TableZone.indoor,
+      customerCount: 4,
+      existingItems: [_menuItemsData['pho_bo']!, _menuItemsData['tra_dao']!],
+      totalAmount: 85000),
+  TableModel(
+      id: 'T3',
+      name: 'A-3',
+      seats: 8,
+      status: TableStatus.available,
+      zone: TableZone.indoor),
+  TableModel(
+      id: 'T4',
+      name: 'A-4',
+      seats: 4,
+      status: TableStatus.reserved,
+      zone: TableZone.indoor,
+      customerCount: 2),
 
   // Khu B - VIP
-  TableModel(id: 'T5', name: 'B-1', seats: 4, status: TableStatus.available, zone: TableZone.vip),
-  TableModel(id: 'T6', name: 'B-2', seats: 6, status: TableStatus.serving, zone: TableZone.vip, customerCount: 6,
-    existingItems: [_menuItemsData['lau_thai']!, _menuItemsData['coca_cola']!, _menuItemsData['coca_cola']!], totalAmount: 280000),
-  TableModel(id: 'T7', name: 'B-3', seats: 8, status: TableStatus.reserved, zone: TableZone.vip, customerCount: 8),
+  TableModel(
+      id: 'T5',
+      name: 'B-1',
+      seats: 4,
+      status: TableStatus.available,
+      zone: TableZone.vip),
+  TableModel(
+      id: 'T6',
+      name: 'B-2',
+      seats: 6,
+      status: TableStatus.serving,
+      zone: TableZone.vip,
+      customerCount: 6,
+      existingItems: [
+        _menuItemsData['lau_thai']!,
+        _menuItemsData['coca_cola']!,
+        _menuItemsData['coca_cola']!
+      ],
+      totalAmount: 280000,
+      isPendingPayment: true), // ✅ Thêm 1 bàn đang chờ TT để test
+  TableModel(
+      id: 'T7',
+      name: 'B-3',
+      seats: 8,
+      status: TableStatus.reserved,
+      zone: TableZone.vip,
+      customerCount: 8),
 
   // Khu C - Ngoài trời
-  TableModel(id: 'T8', name: 'C-1', seats: 4, status: TableStatus.serving, zone: TableZone.outdoor, customerCount: 3,
-    existingItems: [_menuItemsData['bun_cha']!, _menuItemsData['ca_phe_sua']!], totalAmount: 70000),
-  TableModel(id: 'T9', name: 'C-2', seats: 6, status: TableStatus.available, zone: TableZone.outdoor),
-  TableModel(id: 'T10', name: 'C-3', seats: 4, status: TableStatus.reserved, zone: TableZone.outdoor, customerCount: 4),
-  TableModel(id: 'T11', name: 'C-4', seats: 8, status: TableStatus.available, zone: TableZone.outdoor),
+  TableModel(
+      id: 'T8',
+      name: 'C-1',
+      seats: 4,
+      status: TableStatus.serving,
+      zone: TableZone.outdoor,
+      customerCount: 3,
+      existingItems: [
+        _menuItemsData['bun_cha']!,
+        _menuItemsData['ca_phe_sua']!
+      ],
+      totalAmount: 70000),
+  TableModel(
+      id: 'T9',
+      name: 'C-2',
+      seats: 6,
+      status: TableStatus.available,
+      zone: TableZone.outdoor),
+  TableModel(
+      id: 'T10',
+      name: 'C-3',
+      seats: 4,
+      status: TableStatus.reserved,
+      zone: TableZone.outdoor,
+      customerCount: 4),
+  TableModel(
+      id: 'T11',
+      name: 'C-4',
+      seats: 8,
+      status: TableStatus.available,
+      zone: TableZone.outdoor),
 
   // Khu D - Yên tĩnh
-  TableModel(id: 'T12', name: 'D-1', seats: 2, status: TableStatus.available, zone: TableZone.quiet),
-  TableModel(id: 'T13', name: 'D-2', seats: 2, status: TableStatus.serving, zone: TableZone.quiet, customerCount: 2,
-    existingItems: [_menuItemsData['mi_quang']!], totalAmount: 40000),
-  TableModel(id: 'T14', name: 'D-3', seats: 4, status: TableStatus.available, zone: TableZone.quiet),
+  TableModel(
+      id: 'T12',
+      name: 'D-1',
+      seats: 2,
+      status: TableStatus.available,
+      zone: TableZone.quiet),
+  TableModel(
+      id: 'T13',
+      name: 'D-2',
+      seats: 2,
+      status: TableStatus.serving,
+      zone: TableZone.quiet,
+      customerCount: 2,
+      existingItems: [_menuItemsData['mi_quang']!],
+      totalAmount: 40000),
+  TableModel(
+      id: 'T14',
+      name: 'D-3',
+      seats: 4,
+      status: TableStatus.available,
+      zone: TableZone.quiet),
 
   // Dữ liệu bổ sung
-  TableModel(id: 'T15', name: 'A-5', seats: 6, status: TableStatus.available, zone: TableZone.indoor),
-  TableModel(id: 'T16', name: 'A-6', seats: 4, status: TableStatus.serving, zone: TableZone.indoor, customerCount: 4,
-    existingItems: [_menuItemsData['com_tam']!, _menuItemsData['hu_tieu']!, _menuItemsData['nuoc_cam']!], totalAmount: 135000),
-  TableModel(id: 'T17', name: 'B-4', seats: 6, status: TableStatus.reserved, zone: TableZone.vip, customerCount: 5),
-  TableModel(id: 'T18', name: 'C-5', seats: 8, status: TableStatus.available, zone: TableZone.outdoor),
-  TableModel(id: 'T19', name: 'D-4', seats: 2, status: TableStatus.serving, zone: TableZone.quiet, customerCount: 1,
-    existingItems: [_menuItemsData['ca_phe_sua']!], totalAmount: 25000),
-  TableModel(id: 'T20', name: 'A-7', seats: 8, status: TableStatus.reserved, zone: TableZone.indoor, customerCount: 7),
-  TableModel(id: 'T21', name: 'C-6', seats: 4, status: TableStatus.available, zone: TableZone.outdoor),
-  TableModel(id: 'T22', name: 'B-5', seats: 8, status: TableStatus.serving, zone: TableZone.vip, customerCount: 5,
-    existingItems: [_menuItemsData['goi_cuon']!, _menuItemsData['banh_xeo']!, _menuItemsData['tra_dao']!], totalAmount: 100000),
-  TableModel(id: 'T23', name: 'A-8', seats: 4, status: TableStatus.available, zone: TableZone.indoor),
-  TableModel(id: 'T24', name: 'C-7', seats: 2, status: TableStatus.reserved, zone: TableZone.outdoor, customerCount: 2),
+  TableModel(
+      id: 'T15',
+      name: 'A-5',
+      seats: 6,
+      status: TableStatus.available,
+      zone: TableZone.indoor),
+  TableModel(
+      id: 'T16',
+      name: 'A-6',
+      seats: 4,
+      status: TableStatus.serving,
+      zone: TableZone.indoor,
+      customerCount: 4,
+      existingItems: [
+        _menuItemsData['com_tam']!,
+        _menuItemsData['hu_tieu']!,
+        _menuItemsData['nuoc_cam']!
+      ],
+      totalAmount: 135000),
+  TableModel(
+      id: 'T17',
+      name: 'B-4',
+      seats: 6,
+      status: TableStatus.reserved,
+      zone: TableZone.vip,
+      customerCount: 5),
+  TableModel(
+      id: 'T18',
+      name: 'C-5',
+      seats: 8,
+      status: TableStatus.available,
+      zone: TableZone.outdoor),
+  TableModel(
+      id: 'T19',
+      name: 'D-4',
+      seats: 2,
+      status: TableStatus.serving,
+      zone: TableZone.quiet,
+      customerCount: 1,
+      existingItems: [_menuItemsData['ca_phe_sua']!],
+      totalAmount: 25000),
+  TableModel(
+      id: 'T20',
+      name: 'A-7',
+      seats: 8,
+      status: TableStatus.reserved,
+      zone: TableZone.indoor,
+      customerCount: 7),
+  TableModel(
+      id: 'T21',
+      name: 'C-6',
+      seats: 4,
+      status: TableStatus.available,
+      zone: TableZone.outdoor),
+  TableModel(
+      id: 'T22',
+      name: 'B-5',
+      seats: 8,
+      status: TableStatus.serving,
+      zone: TableZone.vip,
+      customerCount: 5,
+      existingItems: [
+        _menuItemsData['goi_cuon']!,
+        _menuItemsData['banh_xeo']!,
+        _menuItemsData['tra_dao']!
+      ],
+      totalAmount: 100000),
+  TableModel(
+      id: 'T23',
+      name: 'A-8',
+      seats: 4,
+      status: TableStatus.available,
+      zone: TableZone.indoor),
+  TableModel(
+      id: 'T24',
+      name: 'C-7',
+      seats: 2,
+      status: TableStatus.reserved,
+      zone: TableZone.outdoor,
+      customerCount: 2),
 ];
