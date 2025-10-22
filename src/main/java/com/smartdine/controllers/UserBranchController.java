@@ -14,7 +14,7 @@ import com.smartdine.models.UserBranch;
 import com.smartdine.services.UserBranchSevices;
 
 @RestController
-@RequestMapping("/api/user_branches")
+@RequestMapping("/api/user-branches")
 public class UserBranchController {
     @Autowired
     UserBranchSevices userBranchServices;
