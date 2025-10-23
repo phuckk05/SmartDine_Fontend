@@ -24,7 +24,7 @@ public class Promotion {
 
     private String name;
 
-    @Lob
+    @Column(name = "description", columnDefinition = "text")
     private String description;
 
     @Column(name = "start_date")
