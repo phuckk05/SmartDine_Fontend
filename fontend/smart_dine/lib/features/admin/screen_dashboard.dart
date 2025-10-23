@@ -27,7 +27,6 @@ class DashboardScreen extends ConsumerWidget {
         ),
         backgroundColor: Colors.white,
         elevation: 0,
-        // ✅ ĐÃ XÓA: Real-time badge và Refresh button
       ),
       body: dashboardAsync.when(
         data:
@@ -41,8 +40,6 @@ class DashboardScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ✅ ĐÃ XÓA: Summary Cards
-
                     // Branch Revenue Title
                     const Text(
                       'Doanh thu chi nhánh',
@@ -137,8 +134,6 @@ class DashboardScreen extends ConsumerWidget {
       ),
     );
   }
-
-  // ==================== BRANCH GRID ====================
 
   Widget _buildBranchGrid(List<BranchRevenueData> branches, WidgetRef ref) {
     return GridView.builder(

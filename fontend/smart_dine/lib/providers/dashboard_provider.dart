@@ -1,17 +1,11 @@
-// lib/providers/dashboard_providers_mock.dart
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/features/service/dashboard_service.dart';
 import 'package:mart_dine/models/dashboard_model.dart';
-
-// ==================== SERVICE PROVIDER ====================
 
 /// Provider cho Dashboard Mock Service
 final dashboardMockServiceProvider = Provider<DashboardMockService>((ref) {
   return DashboardMockService();
 });
-
-// ==================== STATE PROVIDERS ====================
 
 /// Provider cho company ID hiện tại
 final currentCompanyIdProvider = StateProvider<String>((ref) {
@@ -30,8 +24,6 @@ final customDateRangeProvider = StateProvider<DateTimeRange?>((ref) {
 
 /// Provider cho selected branch (để xem chi tiết)
 final selectedBranchProvider = StateProvider<String?>((ref) => null);
-
-// ==================== DATA PROVIDERS ====================
 
 /// Provider cho dữ liệu dashboard chính
 final dashboardDataProvider = FutureProvider<DashboardData>((ref) async {

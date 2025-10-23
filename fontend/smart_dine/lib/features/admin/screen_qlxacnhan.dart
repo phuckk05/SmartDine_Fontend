@@ -1,236 +1,120 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/style.dart';
-
-// Model
-class UserRequest {
-  final String id;
-  final String userName;
-  final String role;
-  final String fullName;
-  final String address;
-  final String phone;
-  final DateTime requestDate;
-  bool isConfirmed;
-
-  UserRequest({
-    required this.id,
-    required this.userName,
-    required this.role,
-    required this.fullName,
-    required this.address,
-    required this.phone,
-    required this.requestDate,
-    this.isConfirmed = false,
-  });
-}
-
-// Provider cho danh sách user
-final userRequestListProvider =
-    StateNotifierProvider<UserRequestNotifier, List<UserRequest>>((ref) {
-      return UserRequestNotifier();
-    });
-
-class UserRequestNotifier extends StateNotifier<List<UserRequest>> {
-  UserRequestNotifier() : super([]) {
-    _loadData();
-  }
-
-  void _loadData() {
-    state = [
-      UserRequest(
-        id: '1',
-        userName: 'Người Dùng 1',
-        role: 'Quản lý chi nhánh',
-        fullName: 'Nguyễn Văn A',
-        address: 'Chi nhánh Quận 1,TP.HCM',
-        phone: '0123456789',
-        requestDate: DateTime(2025, 9, 29),
-      ),
-      UserRequest(
-        id: '2',
-        userName: 'Người Dùng 2',
-        role: 'Thu Ngân',
-        fullName: 'Trần Thị B',
-        address: 'Chi nhánh Quận 2,TP.HCM',
-        phone: '0987654321',
-        requestDate: DateTime(2025, 9, 28),
-      ),
-      UserRequest(
-        id: '3',
-        userName: 'Người Dùng 3',
-        role: 'Quản lý chi nhánh',
-        fullName: 'Lê Văn C',
-        address: 'Chi nhánh Quận 3,TP.HCM',
-        phone: '0912345678',
-        requestDate: DateTime(2025, 9, 27),
-      ),
-      UserRequest(
-        id: '4',
-        userName: 'Người Dùng 4',
-        role: 'Nhân Viên',
-        fullName: 'Phạm Thị D',
-        address: 'Chi nhánh Quận 4,TP.HCM',
-        phone: '0898765432',
-        requestDate: DateTime(2025, 9, 26),
-      ),
-      UserRequest(
-        id: '5',
-        userName: 'Người Dùng 5',
-        role: 'Nhân Viên',
-        fullName: 'Hoàng Văn E',
-        address: 'Chi nhánh Quận 5,TP.HCM',
-        phone: '0901234567',
-        requestDate: DateTime(2025, 9, 25),
-      ),
-    ];
-  }
-
-  void confirmUser(String id) {
-    state = [
-      for (final item in state)
-        if (item.id == id)
-          UserRequest(
-            id: item.id,
-            userName: item.userName,
-            role: item.role,
-            fullName: item.fullName,
-            address: item.address,
-            phone: item.phone,
-            requestDate: item.requestDate,
-            isConfirmed: true,
-          )
-        else
-          item,
-    ];
-  }
-
-  void rejectUser(String id) {
-    state = state.where((item) => item.id != id).toList();
-  }
-}
-
-// Provider cho search
-final searchQueryProvider = StateProvider<String>((ref) => '');
+import 'package:mart_dine/models/xacnhan_model.dart';
+import 'package:mart_dine/providers/xacnhan_providers.dart';
 
 class ConfirmManagementScreen extends ConsumerWidget {
   const ConfirmManagementScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userList = ref.watch(userRequestListProvider);
-    final searchQuery = ref.watch(searchQueryProvider);
-
-    // Filter theo search
-    final filteredList =
-        searchQuery.isEmpty
-            ? userList
-            : userList
-                .where(
-                  (user) =>
-                      user.userName.toLowerCase().contains(
-                        searchQuery.toLowerCase(),
-                      ) ||
-                      user.role.toLowerCase().contains(
-                        searchQuery.toLowerCase(),
-                      ),
-                )
-                .toList();
+    final filteredList = ref.watch(filteredUserRequestsProvider);
 
     return Scaffold(
       backgroundColor: Style.backgroundColor,
-      appBar: AppBar(
-        title: Text(
-          'Quản lý xác nhận',
-          style: Style.fontTitle.copyWith(
-            color: Style.textColorWhite,
-            fontSize: 20,
-          ),
-        ),
-        backgroundColor: const Color(0xFF1976D2),
-        elevation: 0,
-        centerTitle: false,
-        automaticallyImplyLeading: false,
-      ),
+      appBar: _buildAppBar(),
       body: Column(
         children: [
-          // Search bar
-          Container(
-            color: Style.colorLight,
-            padding: const EdgeInsets.all(Style.paddingPhone),
-            child: TextField(
-              onChanged: (value) {
-                ref.read(searchQueryProvider.notifier).state = value;
-              },
-              decoration: InputDecoration(
-                hintText: 'Tìm kiếm',
-                hintStyle: Style.fontNormal.copyWith(
-                  color: Style.textColorGray,
-                ),
-                prefixIcon: Icon(Icons.search, color: Style.textColorGray),
-                filled: true,
-                fillColor: Colors.grey[300],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-              ),
-            ),
-          ),
-
-          // Header
-          Container(
-            width: double.infinity,
-            color: Style.colorLight,
-            padding: const EdgeInsets.symmetric(
-              horizontal: Style.paddingPhone,
-              vertical: 12,
-            ),
-            child: Text(
-              'Tất cả các thông tin',
-              style: Style.fontTitleSuperMini,
-            ),
-          ),
-
+          _buildSearchBar(ref),
+          _buildHeader(),
           const SizedBox(height: Style.spacingSmall),
-
-          // List
-          Expanded(
-            child:
-                filteredList.isEmpty
-                    ? Center(
-                      child: Text(
-                        'Không tìm thấy kết quả',
-                        style: Style.fontNormal.copyWith(
-                          color: Style.textColorGray,
-                        ),
-                      ),
-                    )
-                    : ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: Style.paddingPhone,
-                      ),
-                      itemCount: filteredList.length,
-                      itemBuilder: (context, index) {
-                        final user = filteredList[index];
-                        return _buildUserCard(context, ref, user);
-                      },
-                    ),
-          ),
+          _buildUserList(context, ref, filteredList),
         ],
       ),
     );
   }
 
+  // AppBar
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      title: Text(
+        'Quản lý xác nhận',
+        style: Style.fontTitle.copyWith(
+          color: Style.textColorWhite,
+          fontSize: 20,
+        ),
+      ),
+      backgroundColor: const Color(0xFF1976D2),
+      elevation: 0,
+      centerTitle: false,
+      automaticallyImplyLeading: false,
+    );
+  }
+
+  // Search bar
+  Widget _buildSearchBar(WidgetRef ref) {
+    return Container(
+      color: Style.colorLight,
+      padding: const EdgeInsets.all(Style.paddingPhone),
+      child: TextField(
+        onChanged: (value) {
+          ref.read(searchQueryProvider.notifier).state = value;
+        },
+        decoration: InputDecoration(
+          hintText: 'Tìm kiếm',
+          hintStyle: Style.fontNormal.copyWith(color: Style.textColorGray),
+          prefixIcon: Icon(Icons.search, color: Style.textColorGray),
+          filled: true,
+          fillColor: Colors.grey[300],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(25),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 12,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Header
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      color: Style.colorLight,
+      padding: const EdgeInsets.symmetric(
+        horizontal: Style.paddingPhone,
+        vertical: 12,
+      ),
+      child: Text('Tất cả các thông tin', style: Style.fontTitleSuperMini),
+    );
+  }
+
+  // User list
+  Widget _buildUserList(
+    BuildContext context,
+    WidgetRef ref,
+    List<UserRequest> filteredList,
+  ) {
+    return Expanded(
+      child:
+          filteredList.isEmpty
+              ? Center(
+                child: Text(
+                  'Không tìm thấy kết quả',
+                  style: Style.fontNormal.copyWith(color: Style.textColorGray),
+                ),
+              )
+              : ListView.builder(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Style.paddingPhone,
+                ),
+                itemCount: filteredList.length,
+                itemBuilder: (context, index) {
+                  final user = filteredList[index];
+                  return _buildUserCard(context, ref, user);
+                },
+              ),
+    );
+  }
+
+  // User card
   Widget _buildUserCard(BuildContext context, WidgetRef ref, UserRequest user) {
     return GestureDetector(
-      onTap: () {
-        _showUserDetailDialog(context, ref, user);
-      },
+      onTap: () => _showUserDetailDialog(context, ref, user),
       child: Container(
         margin: const EdgeInsets.only(bottom: Style.spacingSmall),
         padding: const EdgeInsets.all(Style.paddingPhone),
@@ -247,18 +131,35 @@ class ConfirmManagementScreen extends ConsumerWidget {
                   Text(user.userName, style: Style.fontTitleMini),
                   const SizedBox(height: 4),
                   Text(
-                    user.role,
+                    user.roleDisplay,
                     style: Style.fontCaption.copyWith(fontSize: 13),
                   ),
                 ],
               ),
             ),
+            // Status badge
+            if (!user.isPending)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: user.isConfirmed ? Colors.green : Colors.red,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  user.statusDisplay,
+                  style: Style.fontCaption.copyWith(
+                    color: Style.textColorWhite,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
 
+  // User detail dialog
   void _showUserDetailDialog(
     BuildContext context,
     WidgetRef ref,
@@ -276,101 +177,31 @@ class ConfirmManagementScreen extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Title
                   Text(
                     'Chi tiết ${user.userName.toLowerCase()}',
                     style: Style.fontTitleMini,
                   ),
                   const SizedBox(height: Style.spacingMedium),
-
-                  // Role
-                  Text(user.role, style: Style.fontNormal),
+                  Text(user.roleDisplay, style: Style.fontNormal),
                   const SizedBox(height: Style.spacingMedium),
-
-                  // Info
                   _buildInfoRow('Tên người dùng:', user.fullName),
-                  _buildInfoRow('Địa chỉ', user.address),
-                  _buildInfoRow('Số điện thoại', user.phone),
-                  _buildInfoRow(
-                    'Ngày yêu cầu:',
-                    '${user.requestDate.day.toString().padLeft(2, '0')}/${user.requestDate.month.toString().padLeft(2, '0')}/${user.requestDate.year}',
-                  ),
-
+                  _buildInfoRow('Địa chỉ:', user.address),
+                  _buildInfoRow('Số điện thoại:', user.phone),
+                  _buildInfoRow('Ngày yêu cầu:', user.formattedRequestDate),
+                  if (user.email != null && user.email!.isNotEmpty)
+                    _buildInfoRow('Email:', user.email!),
                   const SizedBox(height: Style.spacingMedium),
-
-                  // Status text
                   Text(
-                    'Đang chờ xác nhận ...',
+                    user.isPending
+                        ? 'Đang chờ xác nhận ...'
+                        : user.statusDisplay,
                     style: Style.fontCaption.copyWith(
                       fontStyle: FontStyle.italic,
+                      color: user.isConfirmed ? Colors.green : Colors.red,
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
-                  // Buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            ref
-                                .read(userRequestListProvider.notifier)
-                                .confirmUser(user.id);
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Đã xác nhận thành công',
-                                  style: Style.fontNormal.copyWith(
-                                    color: Style.textColorWhite,
-                                  ),
-                                ),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            foregroundColor: Style.textColorWhite,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                Style.buttonBorderRadius,
-                              ),
-                            ),
-                          ),
-                          child: Text('Xác Nhận', style: Style.fontButton),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            _showDeleteConfirmDialog(context, ref, user);
-                          },
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red,
-                            side: const BorderSide(
-                              color: Colors.red,
-                              width: 1.5,
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                Style.buttonBorderRadius,
-                              ),
-                            ),
-                          ),
-                          child: Text(
-                            'Từ chối',
-                            style: Style.fontButton.copyWith(color: Colors.red),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  if (user.isPending) _buildActionButtons(context, ref, user),
                 ],
               ),
             ),
@@ -378,6 +209,58 @@ class ConfirmManagementScreen extends ConsumerWidget {
     );
   }
 
+  // Action buttons
+  Widget _buildActionButtons(
+    BuildContext context,
+    WidgetRef ref,
+    UserRequest user,
+  ) {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {
+              ref.read(userRequestListProvider.notifier).confirmUser(user.id);
+              Navigator.pop(context);
+              _showSnackBar(context, 'Đã xác nhận thành công', Colors.green);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Style.textColorWhite,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(Style.buttonBorderRadius),
+              ),
+            ),
+            child: Text('Xác Nhận', style: Style.fontButton),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: OutlinedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _showRejectConfirmDialog(context, ref, user);
+            },
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red,
+              side: const BorderSide(color: Colors.red, width: 1.5),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(Style.buttonBorderRadius),
+              ),
+            ),
+            child: Text(
+              'Từ chối',
+              style: Style.fontButton.copyWith(color: Colors.red),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Info row
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -391,7 +274,8 @@ class ConfirmManagementScreen extends ConsumerWidget {
     );
   }
 
-  void _showDeleteConfirmDialog(
+  // Reject confirmation dialog
+  void _showRejectConfirmDialog(
     BuildContext context,
     WidgetRef ref,
     UserRequest user,
@@ -419,17 +303,7 @@ class ConfirmManagementScreen extends ConsumerWidget {
                       .read(userRequestListProvider.notifier)
                       .rejectUser(user.id);
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Đã từ chối yêu cầu',
-                        style: Style.fontNormal.copyWith(
-                          color: Style.textColorWhite,
-                        ),
-                      ),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                  _showSnackBar(context, 'Đã từ chối yêu cầu', Colors.red);
                 },
                 child: Text(
                   'Từ chối',
@@ -438,6 +312,20 @@ class ConfirmManagementScreen extends ConsumerWidget {
               ),
             ],
           ),
+    );
+  }
+
+  // Show snackbar
+  void _showSnackBar(BuildContext context, String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: Style.fontNormal.copyWith(color: Style.textColorWhite),
+        ),
+        backgroundColor: color,
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 }
