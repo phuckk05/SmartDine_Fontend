@@ -1,12 +1,56 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart'; // Cần cho createOrderFromTable
+
+// ✅ BƯỚC 1: IMPORT CÁC MODEL CẦN THIẾT
+// (Hãy đảm bảo đường dẫn 'mart_dine/models/...' là chính xác)
 import 'package:mart_dine/models/order.dart'; // Import OrderModel
 import 'package:mart_dine/models/dish.dart'; // Import DishModel
+import 'package:mart_dine/models/table.dart'; // Import TableModel
+import 'package:mart_dine/models/menu.dart'; // Import MenuItemModel (để chuyển đổi)
+
 
 class OrderNotifier extends StateNotifier<List<OrderModel>> {
   OrderNotifier() : super([]) {
     _loadInitialData(); // Tải dữ liệu mẫu khi notifier được khởi tạo
   }
+  
+  // ✅ BƯỚC 2: HÀM "CẦU NỐI" TỪ TABLE_PROVIDER
+  /// Nhận dữ liệu từ TableModel (Nhân viên) và tạo ra một OrderModel (Thu ngân)
+  /// Hàm này được gọi bởi 'table_provider.dart'
+  /// Nó trả về ID của đơn hàng mới được tạo
+  String createOrderFromTable(TableModel table) {
+    
+    // 1. Chuyển đổi List<MenuItemModel> thành List<DishModel>
+    final List<DishModel> dishes = table.existingItems.map((menuItem) {
+      return DishModel(
+        id: menuItem.id, // Dùng chung ID
+        name: menuItem.name,
+        price: menuItem.price,
+        note: null, // MenuItemModel không có 'note'
+      );
+    }).toList();
+
+    // 2. Tạo OrderModel mới
+    final newOrder = OrderModel(
+      // id: Sẽ được tự tạo bởi constructor của OrderModel
+      tableName: table.name,
+      tableId: table.id, // Lấy tableId từ TableModel
+      customerCount: table.customerCount ?? 0,
+      items: dishes, // Dùng danh sách DishModel đã chuyển đổi
+      totalAmount: table.totalAmount,
+      orderTime: DateTime.now(),
+      status: OrderStatus.confirmed, // ✅ Đặt là 'confirmed' để Thu ngân thấy
+    );
+
+    // 3. Thêm đơn hàng mới vào danh sách
+    state = [...state, newOrder];
+    debugPrint("Đã tạo đơn hàng mới từ Bàn ${table.name} cho Thu ngân.");
+
+    // 4. Trả về ID
+    return newOrder.id;
+  }
+
 
   // Thêm một đơn hàng mới, với trạng thái mặc định là 'newOrder'
   void addOrder({
