@@ -47,10 +47,17 @@ dependencies:
   uuid: ^4.3.3                    # Tạo ID ngẫu nhiên
   cupertino_icons: ^1.0.8
 
+  dropdown_button2: ^2.3.9
+
+  #intl để định dạng ngày, giờ 
+  intl: ^0.18.1
+  
   #Thư viện check internet
   connectivity_plus: ^4.0.0
 
-  #thư viện validate email
+  dotted_border: ^2.1.0 
+
+    #thư viện validate email
   email_validator: ^2.0.1
   #thư viện gửi email
   mailer: ^6.5.0
@@ -65,7 +72,6 @@ dependencies:
   fluentui_system_icons: ^1.1.273
   lucide_icons: ^0.257.0
   lottie: ^3.3.0
-  dotted_border: ^2.1.0
 
 
 dev_dependencies:

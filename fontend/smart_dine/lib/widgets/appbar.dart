@@ -6,11 +6,17 @@ class AppBarCus extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
   final bool isCanpop;
   final bool isButtonEnabled;
+  final List<Widget>? actions;
+  final bool? centerTitle;
+  final Color? backgroundColor;
   const AppBarCus({
     super.key,
     this.title,
     required this.isCanpop,
     required this.isButtonEnabled,
+    this.actions,
+    this.centerTitle,
+    this.backgroundColor,
   });
 
   @override
@@ -21,17 +27,19 @@ class AppBarCus extends StatelessWidget implements PreferredSizeWidget {
           isButtonEnabled
               ? AppBar(
                 leading: IconBack.back(context),
-                backgroundColor: Colors.transparent,
+                backgroundColor: backgroundColor ?? Colors.transparent,
                 elevation: 0,
-                centerTitle: true,
+                centerTitle: centerTitle ?? true,
                 title: Text(title!, style: Style.fontTitle),
+                actions: actions,
               )
               : AppBar(
                 automaticallyImplyLeading: false,
-                backgroundColor: Colors.transparent,
+                backgroundColor: backgroundColor ?? Colors.transparent,
                 elevation: 0,
-                centerTitle: true,
+                centerTitle: centerTitle ?? true,
                 title: Text(title!, style: Style.fontTitle),
+                actions: actions,
               ),
     );
   }

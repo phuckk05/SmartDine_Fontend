@@ -1,15 +1,20 @@
 // import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mart_dine/features/start/screen/screen_start.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:mart_dine/features/staff/screen_choose_table.dart';
+import 'package:mart_dine/features/staff/screen_menu.dart';
+import 'package:mart_dine/features/staff/screen_start.dart';
 import 'package:mart_dine/providers/mode_provider.dart';
 
-void main() {
+Future<void> main() async {
   //Cấu hình để sử dụng firebase
   WidgetsFlutterBinding.ensureInitialized();
   // // Khởi tạo Firebase
   // await Firebase.initializeApp();
-  runApp(ProviderScope(child: SmartDineApp()));
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('vi_VN', null);
+  runApp(const ProviderScope(child: SmartDineApp()));
 }
 
 class SmartDineApp extends ConsumerWidget {
@@ -29,7 +34,7 @@ class SmartDineApp extends ConsumerWidget {
       ),
 
       // Thiết lập chệ độ sáng tối
-      home: const ScreenStart(),
+      home: const ScreenMenu(tableName: "Bàn - 1"),
     );
   }
 }
