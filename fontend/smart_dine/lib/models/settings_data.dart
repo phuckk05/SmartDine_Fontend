@@ -7,28 +7,16 @@ class SettingsMockData {
   /// Mock roles
   static final roles = {
     'KITCHEN_STAFF': Role(
-      id: 'r-1',
+      id: 1,
       code: 'KITCHEN_STAFF',
       name: 'Bếp',
       description: 'Nhân viên bếp',
     ),
     'WAITER': Role(
-      id: 'r-2',
+      id: 2,
       code: 'WAITER',
       name: 'Phục vụ',
       description: 'Nhân viên phục vụ',
-    ),
-    'MANAGER': Role(
-      id: 'r-3',
-      code: 'MANAGER',
-      name: 'Quản lý',
-      description: 'Quản lý nhà hàng',
-    ),
-    'ADMIN': Role(
-      id: 'r-4',
-      code: 'ADMIN',
-      name: 'Quản trị viên',
-      description: 'Quản trị hệ thống',
     ),
   };
 

@@ -7,14 +7,14 @@ import 'menu_item_status.dart';
 
 class KitchenMockData {
   static final roleKitchen = Role(
-    id: 'r-1',
+    id: 1,
     code: 'KITCHEN_STAFF',
     name: 'Nhân viên bếp',
     description: 'Nhân viên làm việc tại bếp',
   );
 
   static final roleWaiter = Role(
-    id: 'r-2',
+    id: 2,
     code: 'WAITER',
     name: 'Nhân viên phục vụ',
     description: 'Nhân viên phục vụ khách',
