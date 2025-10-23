@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-// ...existing code...
 class Item {
   final int? id;
   final int companyId;
@@ -94,4 +93,5 @@ class Item {
     return DateTime.tryParse(value.toString());
   }
 }
+
 // ...existing code...
