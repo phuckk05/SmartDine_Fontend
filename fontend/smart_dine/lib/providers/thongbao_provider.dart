@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mart_dine/providers/kitchen_providers.dart';
-import '../models/notification_model.dart';
-import '../models/kitchen_order_status.dart';
-export '../models/notification_model.dart';
+import 'package:mart_dine/providers/kitchen_amthanh_providers.dart';
+import '../models/thongbao_model.dart';
+import '../models/kitchen_order_tinhtrang.dart';
+export '../models/thongbao_model.dart';
 
 /// Trạng thái của notification được quản lý như một state
 final notificationsStateProvider =

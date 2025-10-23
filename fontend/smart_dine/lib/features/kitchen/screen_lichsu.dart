@@ -23,7 +23,7 @@ class HistoryScreen extends ConsumerWidget {
         centerTitle: false,
         automaticallyImplyLeading: false,
         title: Text(
-          'Lịch sử',
+          'Lịch sử ',
           style: Style.fontTitle.copyWith(
             color: Style.textColorWhite,
             fontSize: 20,

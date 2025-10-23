@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/history_order.dart';
+import '../models/lichsu_order.dart';
 
 // ==================== STATE PROVIDERS ====================
 

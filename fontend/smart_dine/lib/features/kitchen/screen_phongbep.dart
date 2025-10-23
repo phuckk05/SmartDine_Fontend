@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/features/kitchen/screen_thongbao.dart';
-import 'package:mart_dine/providers/notification_provider.dart';
+import 'package:mart_dine/providers/thongbao_provider.dart';
 import '../../../core/style.dart';
-import '../../models/kitchen_order.dart';
-import '../../models/kitchen_order_status.dart';
-import '../../providers/kitchen_providers.dart';
+import '../../models/kitchen_order.dart'; // Mô hình đơn hàng bếp
+import '../../models/kitchen_order_tinhtrang.dart'; // Tình trạng đơn hàng bếp
+import '../../providers/kitchen_amthanh_providers.dart';
 
 class KitchenScreen extends ConsumerWidget {
   const KitchenScreen({super.key});

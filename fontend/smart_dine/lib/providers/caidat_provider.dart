@@ -1,9 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/settings_model.dart';
 import '../models/user_profile_model.dart';
-import '../models/settings_mock_data.dart';
-
-// ==================== SETTINGS PROVIDER ====================
+import '../models/settings_data.dart'; //dữ liệu cài đặt mặc định
 
 final settingsProvider = StateNotifierProvider<SettingsNotifier, SettingsModel>(
   (ref) {
@@ -65,13 +63,6 @@ final currentUserProfileProvider = Provider<UserProfile>((ref) {
 final logoutProvider = Provider<Future<void> Function()>((ref) {
   return () async {
     print('🚪 [LogoutProvider] Logging out...');
-
-    // TODO: Implement actual logout logic
-    // - Clear auth tokens
-    // - Clear user data
-    // - Navigate to login screen
-    // - Reset all providers
-
     await Future.delayed(const Duration(milliseconds: 500));
 
     // Reset settings

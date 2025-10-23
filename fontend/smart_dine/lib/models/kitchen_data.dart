@@ -1,5 +1,5 @@
 import 'kitchen_order.dart';
-import 'kitchen_order_status.dart';
+import 'kitchen_order_tinhtrang.dart';
 import 'user.dart';
 import 'role.dart';
 import 'item.dart';
@@ -54,6 +54,7 @@ class KitchenMockData {
     name: 'Còn món',
   );
 
+  /// Danh sách các món ăn
   static final items = [
     Item(
       id: 'i-1',
@@ -129,12 +130,11 @@ class KitchenMockData {
     ),
   ];
 
-  /// CHỈ TẠO ORDERS "CHƯA LÀM" - XÓA DỮ LIỆU CỨNG CÁC TAB KHÁC
+  //****************************************************/
+  /// Lấy tất cả các đơn hàng bếp (dữ liệu cứng)
   static List<KitchenOrder> getAllKitchenOrders() {
     final now = DateTime.now();
-
     return [
-      // CHỈ CÓ TAB 0: CHƯA LÀM (5 món)
       _createOrder(
         id: 'ko-1',
         item: items[0],
@@ -178,11 +178,6 @@ class KitchenMockData {
         status: KitchenOrderStatus.pending,
         note: 'Nhiều rau',
       ),
-
-      // XÓA TOÀN BỘ DỮ LIỆU CỨNG TAB 1, 2, 3
-      // TAB 1: ĐÃ LÀM - RỖNG
-      // TAB 2: HẾT MÓN - RỖNG
-      // TAB 3: ĐÃ HỦY - RỖNG
     ];
   }
 

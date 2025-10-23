@@ -23,7 +23,7 @@ class SettingsScreen extends ConsumerWidget {
         centerTitle: false,
         automaticallyImplyLeading: false,
         title: Text(
-          'Cài đặt',
+          'Cài đặt ',
           style: Style.fontTitle.copyWith(
             color: Style.textColorWhite,
             fontSize: 20,

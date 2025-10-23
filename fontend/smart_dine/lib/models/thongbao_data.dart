@@ -1,7 +1,7 @@
-import 'notification_model.dart';
+import 'thongbao_model.dart';
 import '../../models/kitchen_order.dart';
-import 'kitchen_order_status.dart';
-import 'kitchen_mock_data.dart';
+import 'kitchen_order_tinhtrang.dart';
+import 'kitchen_data.dart';
 
 class NotificationMockData {
   /// Lấy tất cả notifications

@@ -1,4 +1,4 @@
-import 'kitchen_order_status.dart';
+import 'kitchen_order_tinhtrang.dart';
 import 'item.dart';
 import 'user.dart';
 import 'order_item.dart';

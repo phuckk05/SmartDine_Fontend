@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/style.dart';
-import '../../models/notification_model.dart';
-import '../../providers/notification_provider.dart';
-import '../../providers/kitchen_providers.dart';
+import '../../models/thongbao_model.dart';
+import '../../providers/thongbao_provider.dart';
+import '../../providers/kitchen_amthanh_providers.dart';
 
 class NotificationScreen extends ConsumerWidget {
   const NotificationScreen({super.key});
@@ -343,38 +343,6 @@ class NotificationScreen extends ConsumerWidget {
       'Đã xác nhận làm món ${notification.dishName}',
       Colors.green,
     );
-  }
-
-  void _handleOutOfStock(WidgetRef ref, OrderNotification notification) {
-    // Đánh dấu notification đã đọc
-    ref.read(markAsReadProvider)(notification.id);
-
-    // Cập nhật order status sang out of stock
-    if (notification.orderDetails != null) {
-      final orders = ref.read(ordersProvider);
-      final updated =
-          orders.map((o) {
-            if (o.id == notification.orderDetails!.id) {
-              return o.markAsOutOfStock();
-            }
-            return o;
-          }).toList();
-      ref.read(ordersProvider.notifier).state = updated;
-    }
-
-    // Sync notifications
-    ref.read(syncNotificationsFromKitchenProvider)();
-
-    _showSnackBar(
-      ref,
-      'Món ${notification.dishName} đã hết nguyên liệu',
-      Colors.orange,
-    );
-  }
-
-  void _handleOrderOutOfStock(WidgetRef ref, OrderNotification notification) {
-    ref.read(markAsReadProvider)(notification.id);
-    _showSnackBar(ref, 'Đã thông báo món hết nguyên liệu', Colors.orange);
   }
 
   void _handlePickupOrder(WidgetRef ref, OrderNotification notification) {

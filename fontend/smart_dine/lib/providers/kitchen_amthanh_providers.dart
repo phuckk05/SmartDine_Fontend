@@ -1,17 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../models/kitchen_order.dart';
-import '../models/kitchen_order_status.dart';
-import '../models/kitchen_mock_data.dart';
-import '../models/history_order.dart';
-import 'notification_provider.dart';
+import '../models/kitchen_order_tinhtrang.dart';
+import '../models/kitchen_data.dart';
+import '../models/lichsu_order.dart';
+import 'thongbao_provider.dart';
 import 'lichsu_provider.dart';
 import 'caidat_provider.dart';
 
-// Export
-export 'caidat_provider.dart' show canCancelOrderProvider;
-export 'notification_provider.dart';
-
+// Exports removed — providing canCancelOrderProvider locally
 final canCancelOrderProvider = Provider<bool>((ref) => true);
 
 // ==================== SOUND SERVICE ====================
