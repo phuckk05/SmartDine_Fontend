@@ -36,8 +36,7 @@ public class User {
 
     @Column(name = "role")
     private Integer role;
-    @Column(name = "role_id")
-    private Integer roleId;
+
     @Column(name = "company_id")
     private Integer companyId;
     @JsonFormat(shape = JsonFormat.Shape.STRING)
@@ -56,7 +55,7 @@ public class User {
 
     public User(Integer id, String fullName, String email, String phone,
             String passworkHash, String fontImage, String backImage,
-            Integer statusId, Integer role, Integer roleId,
+            Integer statusId, Integer role,
             Integer companyId,
             LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
         this.id = id;
@@ -68,7 +67,7 @@ public class User {
         this.backImage = backImage;
         this.statusId = statusId;
         this.role = role;
-        this.roleId = roleId;
+
         this.companyId = companyId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -86,14 +85,6 @@ public class User {
     // Getters & Setters
     public Integer getId() {
         return id;
-    }
-
-    public Integer getRoleId() {
-        return roleId;
-    }
-
-    public void setRoleId(Integer roleId) {
-        this.roleId = roleId;
     }
 
     public Integer getCompanyId() {
