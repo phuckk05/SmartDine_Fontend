@@ -131,7 +131,6 @@ class _ScreenConfirmState extends ConsumerState<ScreenConfirm> {
 
   //Textflied "Nhập mã"
   Widget _textFiledCode() {
-    final textCode = ref.watch(textCodeEditTextProvider);
     final isCheck = ref.watch(isCheckvalueProvider);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,

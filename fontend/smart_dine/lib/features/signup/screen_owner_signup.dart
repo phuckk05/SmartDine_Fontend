@@ -27,7 +27,6 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _codeController = TextEditingController();
-  final TextEditingController _passwordController2 = TextEditingController();
 
   //Hàm lấy ảnh
   Future<void> _getImage(StateProvider<File?> _image) async {

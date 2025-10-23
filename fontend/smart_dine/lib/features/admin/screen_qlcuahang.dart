@@ -2,83 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/style.dart';
 import 'screen_hoso.dart';
-
-// Model
-class Store {
-  final String id;
-  final String name;
-  final String ownerName;
-  final String phone;
-  final int branchNumber;
-
-  Store({
-    required this.id,
-    required this.name,
-    required this.ownerName,
-    required this.phone,
-    required this.branchNumber,
-  });
-}
-
-// Provider cho danh sách cửa hàng
-final storeListProvider = StateNotifierProvider<StoreListNotifier, List<Store>>(
-  (ref) {
-    return StoreListNotifier();
-  },
-);
-
-class StoreListNotifier extends StateNotifier<List<Store>> {
-  StoreListNotifier() : super([]) {
-    _loadData();
-  }
-
-  void _loadData() {
-    state = [
-      Store(
-        id: '1',
-        name: 'Nhà hàng 1',
-        ownerName: 'Nguyễn Văn A',
-        phone: '0123456789',
-        branchNumber: 1,
-      ),
-      Store(
-        id: '2',
-        name: 'Nhà hàng 2',
-        ownerName: 'Trần Thị B',
-        phone: '0987654321',
-        branchNumber: 2,
-      ),
-      Store(
-        id: '3',
-        name: 'Nhà hàng 3',
-        ownerName: 'Lê Văn C',
-        phone: '0912345678',
-        branchNumber: 1,
-      ),
-    ];
-  }
-
-  void deleteStore(String id) {
-    state = state.where((store) => store.id != id).toList();
-  }
-}
-
-// Provider cho search query
-final searchQueryProvider = StateProvider<String>((ref) => '');
-
-// Provider cho filtered stores
-final filteredStoresProvider = Provider<List<Store>>((ref) {
-  final stores = ref.watch(storeListProvider);
-  final query = ref.watch(searchQueryProvider).toLowerCase();
-
-  if (query.isEmpty) return stores;
-
-  return stores.where((store) {
-    return store.name.toLowerCase().contains(query) ||
-        store.ownerName.toLowerCase().contains(query) ||
-        store.phone.contains(query);
-  }).toList();
-});
+import 'package:mart_dine/models/cuahang_model.dart';
+import 'package:mart_dine/providers/cuahang_providers.dart';
 
 class StoreManagementScreen extends ConsumerWidget {
   const StoreManagementScreen({super.key});
@@ -384,13 +309,28 @@ class StoreManagementScreen extends ConsumerWidget {
   }
 
   void _showDeleteAllDialog(BuildContext context, WidgetRef ref) {
+    // Kiểm tra xem có cửa hàng nào không
+    final stores = ref.read(storeListProvider);
+    if (stores.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Không có cửa hàng nào để xóa',
+            style: Style.fontNormal.copyWith(color: Style.textColorWhite),
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
             title: Text('Xác nhận xóa tất cả', style: Style.fontTitleMini),
             content: Text(
-              'Bạn có chắc muốn xóa tất cả cửa hàng?',
+              'Bạn có chắc muốn xóa tất cả ${stores.length} cửa hàng?\n\nHành động này không thể hoàn tác!',
               style: Style.fontNormal,
             ),
             actions: [
@@ -403,21 +343,24 @@ class StoreManagementScreen extends ConsumerWidget {
               ),
               ElevatedButton(
                 onPressed: () {
-                  // TODO: Implement delete all
+                  // Thực hiện xóa tất cả
+                  ref.read(storeListProvider.notifier).deleteAllStores();
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        'Đã xóa tất cả cửa hàng',
+                        'Đã xóa tất cả ${stores.length} cửa hàng',
                         style: Style.fontNormal.copyWith(
                           color: Style.textColorWhite,
                         ),
                       ),
+                      backgroundColor: Colors.green,
+                      duration: const Duration(seconds: 2),
                     ),
                   );
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: Text('Xóa', style: Style.fontButton),
+                child: Text('Xóa tất cả', style: Style.fontButton),
               ),
             ],
           ),

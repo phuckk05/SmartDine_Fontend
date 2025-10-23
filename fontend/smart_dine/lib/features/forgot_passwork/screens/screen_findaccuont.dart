@@ -5,7 +5,6 @@ import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/forgot_passwork/screens/screen_confirm.dart';
 import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets/appbar.dart';
-import 'package:mart_dine/widgets/loading.dart';
 
 class ScreenFindaccuont extends ConsumerWidget {
   ScreenFindaccuont({super.key});
@@ -92,24 +91,7 @@ class ScreenFindaccuont extends ConsumerWidget {
     );
   }
 
-  //Note
-  Widget _note() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        Text(
-          ' - Vui lòng nhập đúng thông tin chi nhánh của bạn !',
-          style: Style.fontCaption,
-        ),
-        Text(' - Ghi nhớ mã code chi nhánh.', style: Style.fontCaption),
-        Text(
-          ' - Thời gian duyệt yêu cầu 1-2 ngày trừ các ngày lễ.',
-          style: Style.fontCaption,
-        ),
-      ],
-    );
-  }
+  // (note widget removed — unused)
 
   //Textfield
   Widget _textFiled(
