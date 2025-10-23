@@ -1,7 +1,6 @@
-// import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mart_dine/features/start/screen/screen_start.dart';
+import 'package:mart_dine/features/bottom_Navigation/screen/bottom_navigation.dart';
 import 'package:mart_dine/providers/mode_provider.dart';
 
 void main() {
@@ -28,8 +27,8 @@ class SmartDineApp extends ConsumerWidget {
         ),
       ),
 
-      // Thiết lập chệ độ sáng tối
-      home: const ScreenStart(),
+      home: const ScreenBottomNavigation(index: 2), // Chạy Admin
+      //home: const ScreenBottomNavigation(index: 1), // Chạy Kitchen
     );
   }
 }
