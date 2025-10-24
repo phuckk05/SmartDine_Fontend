@@ -19,6 +19,9 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     // Lấy danh sách order by tableId ngay hôm nay
     List<Order> findByTableIdAndCreatedAtBetween(Integer tableId, LocalDateTime startOfDay, LocalDateTime endOfDay);
 
+    // Lấy danh sách order theo branchId trong khoảng thời gian
+    List<Order> findByBranchIdAndCreatedAtBetween(Integer branchId, LocalDateTime startOfDay, LocalDateTime endOfDay);
+
     // Lấy danh sách tableId đã có order với statusId cụ thể ngay hôm nay
     @Query("SELECT DISTINCT o.tableId FROM Order o WHERE o.statusId = :statusId AND o.createdAt BETWEEN :startOfDay AND :endOfDay")
     List<Integer> findDistinctTableIdByStatusIdAndCreatedAtBetween(

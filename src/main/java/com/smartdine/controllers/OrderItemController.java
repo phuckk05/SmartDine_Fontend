@@ -2,8 +2,6 @@ package com.smartdine.controllers;
 
 import java.util.List;
 
-import org.antlr.v4.runtime.atn.SemanticContext.OR;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,17 +18,21 @@ import com.smartdine.services.OrderServices;
 @RestController
 @RequestMapping("/api/order-items")
 public class OrderItemController {
-    @Autowired
-    private OrderItemService orderItemServices;
-    private OrderServices orderServices;
+    private final OrderItemService orderItemServices;
+    private final OrderServices orderServices;
+
+    public OrderItemController(OrderItemService orderItemServices, OrderServices orderServices) {
+        this.orderItemServices = orderItemServices;
+        this.orderServices = orderServices;
+    }
 
     // Lấy tất cả order item ngày hôm nay
     @GetMapping("/today/branch/{branchId}")
     public ResponseEntity<?> getOrderItemsToday(@PathVariable Integer branchId) {
         try {
             List<Order> orders = orderServices.getOrdersByBranchIdToday(branchId);
-            List<OrderItem> orderItems = orderItemServices
-                    .getOrderItemsByIds(orders.stream().map(Order::getId).toList());
+            List<Integer> orderIds = orders.stream().map(Order::getId).toList();
+            List<OrderItem> orderItems = orderItemServices.getOrderItemsByOrderIds(orderIds);
             return ResponseEntity.ok(orderItems);
         } catch (Exception e) {
             e.printStackTrace();

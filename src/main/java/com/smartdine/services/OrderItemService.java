@@ -1,6 +1,5 @@
 package com.smartdine.services;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,9 +13,12 @@ public class OrderItemService {
     @Autowired
     private OrderItemRepository orderItemRepository;
 
-    // Intput list<orderItemId> , output list<OrderItem>
-    public List<OrderItem> getOrderItemsByIds(List<Integer> orderItemIds) {
-        return orderItemRepository.findAllById(orderItemIds);
+    // Lấy danh sách OrderItem theo các orderId
+    public List<OrderItem> getOrderItemsByOrderIds(List<Integer> orderIds) {
+        if (orderIds == null || orderIds.isEmpty()) {
+            return List.of();
+        }
+        return orderItemRepository.findByOrderIdIn(orderIds);
     }
 
     // Cap̉̀ nhật trạng thái của order item
