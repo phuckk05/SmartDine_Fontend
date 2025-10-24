@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-<<<<<<< HEAD
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:mart_dine/features/staff/screen_choose_table.dart';
 import 'package:mart_dine/features/staff/screen_menu.dart';
 import 'package:mart_dine/features/staff/screen_start.dart';
-=======
-import 'package:mart_dine/features/bottom_Navigation/screen/bottom_navigation.dart';
->>>>>>> cdde95e8c9cbf6765c544eab124333abe4c331be
 import 'package:mart_dine/providers/mode_provider.dart';
 
 Future<void> main() async {
@@ -36,13 +32,8 @@ class SmartDineApp extends ConsumerWidget {
         ),
       ),
 
-<<<<<<< HEAD
       // Thiết lập chệ độ sáng tối
       home: const ScreenMenu(tableName: "Bàn - 1"),
-=======
-      home: const ScreenBottomNavigation(index: 2), // Chạy Admin
-      //home: const ScreenBottomNavigation(index: 1), // Chạy Kitchen
->>>>>>> cdde95e8c9cbf6765c544eab124333abe4c331be
     );
   }
 }
