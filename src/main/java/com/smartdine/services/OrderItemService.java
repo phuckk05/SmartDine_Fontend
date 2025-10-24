@@ -14,12 +14,9 @@ public class OrderItemService {
     @Autowired
     private OrderItemRepository orderItemRepository;
 
-    // Lấy danh sách OrderItem theo orderId ngày hôm nay
-    public List<OrderItem> getOrderItemsByOrderId(Integer orderId) {
-        LocalDate today = LocalDate.now();
-        LocalDate startOfDay = today.atStartOfDay().toLocalDate();
-        LocalDate endOfDay = today.atTime(23, 59, 59).toLocalDate();
-        return orderItemRepository.findByOrderIdAndCreatedAtBetween(orderId, startOfDay, endOfDay);
+    // Intput list<orderItemId> , output list<OrderItem>
+    public List<OrderItem> getOrderItemsByIds(List<Integer> orderItemIds) {
+        return orderItemRepository.findAllById(orderItemIds);
     }
 
     // Cap̉̀ nhật trạng thái của order item

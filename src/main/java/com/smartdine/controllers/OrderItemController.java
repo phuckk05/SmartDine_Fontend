@@ -14,23 +14,28 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.smartdine.models.OrderItem;
 import com.smartdine.services.OrderItemService;
+import com.smartdine.services.OrderServices;
 
 @RestController
 @RequestMapping("/api/order-items")
 public class OrderItemController {
     @Autowired
     private OrderItemService orderItemServices;
+    private OrderServices orderServices;
 
     // Lấy tất cả order item ngày hôm nay
-    @GetMapping("/today")
-    public ResponseEntity<?> getOrderItemsToday(@PathVariable Integer orderId) {
+    @GetMapping("/today/branch/{branchId}")
+    public ResponseEntity<?> getOrderItemsToday(@PathVariable Integer branchId) {
         try {
-            List<OrderItem> orderItems = orderItemServices.getOrderItemsByOrderId(orderId);
+            List<Integer> orderIds = orderServices.getOrdersByBranchIdToday(branchId).stream()
+                    .map(order -> order.getId()).toList();
+            List<OrderItem> orderItems = orderItemServices.getOrderItemsByIds(orderIds);
             return ResponseEntity.ok(orderItems);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
+
     }
 
     // Cập nhật trạng thái của order item
@@ -56,4 +61,5 @@ public class OrderItemController {
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
+
 }
