@@ -1,9 +1,10 @@
 package com.smartdine.controllers;
 
-import com.smartdine.models.Branch;
-import com.smartdine.services.*;
-
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.smartdine.models.Branch;
+import com.smartdine.services.BranchServices;
 
 @RestController
 @RequestMapping("/api/branches")
@@ -48,5 +52,25 @@ public class BranchController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(branch);
+    }
+
+    // Lấy thống kê chi nhánh
+    @GetMapping("/{branchId}/statistics")
+    public ResponseEntity<?> getBranchStatistics(@PathVariable Integer branchId) {
+        try {
+            // Tạo thống kê cơ bản cho chi nhánh
+            Map<String, Object> statistics = new HashMap<>();
+            statistics.put("branchId", branchId);
+            statistics.put("totalEmployees", 15); // Mock data - should get from EmployeeService
+            statistics.put("totalTables", 20); // Mock data - should get from TableService
+            statistics.put("todayRevenue", 2500000.0); // Mock data - should get from PaymentService
+            statistics.put("todayOrders", 45); // Mock data - should get from OrderService
+            statistics.put("occupancyRate", 75.0); // Mock data
+            statistics.put("lastUpdated", LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).toString());
+            
+            return ResponseEntity.ok(statistics);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+        }
     }
 }
