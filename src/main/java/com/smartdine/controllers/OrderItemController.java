@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.smartdine.models.Order;
 import com.smartdine.models.OrderItem;
 import com.smartdine.services.OrderItemService;
 import com.smartdine.services.OrderServices;
@@ -27,9 +28,9 @@ public class OrderItemController {
     @GetMapping("/today/branch/{branchId}")
     public ResponseEntity<?> getOrderItemsToday(@PathVariable Integer branchId) {
         try {
-            List<Integer> orderIds = orderServices.getOrdersByBranchIdToday(branchId).stream()
-                    .map(order -> order.getId()).toList();
-            List<OrderItem> orderItems = orderItemServices.getOrderItemsByIds(orderIds);
+            List<Order> orders = orderServices.getOrdersByBranchIdToday(branchId);
+            List<OrderItem> orderItems = orderItemServices
+                    .getOrderItemsByIds(orders.stream().map(Order::getId).toList());
             return ResponseEntity.ok(orderItems);
         } catch (Exception e) {
             e.printStackTrace();
