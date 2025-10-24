@@ -39,10 +39,22 @@ public class BranchController {
         }
     }
 
+    //
     // Lấy thông tin branch theo mã code
     @GetMapping("/{branchCode}")
     public ResponseEntity<Branch> getBranchByCode(@PathVariable String branchCode) {
         Branch branch = branchServices.findBranch(branchCode);
+        if (branch == null) {
+            // Trả về 404
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(branch);
+    }
+
+    // Lấy thông tin branch theo id
+    @GetMapping("/id/{id}")
+    public ResponseEntity<Branch> getBranchById(@PathVariable Integer id) {
+        Branch branch = branchServices.getBranchById(id);
         if (branch == null) {
             // Trả về 404
             return ResponseEntity.notFound().build();

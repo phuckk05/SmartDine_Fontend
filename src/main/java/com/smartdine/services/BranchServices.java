@@ -39,4 +39,9 @@ public class BranchServices {
         }
         return null;
     }
+
+    // Lấy branch theo id
+    public Branch getBranchById(Integer id) {
+        return branchRepository.findById(id).orElse(null);
+    }
 }
