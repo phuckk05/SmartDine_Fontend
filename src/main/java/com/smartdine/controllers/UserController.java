@@ -41,19 +41,19 @@ public class UserController {
     }
 
     // lấy user theo id
-    @GetMapping("/{id}")
+    @GetMapping("/get/{id}")
     public User getUser(@PathVariable Integer id) {
         return userService.getUserById(id);
     }
 
     // Xoa User
-    @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Integer id) {
-        userService.deleteUser(id);
+    @DeleteMapping("/delete/{id}")
+    public boolean deleteUser(@PathVariable Integer id) {
+        return userService.deleteUser(id);
     }
 
     // Cập nhật mật khẩu
-    @PutMapping("/update/{id}")
+    @PutMapping("/password/{id}")
     public ResponseEntity<?> updatePassword(@PathVariable Integer id, @RequestParam String newPassword) {
         try {
             User updatedUser = userService.updatePassword(id, newPassword);
@@ -63,4 +63,14 @@ public class UserController {
         }
     }
 
+    // Cập nhật user
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody User userDetails) {
+        try {
+            User updatedUser = userService.updateUser(id, userDetails);
+            return ResponseEntity.ok(updatedUser);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

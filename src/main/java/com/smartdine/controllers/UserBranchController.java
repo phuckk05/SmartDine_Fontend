@@ -52,4 +52,16 @@ public class UserBranchController {
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
+
+    // Lấy usrBranch theo branchId
+    @GetMapping("/branch/{branchId}")
+    public ResponseEntity<?> getByBranchId(@PathVariable Integer branchId) {
+        try {
+            List<UserBranch> userBranches = userBranchServices.getByBranchId(branchId);
+            return ResponseEntity.ok(userBranches);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
 }

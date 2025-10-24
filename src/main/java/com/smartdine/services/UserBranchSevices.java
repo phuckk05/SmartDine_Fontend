@@ -26,4 +26,14 @@ public class UserBranchSevices {
     public UserBranch getByUserId(Integer userId) {
         return userBranchRepository.findByUserId(userId);
     }
+
+    // Lấy Userid theo branchId
+    public List<UserBranch> getByBranchId(Integer branchId) {
+        return userBranchRepository.findByBranchId(branchId);
+    }
+
+    // Xóa UserBranch
+    public boolean deleteByUserId(Integer userId) {
+        return userBranchRepository.deleteByUserId(userId);
+    }
 }

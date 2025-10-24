@@ -16,18 +16,22 @@ public class RestaurantTableServices {
     @Autowired
     private RestaurantTableRepository restaurantTableRepository;
 
+    // Lấy tất cả bàn
     public List<RestaurantTable> getAll() {
         return restaurantTableRepository.findAll();
     }
 
+    // Lấy bàn theo id
     public RestaurantTable getById(Integer id) {
         return restaurantTableRepository.findById(id).orElse(null);
     }
 
+    // Tạo mới bàn
     public RestaurantTable create(RestaurantTable table) {
         return restaurantTableRepository.save(table);
     }
 
+    // Cập nhật bàn
     public RestaurantTable update(Integer id, RestaurantTable updatedTable) {
         Optional<RestaurantTable> existingOptional = restaurantTableRepository.findById(id);
         if (existingOptional.isEmpty()) {
@@ -45,6 +49,7 @@ public class RestaurantTableServices {
         return restaurantTableRepository.save(existingTable);
     }
 
+    // Xóa bàn
     public boolean delete(Integer id) {
         Optional<RestaurantTable> existingOptional = restaurantTableRepository.findById(id);
         if (existingOptional.isEmpty()) {
@@ -53,5 +58,10 @@ public class RestaurantTableServices {
 
         restaurantTableRepository.deleteById(id);
         return true;
+    }
+
+    // Lấy bàn theo branchId
+    public List<RestaurantTable> getByBranchId(Integer branchId) {
+        return restaurantTableRepository.findByBranchId(branchId);
     }
 }

@@ -27,7 +27,6 @@ public class OrderItem {
 
     private Integer quantity;
 
-    @Lob
     private String note;
 
     @Column(name = "status_id")

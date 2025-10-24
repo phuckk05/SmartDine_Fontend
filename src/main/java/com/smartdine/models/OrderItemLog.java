@@ -28,7 +28,6 @@ public class OrderItemLog {
     @Column(name = "action_id")
     private Integer actionId;
 
-    @Lob
     private String note;
 
     @Column(name = "created_at")

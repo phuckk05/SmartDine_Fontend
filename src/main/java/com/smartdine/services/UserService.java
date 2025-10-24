@@ -14,6 +14,7 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+    private UserBranchSevices userBranchSevices;
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -60,7 +61,25 @@ public class UserService {
         return userRepository.findById(id).orElse(null);
     }
 
-    public void deleteUser(Integer id) {
+    // Xóa User
+    public boolean deleteUser(Integer id) {
+        userBranchSevices.deleteByUserId(id);
         userRepository.deleteById(id);
+        return true;
+    }
+
+    // Cập nhật user
+    public User updateUser(Integer id, User userDetails) {
+        User user = userRepository.findById(id).orElse(null);
+        if (user == null) {
+            throw new IllegalArgumentException("User not found with id: " + id);
+        }
+
+        user.setFullName(userDetails.getFullName());
+        user.setEmail(userDetails.getEmail());
+        user.setPhone(userDetails.getPhone());
+        user.setUpdatedAt(LocalDateTime.now());
+
+        return userRepository.save(user);
     }
 }

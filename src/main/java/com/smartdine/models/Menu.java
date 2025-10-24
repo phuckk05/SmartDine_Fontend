@@ -25,7 +25,6 @@ public class Menu {
 
     private String name;
 
-    @Lob
     private String description;
 
     @Column(name = "status_id")

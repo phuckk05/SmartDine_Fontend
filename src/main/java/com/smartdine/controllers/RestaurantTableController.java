@@ -33,7 +33,7 @@ public class RestaurantTableController {
         }
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/get/{id}")
     public ResponseEntity<?> getById(@PathVariable Integer id) {
         try {
             RestaurantTable table = restaurantTableServices.getById(id);
@@ -46,6 +46,7 @@ public class RestaurantTableController {
         }
     }
 
+    // Tạo mới bàn
     @PostMapping
     public ResponseEntity<?> create(@RequestBody RestaurantTable table) {
         try {
@@ -56,7 +57,7 @@ public class RestaurantTableController {
         }
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<?> update(@PathVariable Integer id, @RequestBody RestaurantTable table) {
         try {
             RestaurantTable updated = restaurantTableServices.update(id, table);
@@ -69,7 +70,8 @@ public class RestaurantTableController {
         }
     }
 
-    @DeleteMapping("/{id}")
+    // Xóa bàn
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> delete(@PathVariable Integer id) {
         try {
             boolean deleted = restaurantTableServices.delete(id);
@@ -77,6 +79,17 @@ public class RestaurantTableController {
                 return ResponseEntity.notFound().build();
             }
             return ResponseEntity.noContent().build();
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+        }
+    }
+
+    // Lấy bàn theo branchId
+    @GetMapping("/get/branch/{branchId}")
+    public ResponseEntity<?> getByBranchId(@PathVariable Integer branchId) {
+        try {
+            List<RestaurantTable> tables = restaurantTableServices.getByBranchId(branchId);
+            return ResponseEntity.ok(tables);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
         }
