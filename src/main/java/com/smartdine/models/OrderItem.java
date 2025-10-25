@@ -2,8 +2,8 @@ package com.smartdine.models;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,7 +15,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "order_items")
@@ -47,16 +46,16 @@ public class OrderItem {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @JsonIgnore
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "item_id", insertable = false, updatable = false)
-    @JsonProperty("item")
     private Item item;
 
+    @JsonIgnore
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", insertable = false, updatable = false)
-    @JsonProperty("order")
     private Order order;
 
     public OrderItem() {
@@ -161,45 +160,6 @@ public class OrderItem {
 
     public void setOrder(Order order) {
         this.order = order;
-    }
-
-    @Transient
-    @JsonProperty("item_name")
-    public String getItemName() {
-        return item != null ? item.getName() : null;
-    }
-
-    @Transient
-    @JsonProperty("item_price")
-    public java.math.BigDecimal getItemPrice() {
-        return item != null ? item.getPrice() : null;
-    }
-
-    @Transient
-    @JsonProperty("table_name")
-    public String getTableName() {
-        if (order != null && order.getTable() != null) {
-            return order.getTable().getName();
-        }
-        return null;
-    }
-
-    @Transient
-    @JsonProperty("table_code")
-    public String getTableCode() {
-        if (order != null && order.getTable() != null) {
-            return order.getTable().getDescription();
-        }
-        return null;
-    }
-
-    @Transient
-    @JsonProperty("table_id")
-    public Integer getTableId() {
-        if (order != null && order.getTable() != null) {
-            return order.getTable().getId();
-        }
-        return null;
     }
 
     @PrePersist

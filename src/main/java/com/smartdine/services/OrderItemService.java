@@ -1,5 +1,6 @@
 package com.smartdine.services;
 
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -15,13 +16,25 @@ public class OrderItemService {
     @Autowired
     private OrderItemRepository orderItemRepository;
 
-    // Lấy danh sách OrderItem theo các orderId kèm thông tin món và bàn
+    // Lấy danh sách OrderItem theo các orderId
     public List<OrderItem> getOrderItemsByOrderIds(List<Integer> orderIds) {
         if (orderIds == null || orderIds.isEmpty()) {
             return List.of();
         }
         Set<Integer> uniqueIds = new LinkedHashSet<>(orderIds);
-        return orderItemRepository.findDetailedByOrderIds(List.copyOf(uniqueIds));
+        return orderItemRepository.findByOrderIdIn(List.copyOf(uniqueIds)).stream()
+                .sorted(Comparator.comparing(OrderItem::getCreatedAt))
+                .toList();
+    }
+
+    // Lấy danh sách OrderItem theo từng orderId
+    public List<OrderItem> getOrderItemsByOrderId(Integer orderId) {
+        if (orderId == null) {
+            return List.of();
+        }
+        return orderItemRepository.findByOrderId(orderId).stream()
+                .sorted(Comparator.comparing(OrderItem::getCreatedAt))
+                .toList();
     }
 
     // Cập nhật trạng thái của order item
@@ -31,8 +44,7 @@ public class OrderItemService {
             throw new IllegalArgumentException("OrderItem not found with id: " + id);
         }
         orderItem.setStatusId(statusId);
-        orderItemRepository.save(orderItem);
-        return orderItemRepository.findDetailedById(id);
+        return orderItemRepository.save(orderItem);
     }
 
     // Cập nhật người đã phục vụ món lên
@@ -42,7 +54,6 @@ public class OrderItemService {
             throw new IllegalArgumentException("OrderItem not found with id: " + id);
         }
         orderItem.setServedBy(servedBy);
-        orderItemRepository.save(orderItem);
-        return orderItemRepository.findDetailedById(id);
+        return orderItemRepository.save(orderItem);
     }
 }

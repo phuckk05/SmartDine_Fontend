@@ -41,6 +41,18 @@ public class OrderItemController {
 
     }
 
+    // Lấy danh sách order item theo orderId
+    @GetMapping("/order/{orderId}")
+    public ResponseEntity<List<OrderItem>> getOrderItemsByOrder(@PathVariable Integer orderId) {
+        try {
+            List<OrderItem> orderItems = orderItemServices.getOrderItemsByOrderId(orderId);
+            return ResponseEntity.ok(orderItems);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     // Cập nhật trạng thái của order item
     @PutMapping("/{id}/status")
     public ResponseEntity<OrderItem> updateOrderItemStatus(@PathVariable Integer id, @RequestBody Integer status) {
