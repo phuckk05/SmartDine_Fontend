@@ -23,9 +23,9 @@ class ScreenBottomNavigation extends ConsumerStatefulWidget {
 class _BottomNavigationState extends ConsumerState<ScreenBottomNavigation> {
   // Danh sách các màn hình cho Kitchen (index = 1)
   final List<Widget> _kitchenScreens = [
-    const KitchenScreen(),
-    const HistoryScreen(),
-    const SettingsScreen(),
+    const ScreenKitChen(),
+    const ScreenHistory(),
+    const ScreenSetting(),
   ];
 
   // Danh sách các màn hình cho Admin (index = 2)
