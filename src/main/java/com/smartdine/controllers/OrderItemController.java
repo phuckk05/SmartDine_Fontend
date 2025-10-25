@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.smartdine.dto.KitchenOrderItemDto;
 import com.smartdine.models.Order;
-import com.smartdine.models.OrderItem;
 import com.smartdine.services.OrderItemService;
 import com.smartdine.services.OrderServices;
 
@@ -32,7 +32,7 @@ public class OrderItemController {
         try {
             List<Order> orders = orderServices.getOrdersByBranchIdToday(branchId);
             List<Integer> orderIds = orders.stream().map(Order::getId).toList();
-            List<OrderItem> orderItems = orderItemServices.getOrderItemsByOrderIds(orderIds);
+            List<KitchenOrderItemDto> orderItems = orderItemServices.getOrderItemsByOrderIds(orderIds);
             return ResponseEntity.ok(orderItems);
         } catch (Exception e) {
             e.printStackTrace();
@@ -45,7 +45,7 @@ public class OrderItemController {
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updateOrderItemStatus(@PathVariable Integer id, @RequestBody Integer status) {
         try {
-            OrderItem updatedOrderItem = orderItemServices.updateOrderItemStatus(id, status);
+            KitchenOrderItemDto updatedOrderItem = orderItemServices.updateOrderItemStatus(id, status);
             return ResponseEntity.ok(updatedOrderItem);
         } catch (Exception e) {
             e.printStackTrace();
@@ -57,7 +57,7 @@ public class OrderItemController {
     @PutMapping("/{id}/served-by")
     public ResponseEntity<?> updateServedBy(@PathVariable Integer id, @RequestBody Integer servedBy) {
         try {
-            OrderItem updatedOrderItem = orderItemServices.updateServedBy(id, servedBy);
+            KitchenOrderItemDto updatedOrderItem = orderItemServices.updateServedBy(id, servedBy);
             return ResponseEntity.ok(updatedOrderItem);
         } catch (Exception e) {
             e.printStackTrace();
