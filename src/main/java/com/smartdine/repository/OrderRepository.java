@@ -28,4 +28,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
             @Param("statusId") Integer statusId,
             @Param("startOfDay") LocalDateTime startOfDay,
             @Param("endOfDay") LocalDateTime endOfDay);
+
+    // Lấy danh sách order theo branchId và khoảng thời gian
+    List<Order> findByBranchIdAndCreatedAtBetween(Integer branchId, LocalDateTime startTime, LocalDateTime endTime);
 }

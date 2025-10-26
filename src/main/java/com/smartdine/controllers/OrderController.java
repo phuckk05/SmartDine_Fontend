@@ -208,4 +208,26 @@ public class OrderController {
         }
     }
 
+    // Lấy xu hướng doanh thu theo branch trong 7 ngày gần đây
+    @GetMapping("/revenue/trends/{branchId}")
+    public ResponseEntity<?> getRevenueTrends(@PathVariable Integer branchId) {
+        try {
+            List<Map<String, Object>> revenueTrends = orderServices.getRevenueTrendsByBranch(branchId);
+            return ResponseEntity.ok(revenueTrends);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+        }
+    }
+
+    // Lấy doanh thu theo giờ hôm nay
+    @GetMapping("/revenue/hourly/{branchId}")
+    public ResponseEntity<?> getHourlyRevenue(@PathVariable Integer branchId) {
+        try {
+            List<Map<String, Object>> hourlyRevenue = orderServices.getHourlyRevenueByBranch(branchId);
+            return ResponseEntity.ok(hourlyRevenue);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+        }
+    }
+
 }
