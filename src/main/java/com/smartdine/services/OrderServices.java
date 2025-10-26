@@ -46,6 +46,7 @@ public class OrderServices {
         return orderRepository.findByTableIdAndCreatedAtBetween(tableId, startOfDay, endOfDay);
     }
 
+<<<<<<< HEAD
     // Lấy danh sách order theo branchId ngay hôm nay
     public List<Order> getOrdersByBranchIdToday(Integer branchId) {
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
@@ -54,4 +55,11 @@ public class OrderServices {
 
         return orderRepository.findByBranchIdAndCreatedAtBetween(branchId, startOfDay, endOfDay);
     }
+=======
+    // Lấy danh sách orders theo branchId
+    public List<Order> getOrdersByBranchId(Integer branchId) {
+        return orderRepository.findByBranchId(branchId);
+    }
+
+>>>>>>> origin/branch-management-api-v1.2
 }

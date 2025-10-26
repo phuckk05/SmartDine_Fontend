@@ -24,7 +24,7 @@ public class OrderController {
     OrderServices orderServices;
 
     // Lấy tất cả order
-    @GetMapping("/all")
+    @GetMapping
     public List<Order> getAll() {
         return orderServices.getAll();
     }
@@ -56,6 +56,12 @@ public class OrderController {
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
         }
+    }
+
+    // Lấy danh sách orders theo branchId
+    @GetMapping("/branch/{branchId}")
+    public List<Order> getOrdersByBranchId(@PathVariable Integer branchId) {
+        return orderServices.getOrdersByBranchId(branchId);
     }
 
     // Thống kê đơn hàng theo chi nhánh
