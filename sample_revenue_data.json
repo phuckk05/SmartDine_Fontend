@@ -1,0 +1,148 @@
+{
+  "sampleRevenueTrends": {
+    "description": "7 ngày doanh thu mẫu cho branch 1",
+    "data": [
+      {
+        "date": "2025-10-19",
+        "revenue": 1960000,
+        "orders": 5
+      },
+      {
+        "date": "2025-10-20", 
+        "revenue": 1440000,
+        "orders": 4
+      },
+      {
+        "date": "2025-10-21",
+        "revenue": 1920000,
+        "orders": 5
+      },
+      {
+        "date": "2025-10-22",
+        "revenue": 1470000,
+        "orders": 4
+      },
+      {
+        "date": "2025-10-23",
+        "revenue": 1870000,
+        "orders": 5
+      },
+      {
+        "date": "2025-10-24",
+        "revenue": 1320000,
+        "orders": 4
+      },
+      {
+        "date": "2025-10-25",
+        "revenue": 1950000,
+        "orders": 5
+      }
+    ]
+  },
+  
+  "sampleHourlyRevenue": {
+    "description": "Doanh thu theo giờ hôm nay cho branch 1",
+    "data": [
+      {
+        "hour": 7,
+        "revenue": 250000,
+        "timeRange": "07:00 - 07:59",
+        "orders": 1
+      },
+      {
+        "hour": 8,
+        "revenue": 180000,
+        "timeRange": "08:00 - 08:59", 
+        "orders": 1
+      },
+      {
+        "hour": 9,
+        "revenue": 320000,
+        "timeRange": "09:00 - 09:59",
+        "orders": 1
+      },
+      {
+        "hour": 10,
+        "revenue": 150000,
+        "timeRange": "10:00 - 10:59",
+        "orders": 1
+      },
+      {
+        "hour": 11,
+        "revenue": 420000,
+        "timeRange": "11:00 - 11:59",
+        "orders": 1
+      },
+      {
+        "hour": 12,
+        "revenue": 380000,
+        "timeRange": "12:00 - 12:59",
+        "orders": 1
+      },
+      {
+        "hour": 13,
+        "revenue": 290000,
+        "timeRange": "13:00 - 13:59",
+        "orders": 1
+      },
+      {
+        "hour": 14,
+        "revenue": 350000,
+        "timeRange": "14:00 - 14:59",
+        "orders": 1
+      },
+      {
+        "hour": 15,
+        "revenue": 200000,
+        "timeRange": "15:00 - 15:59",
+        "orders": 1
+      },
+      {
+        "hour": 17,
+        "revenue": 480000,
+        "timeRange": "17:00 - 17:59",
+        "orders": 1
+      },
+      {
+        "hour": 18,
+        "revenue": 520000,
+        "timeRange": "18:00 - 18:59",
+        "orders": 1
+      },
+      {
+        "hour": 19,
+        "revenue": 390000,
+        "timeRange": "19:00 - 19:59",
+        "orders": 1
+      },
+      {
+        "hour": 20,
+        "revenue": 450000,
+        "timeRange": "20:00 - 20:59",
+        "orders": 1
+      }
+    ]
+  },
+
+  "expectedTotalRevenue": {
+    "today": 4380000,
+    "yesterday": 1950000,
+    "last7Days": 11930000,
+    "servingOrders": 2,
+    "completedOrders": 13,
+    "unpaidTables": [4, 5]
+  },
+
+  "apiEndpoints": {
+    "revenueTrends": "GET /api/orders/revenue/trends/{branchId}",
+    "hourlyRevenue": "GET /api/orders/revenue/hourly/{branchId}",
+    "todaySummary": "GET /api/orders/summary/today/{branchId}",
+    "statistics": "GET /api/orders/statistics/branch/{branchId}"
+  },
+
+  "testCommands": {
+    "curl_revenue_trends": "curl -X GET https://smartdine-backend-oq2x.onrender.com/api/orders/revenue/trends/1",
+    "curl_hourly_revenue": "curl -X GET https://smartdine-backend-oq2x.onrender.com/api/orders/revenue/hourly/1",
+    "powershell_test": "Invoke-WebRequest -Uri 'https://smartdine-backend-oq2x.onrender.com/api/orders/revenue/trends/1' -Method GET"
+  }
+}
