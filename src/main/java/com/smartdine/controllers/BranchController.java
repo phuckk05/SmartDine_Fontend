@@ -26,7 +26,7 @@ public class BranchController {
     private BranchServices branchServices;
 
     // Lấy tất cả branch
-    @GetMapping("/all")
+    @GetMapping
     public List<Branch> getAll() {
         return branchServices.getAll();
     }

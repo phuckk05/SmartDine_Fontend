@@ -46,4 +46,9 @@ public class OrderServices {
         return orderRepository.findByTableIdAndCreatedAtBetween(tableId, startOfDay, endOfDay);
     }
 
+    // Lấy danh sách orders theo branchId
+    public List<Order> getOrdersByBranchId(Integer branchId) {
+        return orderRepository.findByBranchId(branchId);
+    }
+
 }

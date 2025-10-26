@@ -24,7 +24,7 @@ public class OrderController {
     OrderServices orderServices;
 
     // Lấy tất cả order
-    @GetMapping("/all")
+    @GetMapping
     public List<Order> getAll() {
         return orderServices.getAll();
     }
@@ -45,6 +45,12 @@ public class OrderController {
     @GetMapping("/table-order/{tableId}/today")
     public List<Order> getOrdersByTableIdToday(@PathVariable Integer tableId) {
         return orderServices.getOrdersByTableIdToday(tableId);
+    }
+
+    // Lấy danh sách orders theo branchId
+    @GetMapping("/branch/{branchId}")
+    public List<Order> getOrdersByBranchId(@PathVariable Integer branchId) {
+        return orderServices.getOrdersByBranchId(branchId);
     }
 
     // Thống kê đơn hàng theo chi nhánh

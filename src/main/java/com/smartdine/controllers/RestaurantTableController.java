@@ -31,7 +31,7 @@ public class RestaurantTableController {
     @Autowired
     private OrderServices orderServices;
 
-    @GetMapping("/all")
+    @GetMapping
     public ResponseEntity<?> getAll() {
         try {
             List<RestaurantTable> tables = restaurantTableServices.getAll();
@@ -41,7 +41,7 @@ public class RestaurantTableController {
         }
     }
 
-    @GetMapping("/get/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Integer id) {
         try {
             RestaurantTable table = restaurantTableServices.getById(id);
@@ -65,8 +65,8 @@ public class RestaurantTableController {
         }
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<?> update(@PathVariable Integer id, @RequestBody RestaurantTable table) {
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateTable(@PathVariable Integer id, @RequestBody RestaurantTable table) {
         try {
             RestaurantTable updated = restaurantTableServices.update(id, table);
             if (updated == null) {
@@ -79,8 +79,8 @@ public class RestaurantTableController {
     }
 
     // Xóa bàn
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> delete(@PathVariable Integer id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteTable(@PathVariable Integer id) {
         try {
             boolean deleted = restaurantTableServices.delete(id);
             if (!deleted) {

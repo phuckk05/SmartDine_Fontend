@@ -32,7 +32,7 @@ public class EmployeeController {
     private UserBranchSevices userBranchServices;
 
     // Lấy tất cả nhân viên
-    @GetMapping("/all")
+    @GetMapping
     public ResponseEntity<?> getAllEmployees() {
         try {
             List<User> employees = userService.getAllUsers();
