@@ -1,16 +1,18 @@
+import 'dart:convert';
+
 class OrderItem {
-  final String id;
-  final String orderId;
-  final String itemId;
+  final int id;
+  final int orderId;
+  final int itemId;
   final int quantity;
   final String? note;
-  final String statusId;
-  final String? addedBy;
-  final String? servedBy;
+  final int statusId;
+  final int? addedBy;
+  final int? servedBy;
   final DateTime createdAt;
 
   OrderItem({
-    required this.id,
+    int? id,
     required this.orderId,
     required this.itemId,
     required this.quantity,
@@ -18,24 +20,53 @@ class OrderItem {
     required this.statusId,
     this.addedBy,
     this.servedBy,
-    required this.createdAt,
-  });
+    DateTime? createdAt,
+  }) : id = id ?? 0,
+       createdAt = createdAt ?? DateTime.now();
 
-  factory OrderItem.fromJson(Map<String, dynamic> json) {
+  // Robust parsers
+  static int _parseInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is int) return v;
+    return int.tryParse(v.toString()) ?? 0;
+  }
+
+  static int? _parseNullableInt(dynamic v) {
+    if (v == null || (v is String && v.trim().isEmpty)) return null;
+    if (v is int) return v;
+    return int.tryParse(v.toString());
+  }
+
+  static DateTime _parseDate(dynamic v) {
+    if (v == null) return DateTime.now();
+    if (v is DateTime) return v;
+    if (v is int) return DateTime.fromMillisecondsSinceEpoch(v);
+    if (v is String) {
+      final parsed = DateTime.tryParse(v);
+      if (parsed != null) return parsed;
+      final i = int.tryParse(v);
+      if (i != null) return DateTime.fromMillisecondsSinceEpoch(i);
+    }
+    return DateTime.now();
+  }
+
+  factory OrderItem.fromMap(Map<String, dynamic> map) {
     return OrderItem(
-      id: json['id'],
-      orderId: json['order_id'],
-      itemId: json['item_id'],
-      quantity: json['quantity'],
-      note: json['note'],
-      statusId: json['status_id'],
-      addedBy: json['added_by'],
-      servedBy: json['served_by'],
-      createdAt: DateTime.parse(json['created_at']),
+      id: _parseInt(map['id']),
+      orderId: _parseInt(map['order_id'] ?? map['orderId']),
+      itemId: _parseInt(map['item_id'] ?? map['itemId']),
+      quantity: _parseInt(map['quantity'] ?? map['qty']),
+      note: map['note']?.toString(),
+      statusId: _parseInt(map['status_id'] ?? map['statusId']),
+      addedBy: _parseNullableInt(map['added_by'] ?? map['addedBy']),
+      servedBy: _parseNullableInt(map['served_by'] ?? map['servedBy']),
+      createdAt: _parseDate(
+        map['created_at'] ?? map['createdAt'] ?? map['created'],
+      ),
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toMap() {
     return {
       'id': id,
       'order_id': orderId,
@@ -49,15 +80,20 @@ class OrderItem {
     };
   }
 
+  factory OrderItem.fromJson(String source) =>
+      OrderItem.fromMap(json.decode(source));
+
+  String toJson() => json.encode(toMap());
+
   OrderItem copyWith({
-    String? id,
-    String? orderId,
-    String? itemId,
+    int? id,
+    int? orderId,
+    int? itemId,
     int? quantity,
     String? note,
-    String? statusId,
-    String? addedBy,
-    String? servedBy,
+    int? statusId,
+    int? addedBy,
+    int? servedBy,
     DateTime? createdAt,
   }) {
     return OrderItem(
@@ -72,4 +108,18 @@ class OrderItem {
       createdAt: createdAt ?? this.createdAt,
     );
   }
+
+  @override
+  String toString() {
+    return 'OrderItem(id: $id, orderId: $orderId, itemId: $itemId, qty: $quantity)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is OrderItem && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }

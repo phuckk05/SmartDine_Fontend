@@ -53,15 +53,15 @@ dependencies:
 
   dropdown_button2: ^2.3.9
 
-  #intl để định dạng ngày, giờ 
-  intl: ^0.18.1
-  
+  #intl để định dạng ngày, giờ
+  intl: ^0.20.2
+
   #Thư viện check internet
   connectivity_plus: ^4.0.0
 
-  dotted_border: ^2.1.0 
+  dotted_border: ^2.1.0
 
-    #thư viện validate email
+  #thư viện validate email
   email_validator: ^2.0.1
   #thư viện gửi email
   mailer: ^6.5.0
@@ -81,7 +81,6 @@ dependencies:
   # Biểu đồ
   fl_chart: ^0.66.0
   shared_preferences: ^2.5.3
-  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:

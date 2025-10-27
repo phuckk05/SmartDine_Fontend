@@ -71,6 +71,24 @@ class OrderAPI {
     }
     return null;
   }
+
+  //Lấy order theo branchId
+  Future<List<Order>> getOrdersByBranchId(int branchId) async {
+    final response = await http.get(
+      Uri.parse('${uri2}/branch/$branchId'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body) as List<dynamic>;
+      return data
+          .map((item) => Order.fromMap(item as Map<String, dynamic>))
+          .toList();
+    } else {
+      print("Loi lay order theo branchId: ${response.statusCode}");
+      return [];
+    }
+  }
 }
 
 // Provider

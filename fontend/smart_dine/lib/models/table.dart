@@ -1,140 +1,111 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
-
-class Table {
-  final int? id;
+class DiningTable {
+  final int id;
   final int branchId;
   final String name;
   final int typeId;
   final String? description;
   final int statusId;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
-  Table({
-    this.id,
+  DiningTable({
+    int? id,
     required this.branchId,
     required this.name,
     required this.typeId,
     this.description,
     required this.statusId,
-    this.createdAt,
-    this.updatedAt,
-  });
-  // Factory Table.create({
-  //   required int branchId,
-  //   required String name,
-  //   required int typeId,
-  //   required String? description,
-  //   required int statusId,
-  // }) {
-  //   return Table(
-  //     branchId: branchId,
-  //     name: name,
-  //     typeId: typeId,
-  //     description: description,
-  //     statusId: statusId,
-  //     createdAt: DateTime.now(),
-  //     updatedAt: DateTime.now(),
-  //   );
-  // }
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) : id = id ?? 0,
+       createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
-  Table copyWith({
-    ValueGetter<int?>? id,
+  DiningTable copyWith({
+    int? id,
     int? branchId,
     String? name,
     int? typeId,
-    ValueGetter<String?>? description,
+    String? description,
     int? statusId,
-    ValueGetter<DateTime?>? createdAt,
-    ValueGetter<DateTime?>? updatedAt,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
-    return Table(
-      id: id != null ? id() : this.id,
+    return DiningTable(
+      id: id ?? this.id,
       branchId: branchId ?? this.branchId,
       name: name ?? this.name,
       typeId: typeId ?? this.typeId,
-      description: description != null ? description() : this.description,
+      description: description ?? this.description,
       statusId: statusId ?? this.statusId,
-      createdAt: createdAt != null ? createdAt() : this.createdAt,
-      updatedAt: updatedAt != null ? updatedAt() : this.updatedAt,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'branchId': branchId,
+      'branch_id': branchId,
       'name': name,
-      'typeId': typeId,
+      'type_id': typeId,
       'description': description,
-      'statusId': statusId,
-      'createdAt': createdAt?.millisecondsSinceEpoch,
-      'updatedAt': updatedAt?.millisecondsSinceEpoch,
+      'status_id': statusId,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
     };
   }
 
-  factory Table.fromMap(Map<String, dynamic> map) {
-    DateTime? _parseDate(dynamic value) {
-      if (value == null) return null;
-      if (value is int) {
-        return DateTime.fromMillisecondsSinceEpoch(value);
-      }
-      if (value is String) {
-        return DateTime.tryParse(value);
-      }
-      return null;
-    }
-
-    return Table(
-      id: map['id'] != null ? int.tryParse(map['id'].toString()) : null,
-      branchId:
-          int.tryParse((map['branchId'] ?? map['branch_id']).toString()) ?? 0,
+  factory DiningTable.fromMap(Map<String, dynamic> map) {
+    return DiningTable(
+      id: _parseInt(map['id']),
+      branchId: _parseInt(map['branch_id'] ?? map['branchId']),
       name: map['name']?.toString() ?? '',
-      typeId: int.tryParse((map['typeId'] ?? map['type_id']).toString()) ?? 0,
+      typeId: _parseInt(map['type_id'] ?? map['typeId']),
       description: map['description']?.toString(),
-      statusId:
-          int.tryParse((map['statusId'] ?? map['status_id']).toString()) ?? 0,
-      createdAt: _parseDate(map['createdAt'] ?? map['created_at']),
-      updatedAt: _parseDate(map['updatedAt'] ?? map['updated_at']),
+      statusId: _parseInt(map['status_id'] ?? map['statusId']),
+      createdAt: _parseDate(map['created_at'] ?? map['createdAt']),
+      updatedAt: _parseDate(map['updated_at'] ?? map['updatedAt']),
     );
   }
 
   String toJson() => json.encode(toMap());
 
-  factory Table.fromJson(String source) => Table.fromMap(json.decode(source));
+  factory DiningTable.fromJson(String source) =>
+      DiningTable.fromMap(json.decode(source));
+
+  static int _parseInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is int) return v;
+    return int.tryParse(v.toString()) ?? 0;
+  }
+
+  static DateTime _parseDate(dynamic v) {
+    if (v == null) return DateTime.now();
+    if (v is DateTime) return v;
+    if (v is int) return DateTime.fromMillisecondsSinceEpoch(v);
+    if (v is String) {
+      final parsed = DateTime.tryParse(v);
+      if (parsed != null) return parsed;
+      final i = int.tryParse(v);
+      if (i != null) return DateTime.fromMillisecondsSinceEpoch(i);
+    }
+    return DateTime.now();
+  }
 
   @override
   String toString() {
-    return 'Table(id: $id, branchId: $branchId, name: $name, typeId: $typeId, description: $description, statusId: $statusId, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'DiningTable(id: $id, branchId: $branchId, name: $name, typeId: $typeId, statusId: $statusId)';
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-
-    return other is Table &&
-        other.id == id &&
-        other.branchId == branchId &&
-        other.name == name &&
-        other.typeId == typeId &&
-        other.description == description &&
-        other.statusId == statusId &&
-        other.createdAt == createdAt &&
-        other.updatedAt == updatedAt;
+    return other is DiningTable && other.id == id;
   }
 
   @override
-  int get hashCode {
-    return id.hashCode ^
-        branchId.hashCode ^
-        name.hashCode ^
-        typeId.hashCode ^
-        description.hashCode ^
-        statusId.hashCode ^
-        createdAt.hashCode ^
-        updatedAt.hashCode;
-  }
+  int get hashCode => id.hashCode;
 }
