@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.smartdine.models.VerificationCode;
 import com.smartdine.services.VerificationCodeService;
 
@@ -44,6 +45,8 @@ public class VerificationCodeController {
     static class CreateVerificationCodeRequest {
         public String email;
         public String code;
+
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         public LocalDateTime expiresAt;
     }
 
