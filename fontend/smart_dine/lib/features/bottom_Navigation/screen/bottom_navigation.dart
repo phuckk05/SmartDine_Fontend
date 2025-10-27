@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/features/kitchen/screen_caidat.dart';
+import 'package:mart_dine/features/kitchen/screen_kitchen.dart';
 import 'package:mart_dine/features/kitchen/screen_lichsu.dart';
-import 'package:mart_dine/features/kitchen/screen_phongbep.dart';
 import 'package:mart_dine/features/admin/screen_dashboard.dart';
 import 'package:mart_dine/features/admin/screen_qlcuahang.dart';
 import 'package:mart_dine/features/admin/screen_qlxacnhan.dart';
@@ -23,7 +23,7 @@ class ScreenBottomNavigation extends ConsumerStatefulWidget {
 class _BottomNavigationState extends ConsumerState<ScreenBottomNavigation> {
   // Danh sách các màn hình cho Kitchen (index = 1)
   final List<Widget> _kitchenScreens = [
-    const ScreenKitChen(),
+    const ScreenKitchen(),
     const ScreenHistory(),
     const ScreenSetting(),
   ];

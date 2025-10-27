@@ -7,7 +7,7 @@ class OrderItem {
   final String itemId;
   final int quantity;
   final String? note;
-  final String statusId;
+  final int statusId;
   final String? addedBy;
   final String? servedBy;
   final DateTime createdAt;
@@ -52,8 +52,7 @@ class OrderItem {
       itemId: map['item_id']?.toString() ?? map['itemId']?.toString() ?? '',
       quantity: _parseInt(map['quantity'] ?? map['qty']),
       note: map['note']?.toString(),
-      statusId:
-          map['status_id']?.toString() ?? map['statusId']?.toString() ?? '',
+      statusId: _parseInt(map['status_id'] ?? map['statusId']),
       addedBy: map['added_by']?.toString() ?? map['addedBy']?.toString(),
       servedBy: map['served_by']?.toString() ?? map['servedBy']?.toString(),
       createdAt: _parseDate(
@@ -87,7 +86,7 @@ class OrderItem {
     String? itemId,
     int? quantity,
     String? note,
-    String? statusId,
+    int? statusId,
     String? addedBy,
     String? servedBy,
     DateTime? createdAt,

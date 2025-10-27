@@ -1,8 +1,28 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
+import 'package:mart_dine/models/order_item.dart';
 
 final uri1 = 'https://spring-boot-smartdine.onrender.com/api/order-items';
 final uri2 = 'https://smartdine-backend-oq2x.onrender.com/api/order-items';
 
-class KitchenApi {}
+class KitchenApi {
+  //Lấy tất cả tất cả order items
+  Future<List<OrderItem>> getPendingOrderItems(int branchId) async {
+    final response = await http.get(
+      Uri.parse('${uri2}/today/branch/$branchId'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data
+          .map((item) => OrderItem.fromMap(item as Map<String, dynamic>))
+          .toList();
+    }
+    print("loi lấy order item chua phuc vu: ${response.statusCode}");
+    return [];
+  }
+}
 
 final kitchenApiProvider = Provider<KitchenApi>((ref) => KitchenApi());

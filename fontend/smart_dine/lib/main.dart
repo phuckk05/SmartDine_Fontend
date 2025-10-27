@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/features/bottom_Navigation/screen/bottom_navigation.dart';
-import 'package:mart_dine/features/kitchen/screen_phongbep.dart';
 import 'package:mart_dine/providers/mode_provider.dart';
 
 void main() {
@@ -28,8 +27,7 @@ class SmartDineApp extends ConsumerWidget {
         ),
       ),
 
-      //home: const ScreenBottomNavigation(index: 2), // Chạy Admin
-      //home: ScreenKitChen(), // Chạy Kitchen
+
       home: const ScreenBottomNavigation(index: 1), // Chạy Admin
     );
   }
