@@ -72,7 +72,17 @@ public class MenuController {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
         }
     }
-
+    //Lay menu theo company id
+    @GetMapping("/company/{companyId}")
+    public ResponseEntity<?> getByCompanyId(@PathVariable Integer companyId) {
+        try {
+            List<Menu> menus = menuServices.getByCompanyId(companyId);
+            return ResponseEntity.ok(menus);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+        }
+    }
+    
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Integer id) {
         try {

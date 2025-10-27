@@ -19,7 +19,11 @@ public class MenuServices {
     public List<Menu> getAll() {
         return menuRepository.findAll();
     }
-
+    
+    //Lay menu theo company id
+    public List<Menu> getByCompanyId(Integer companyId) {
+        return menuRepository.findByCompanyId(companyId);
+    }
     public Menu getById(Integer id) {
         return menuRepository.findById(id).orElse(null);
     }
