@@ -27,4 +27,15 @@ public class TableTypeController {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
         }
     }
+
+    // Endpoint cho frontend - không có /all
+    @GetMapping
+    public ResponseEntity<?> getTableTypes() {
+        try {
+            List<TableType> types = tableTypeServices.getAll();
+            return ResponseEntity.ok(types);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+        }
+    }
 }
