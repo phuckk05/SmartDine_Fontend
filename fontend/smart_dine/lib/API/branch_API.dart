@@ -10,7 +10,7 @@ class BranchAPI {
   //Tạo branch
   Future<Branch?> create(Branch branch) async {
     final response = await http.post(
-      Uri.parse('${uri2}'),
+      Uri.parse(uri2),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(branch.toMap()),
     );
@@ -23,7 +23,7 @@ class BranchAPI {
 
   Future<Branch?> findBranchByBranchCode(String branchCode) async {
     final response = await http.get(
-      Uri.parse('${uri2}/${branchCode}'),
+      Uri.parse('$uri2/$branchCode'),
       headers: {'Content-Type': 'application/json'},
     );
     if (response.statusCode == 200 || response.statusCode == 201) {

@@ -80,7 +80,7 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
 
     if (result != "0") {
       ref.read(_imageUrlProvider.notifier).state = result.toString();
-      print("anh day :${result}");
+      print("anh day :$result");
     } else {
       Constrats.showThongBao(context, "Lỗi chọn ảnh");
     }
@@ -279,7 +279,7 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
 
   //Phần Lấy CCCD
   Widget _getCCCD() {
-    final _image = ref.watch(_imageProvider);
+    final image = ref.watch(_imageProvider);
     return Container(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 0),
@@ -304,7 +304,7 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
                     height: 100,
                     alignment: Alignment.center,
                     child:
-                        _image == null
+                        image == null
                             ? Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -317,12 +317,12 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
                             )
                             : ClipRRect(
                               borderRadius: BorderRadius.circular(6.0),
-                              child: Image.file(_image, fit: BoxFit.fill),
+                              child: Image.file(image, fit: BoxFit.fill),
                             ),
                   ),
                 ),
               ),
-              _image == null
+              image == null
                   ? SizedBox()
                   : Positioned(
                     top: 0,
@@ -355,7 +355,7 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
         child: MaterialButton(
           onPressed: () async {
             final anh = ref.watch(_imageUrlProvider);
-            print(" danh : ${anh}");
+            print(" danh : $anh");
             Company company = Company.create(
               name: _nameController.text,
               address: _addressController.text,

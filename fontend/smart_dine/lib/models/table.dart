@@ -77,7 +77,7 @@ class Table {
   }
 
   factory Table.fromMap(Map<String, dynamic> map) {
-    DateTime? _parseDate(dynamic value) {
+    DateTime? parseDate(dynamic value) {
       if (value == null) return null;
       if (value is int) {
         return DateTime.fromMillisecondsSinceEpoch(value);
@@ -97,8 +97,8 @@ class Table {
       description: map['description']?.toString(),
       statusId:
           int.tryParse((map['statusId'] ?? map['status_id']).toString()) ?? 0,
-      createdAt: _parseDate(map['createdAt'] ?? map['created_at']),
-      updatedAt: _parseDate(map['updatedAt'] ?? map['updated_at']),
+      createdAt: parseDate(map['createdAt'] ?? map['created_at']),
+      updatedAt: parseDate(map['updatedAt'] ?? map['updated_at']),
     );
   }
 

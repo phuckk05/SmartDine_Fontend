@@ -12,7 +12,8 @@ import 'package:mart_dine/models/order_item.dart';
 import 'package:mart_dine/API/order_API.dart'; // Để dùng orderApiProvider
 
 class ScreenChooseTable extends ConsumerStatefulWidget {
-  const ScreenChooseTable({Key? key}) : super(key: key);
+  final int? branchId;
+  const ScreenChooseTable({super.key, this.branchId});
 
   @override
   ConsumerState<ScreenChooseTable> createState() => _ScreenChooseTableState();
@@ -24,8 +25,13 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
   @override
   void initState() {
     super.initState();
-    // Bạn không cần hàm loadTableData() ở đây
-    // vì TableProvider đã tự gọi getAll() khi khởi tạo.
+    Future.microtask(_loadTables);
+  }
+
+  //Load tables
+  Future<void> _loadTables() async {
+    final branchId = widget.branchId ?? 1;
+    ref.read(tableNotifierProvider.notifier).getAll(branchId);
   }
 
   @override
@@ -115,7 +121,6 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
     final unpaidTableIds = ref.watch(getUnpaidTableIdsToday);
     // TỐI ƯU: watch provider 1 lần ở đây
     final tables = ref.watch(tableNotifierProvider);
-
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -145,24 +150,12 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
             final tableName = table.name ?? 'Bàn - ${table.id}';
 
             if (hasUnpaidOrders) {
-              // 1. BÀN CÓ NGƯỜI: Hiển thị Dialog
-              showDialog(
-                context: context,
-                builder: (dialogContext) {
-                  return _ExistingOrderDialog(
-                    tableId: tableId,
-                    tableName: tableName,
-                  );
-                },
-              );
+
             } else {
               // 2. BÀN TRỐNG: Đi tới màn hình Menu
               Routes.pushRightLeftConsumerFul(
                 context,
-                ScreenMenu(
-                  tableId: tableId,
-                  tableName: tableName,
-                ),
+                ScreenMenu(tableId: tableId, tableName: tableName),
               );
             }
           },
@@ -291,101 +284,101 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
 
 // *** WIDGET DIALOG MỚI ***
 
-// 1. Provider mới để tải tóm tắt order cho Dialog
-final _dialogOrderSummaryProvider =
-    FutureProvider.family<List<OrderItem>, int>((ref, tableId) async {
-  final orderApi = ref.watch(orderApiProvider);
+// // 1. Provider mới để tải tóm tắt order cho Dialog
+// final _dialogOrderSummaryProvider =
+//     FutureProvider.family<List<OrderItem>, int>((ref, tableId) async {
+//   final orderApi = ref.watch(orderApiProvider);
 
-  // Lấy order (chỉ lấy order đầu tiên của bàn trong ngày)
-  final orders = await orderApi.fetchOrdersByTableIdToday(tableId);
-  if (orders.isEmpty) {
-    return []; // Không có order, trả về list rỗng
-  }
-  final order = orders.first;
+//   // Lấy order (chỉ lấy order đầu tiên của bàn trong ngày)
+//   final orders = await orderApi.fetchOrdersByTableIdToday(tableId);
+//   if (orders.isEmpty) {
+//     return []; // Không có order, trả về list rỗng
+//   }
+//   final order = orders.first;
 
-  // Lấy danh sách items của order đó
-  final items = await orderApi.fetchOrderItems(order.id.toString());
-  return items;
-});
+//   // Lấy danh sách items của order đó
+//   // final items = await orderApi.fetchOrderItems(order.id.toString());
+//   // return items;
+// });
 
-// 2. Widget AlertDialog
-class _ExistingOrderDialog extends ConsumerWidget {
-  final int tableId;
-  final String tableName;
+// // 2. Widget AlertDialog
+// class _ExistingOrderDialog extends ConsumerWidget {
+//   final int tableId;
+//   final String tableName;
 
-  const _ExistingOrderDialog({
-    required this.tableId,
-    required this.tableName,
-  });
+//   const _ExistingOrderDialog({
+//     required this.tableId,
+//     required this.tableName,
+//   });
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Watch provider mới
-    final orderItemsAsync = ref.watch(_dialogOrderSummaryProvider(tableId));
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     // Watch provider mới
+//     final orderItemsAsync = ref.watch(_dialogOrderSummaryProvider(tableId));
 
-    return AlertDialog(
-      title: Text('Order của $tableName'),
-      content: Container(
-        // Đặt chiều cao cố định để dialog không bị nhảy size khi loading
-        height: 70,
-        child: orderItemsAsync.when(
-          data: (items) {
-            if (items.isEmpty) {
-              return const Center(child: Text('Bàn này chưa chọn món.'));
-            }
-            // Đếm tổng số lượng món
-            final totalQuantity =
-                items.fold(0, (sum, item) => sum + item.quantity);
-            // Đếm số loại món
-            final totalItemTypes = items.length;
+//     return AlertDialog(
+//       title: Text('Order của $tableName'),
+//       content: Container(
+//         // Đặt chiều cao cố định để dialog không bị nhảy size khi loading
+//         height: 70,
+//         child: orderItemsAsync.when(
+//           data: (items) {
+//             if (items.isEmpty) {
+//               return const Center(child: Text('Bàn này chưa chọn món.'));
+//             }
+//             // Đếm tổng số lượng món
+//             final totalQuantity =
+//                 items.fold(0, (sum, item) => sum + item.quantity);
+//             // Đếm số loại món
+//             final totalItemTypes = items.length;
 
-            return Center(
-              child: Text(
-                'Đã order $totalItemTypes loại món.\n(Tổng số lượng: $totalQuantity)',
-                textAlign: TextAlign.center,
-                style: Style.fontNormal,
-              ),
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => const Center(
-            child: Text('Lỗi tải chi tiết order.'),
-          ),
-        ),
-      ),
-      actionsAlignment: MainAxisAlignment.spaceBetween,
-      actions: [
-        // Nút Thanh Toán
-        TextButton(
-          onPressed: () {
-            // TODO: Thêm logic gọi API thanh toán ở đây
-            Navigator.of(context).pop(); // Đóng dialog
-            print('Yêu cầu thanh toán cho bàn $tableId');
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Đã gửi yêu cầu thanh toán cho $tableName')),
-            );
-          },
-          child: Text(
-            'Thanh Toán',
-            style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold),
-          ),
-        ),
-        // Nút Thêm Món
-        ElevatedButton(
-          onPressed: () {
-            // Đóng dialog VÀ chuyển sang màn hình Menu
-            Navigator.of(context).pop();
-            Routes.pushRightLeftConsumerFul(
-              context,
-              ScreenMenu(
-                tableId: tableId,
-                tableName: tableName,
-              ),
-            );
-          },
-          child: const Text('Thêm Món'),
-        ),
-      ],
-    );
-  }
-}
+//             return Center(
+//               child: Text(
+//                 'Đã order $totalItemTypes loại món.\n(Tổng số lượng: $totalQuantity)',
+//                 textAlign: TextAlign.center,
+//                 style: Style.fontNormal,
+//               ),
+//             );
+//           },
+//           loading: () => const Center(child: CircularProgressIndicator()),
+//           error: (err, stack) => const Center(
+//             child: Text('Lỗi tải chi tiết order.'),
+//           ),
+//         ),
+//       ),
+//       actionsAlignment: MainAxisAlignment.spaceBetween,
+//       actions: [
+//         // Nút Thanh Toán
+//         TextButton(
+//           onPressed: () {
+//             // TODO: Thêm logic gọi API thanh toán ở đây
+//             Navigator.of(context).pop(); // Đóng dialog
+//             print('Yêu cầu thanh toán cho bàn $tableId');
+//             ScaffoldMessenger.of(context).showSnackBar(
+//               SnackBar(content: Text('Đã gửi yêu cầu thanh toán cho $tableName')),
+//             );
+//           },
+//           child: Text(
+//             'Thanh Toán',
+//             style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold),
+//           ),
+//         ),
+//         // Nút Thêm Món
+//         ElevatedButton(
+//           onPressed: () {
+//             // Đóng dialog VÀ chuyển sang màn hình Menu
+//             Navigator.of(context).pop();
+//             Routes.pushRightLeftConsumerFul(
+//               context,
+//               ScreenMenu(
+//                 tableId: tableId,
+//                 tableName: tableName,
+//               ),
+//             );
+//           },
+//           child: const Text('Thêm Món'),
+//         ),
+//       ],
+//     );
+//   }
+// }

@@ -48,6 +48,18 @@ class OrderProvider extends StateNotifier<List<Order>> {
       return null;
     }
   }
+
+  //tao order moi
+  Future<Order?> createOrder(Order newOrder) async {
+    try {
+      final createdOrder = await orderApi.createOrder(newOrder);
+      state = [...state, createdOrder];
+      return createdOrder;
+    } catch (e) {
+      print('Error creating order: $e');
+      return null;
+    }
+  }
 }
 
 // Provider for OrderProvider

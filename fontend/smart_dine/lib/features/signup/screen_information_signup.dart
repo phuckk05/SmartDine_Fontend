@@ -293,7 +293,7 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
 
     if (result != "0") {
       ref.read(image.notifier).state = result;
-      print("anh day :${result}");
+      print("anh day :$result");
     } else {
       Constrats.showThongBao(context, "Lỗi chọn ảnh");
     }
@@ -313,8 +313,8 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
   @override
   Widget build(BuildContext context) {
     //Xem các state
-    final _obscureText1 = ref.watch(_obscureText1Provider);
-    final _obscureText2 = ref.watch(_obscureText2Provider);
+    final obscureText1 = ref.watch(_obscureText1Provider);
+    final obscureText2 = ref.watch(_obscureText2Provider);
     final isCanPop = ref.watch(_isCanPop);
     final isGlobalLoading = ref.watch(isLoadingNotifierProvider);
     //Build giao diện
@@ -370,13 +370,13 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
                       _label("Mật khẩu*"),
                       _textFiled(
                         3,
-                        _obscureText1,
+                        obscureText1,
                         Icon(Icons.password, color: Colors.grey[600]),
                         null,
                         _passwordController1,
                         IconButton(
                           icon:
-                              _obscureText1
+                              obscureText1
                                   ? Icon(
                                     Icons.visibility_off,
                                     color: Colors.grey[600],
@@ -388,7 +388,7 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
                           onPressed: () {
                             //Thay đổi trạng thái ẩn hiện mật khẩu
                             ref.read(_obscureText1Provider.notifier).state =
-                                !_obscureText1;
+                                !obscureText1;
                           },
                         ),
                       ),
@@ -396,13 +396,13 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
                       _label("Xác nhận mật khẩu*"),
                       _textFiled(
                         4,
-                        _obscureText2,
+                        obscureText2,
                         Icon(Icons.password, color: Colors.grey[600]),
                         null,
                         _passwordController2,
                         IconButton(
                           icon:
-                              _obscureText2
+                              obscureText2
                                   ? Icon(
                                     Icons.visibility_off,
                                     color: Colors.grey[600],
@@ -414,7 +414,7 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
                           onPressed: () {
                             //Thay đổi trạng thái ẩn hiện mật khẩu
                             ref.read(_obscureText2Provider.notifier).state =
-                                !_obscureText2;
+                                !obscureText2;
                           },
                         ),
                       ),
@@ -513,8 +513,8 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
 
   //Phần Lấy CCCD
   Widget _getCCCD(WidgetRef ref, BuildContext context) {
-    final _fontImage = ref.watch(_fontImageProvider);
-    final _backImage = ref.watch(_backImageProvider);
+    final fontImage = ref.watch(_fontImageProvider);
+    final backImage = ref.watch(_backImageProvider);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -549,7 +549,7 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
                         height: 100,
                         alignment: Alignment.center,
                         child:
-                            _fontImage == null
+                            fontImage == null
                                 ? Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -560,14 +560,14 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
                                 : ClipRRect(
                                   borderRadius: BorderRadius.circular(6.0),
                                   child: Image.file(
-                                    _fontImage,
+                                    fontImage,
                                     fit: BoxFit.fill,
                                   ),
                                 ),
                       ),
                     ),
                   ),
-                  _fontImage == null
+                  fontImage == null
                       ? SizedBox()
                       : Positioned(
                         top: 0,
@@ -618,7 +618,7 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
                         height: 100,
                         alignment: Alignment.center,
                         child:
-                            _backImage == null
+                            backImage == null
                                 ? Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -629,14 +629,14 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
                                 : ClipRRect(
                                   borderRadius: BorderRadius.circular(6.0),
                                   child: Image.file(
-                                    _backImage,
+                                    backImage,
                                     fit: BoxFit.fill,
                                   ),
                                 ),
                       ),
                     ),
                   ),
-                  _backImage == null
+                  backImage == null
                       ? SizedBox()
                       : Positioned(
                         top: 0,
@@ -681,8 +681,8 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
   Widget _signinButton(BuildContext context, WidgetRef ref) {
     // final userProvider = ref.watch(userNotifierProvider);
     final isLoading = ref.watch(_isLoadingProvider);
-    final _fontImageUrl = ref.watch(_fontImageUrlProvider);
-    final _backImageUrl = ref.watch(_backImageUrlProvider);
+    final fontImageUrl = ref.watch(_fontImageUrlProvider);
+    final backImageUrl = ref.watch(_backImageUrlProvider);
     return Padding(
       padding: EdgeInsets.only(bottom: 10),
       child: ShadowCus(
@@ -704,8 +704,8 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
                       : widget.index == 2
                       ? 2
                       : 3,
-              fontImage: _fontImageUrl ?? "Chưa có",
-              backImage: _backImageUrl ?? "Chưa có",
+              fontImage: fontImageUrl ?? "Chưa có",
+              backImage: backImageUrl ?? "Chưa có",
             );
             //Hàm đăng kí phục vụ
             checkControllers(context, user);

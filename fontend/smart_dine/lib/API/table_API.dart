@@ -12,7 +12,7 @@ class TableAPI {
   // Your existing code here
   Future<List<Table>> fetchTables() async {
     final response = await http.get(
-      Uri.parse('${uri2}'),
+      Uri.parse(uri2),
       // !!! LỖI 400 BAD REQUEST XẢY RA Ở ĐÂY !!!
       // Yêu cầu này bị thiếu thông tin mà backend cần,
       // ví dụ như 'branchId' hoặc 'Authorization'.
@@ -27,8 +27,26 @@ class TableAPI {
     } else {
       print("Loi lay table: ${response.statusCode}");
       // In ra nội dung lỗi để xem chi tiết
-      print("Noi dung loi: ${response.body}"); 
+      print("Noi dung loi: ${response.body}");
       return [];
+    }
+  }
+
+  //Lay table theo branch id
+  Future<List<Table>> fetchTablesByBranchId(int branchId) async {
+    final response = await http.get(
+      Uri.parse('$uri2/branch/$branchId'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body) as List<dynamic>;
+      return data
+          .map((item) => Table.fromMap(item as Map<String, dynamic>))
+          .toList();
+    } else {
+      print("Loi lay table theo branchId: ${response.statusCode}");
+      return []; // Trả về rỗng nếu không có hoặc lỗi
     }
   }
 }

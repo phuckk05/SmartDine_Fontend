@@ -5,13 +5,11 @@ import 'package:mart_dine/models/table.dart';
 
 class TableProvider extends StateNotifier<List<Table>> {
   final TableAPI tableAPI;
-  TableProvider(this.tableAPI) : super([]) {
-    getAll();
-  }
+  TableProvider(this.tableAPI) : super([]);
 
   //Lấy danh sách bàn
-  Future<void> getAll() async {
-    final tables = await tableAPI.fetchTables();
+  void getAll(int branchId) async {
+    final tables = await tableAPI.fetchTablesByBranchId(branchId);
     state = tables.isNotEmpty ? tables : [];
   }
 

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+
 class Order {
   final int? id;
   final int tableId;
@@ -26,6 +27,29 @@ class Order {
     this.updatedAt,
     this.deletedAt,
   });
+  factory Order.create({
+    required int tableId,
+    required int companyId,
+    required int branchId,
+    required int userId,
+    required int statusId,
+    String? note,
+    int? promotionId,
+  }) {
+    final DateTime now = DateTime.now();
+    return Order(
+      tableId: tableId,
+      companyId: companyId,
+      branchId: branchId,
+      userId: userId,
+      statusId: statusId,
+      note: note,
+      promotionId: promotionId,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    );
+  }
 
   Order copyWith({
     int? id,

@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class OrderItem {
   // SỬA TẤT CẢ CÁC ID TỪ String SANG int
-  final int id;
+  int? id;
   final int orderId;
   final int itemId;
   final int quantity;
@@ -15,7 +15,7 @@ class OrderItem {
   final DateTime createdAt;
 
   OrderItem({
-    required this.id,
+    this.id,
     required this.orderId,
     required this.itemId,
     required this.quantity,
@@ -26,7 +26,7 @@ class OrderItem {
     required this.createdAt,
   });
 
-factory OrderItem.create({
+  factory OrderItem.create({
     required int orderId,
     required int itemId,
     required int quantity,
@@ -34,12 +34,11 @@ factory OrderItem.create({
     required int statusId,
     int? addedBy,
     int? servedBy,
-    required DateTime createdAt,  
+    required DateTime createdAt,
   }) {
-    // 
+    //
 
     return OrderItem(
-      id: 0, // id sẽ được gán bởi backend
       orderId: orderId,
       itemId: itemId,
       quantity: quantity,
@@ -56,7 +55,6 @@ factory OrderItem.create({
     if (value is int) return value;
     return int.tryParse(value.toString()) ?? 0;
   }
-  
 
   static int? _asIntNullable(dynamic value) {
     if (value == null) return null;
@@ -65,7 +63,9 @@ factory OrderItem.create({
   }
 
   static DateTime _parseDate(dynamic value) {
-    if (value == null) return DateTime.now(); // Trả về ngày giờ hiện tại nếu null
+    if (value == null) {
+      return DateTime.now(); // Trả về ngày giờ hiện tại nếu null
+    }
     if (value is DateTime) return value;
     return DateTime.tryParse(value.toString()) ?? DateTime.now();
   }
@@ -83,6 +83,20 @@ factory OrderItem.create({
       createdAt: _parseDate(json['created_at']), // Dùng hàm parse an toàn
     );
   }
+  //From Map
+  factory OrderItem.fromMap(Map<String, dynamic> map) {
+    return OrderItem(
+      id: _asInt(map['id']),
+      orderId: _asInt(map['order_id']),
+      itemId: _asInt(map['item_id']),
+      quantity: _asInt(map['quantity']),
+      note: map['note']?.toString(),
+      statusId: _asInt(map['status_id']),
+      addedBy: _asIntNullable(map['createby'] ?? map['added_by']),
+      servedBy: _asIntNullable(map['added__by'] ?? map['served_by']),
+      createdAt: _parseDate(map['servedd_at'] ?? map['created_at']),
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -92,10 +106,24 @@ factory OrderItem.create({
       'quantity': quantity,
       'note': note,
       'status_id': statusId,
-      'added_by': addedBy,
-      'served_by': servedBy,
-      'created_at': createdAt.toIso8601String(),
+      'added__by': servedBy,
+      'createby': addedBy,
+      'servedd_at': createdAt.toIso8601String(),
     };
+  }
+
+  OrderItem toMap() {
+    return OrderItem(
+      id: id,
+      orderId: orderId,
+      itemId: itemId,
+      quantity: quantity,
+      note: note,
+      statusId: statusId,
+      addedBy: addedBy,
+      servedBy: servedBy,
+      createdAt: createdAt,
+    );
   }
 
   OrderItem copyWith({

@@ -2,23 +2,34 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:mart_dine/API/order_API.dart';
 import 'package:mart_dine/core/style.dart';
+import 'package:mart_dine/models/item.dart';
+import 'package:mart_dine/providers/cart_provider.dart';
+import 'package:mart_dine/providers/menu_item_provider.dart';
+import 'package:mart_dine/providers/order_item_provider.dart';
 import 'package:mart_dine/widgets/appbar.dart';
-import 'package:dropdown_button2/dropdown_button2.dart';
 // Import provider của bạn để gọi API
 import 'package:mart_dine/providers/order_provider.dart';
 // Giả sử bạn có model OrderItem đã import
 import 'package:mart_dine/models/order_item.dart';
+import 'package:mart_dine/models/order.dart';
+import 'package:mart_dine/providers/cart_notifier_provider.dart';
 
+////
 class ScreenMenu extends ConsumerStatefulWidget {
   final String tableName;
-  final int tableId; // ID của bàn (đã là int)
+  final int tableId;
+  final int? companyId;
+  final int? branchId;
+  final int? userId;
 
   const ScreenMenu({
     super.key,
     required this.tableName,
     required this.tableId,
+    this.companyId,
+    this.branchId,
+    this.userId,
   });
 
   @override
@@ -33,179 +44,170 @@ final _openBillProvider = StateProvider<bool>((ref) => false);
 class _ScreenMenuState extends ConsumerState<ScreenMenu> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // NÂNG CẤP: Danh sách món ăn giờ có ID là SỐ (int)
-  final List<_MenuItem> _menuItems = const [
-    _MenuItem(id: 1, name: 'Bánh mì', price: 242.3243),
-    _MenuItem(id: 2, name: 'Phở bò', price: 185.000),
-    _MenuItem(id: 3, name: 'Gỏi cuốn', price: 82.000),
-    _MenuItem(id: 4, name: 'Cà phê sữa', price: 45.000),
-    _MenuItem(id: 5, name: 'Trà đào', price: 55.000),
-    _MenuItem(id: 6, name: 'Bánh flan', price: 39.000),
-    _MenuItem(id: 7, name: 'Bít tết', price: 289.000),
-    _MenuItem(id: 8, name: 'Mì Ý', price: 165.000),
-    _MenuItem(id: 9, name: 'Súp bí đỏ', price: 98.0000),
-    _MenuItem(id: 10, name: 'Salad cá ngừ', price: 123.000),
-    _MenuItem(id: 11, name: 'Bánh mì pate', price: 74.500),
-    _MenuItem(id: 12, name: 'Trà trái cây', price: 69.0000),
-  ];
-
   // NÂNG CẤP: Sử dụng Map<int, int> để lưu {itemId: quantity}
-  final Map<int, int> _selectedItems = {};
+  //final Map<int, int> _selectedItems = {};
 
   // Biến trạng thái
   bool _isLoading = true;
-  int? _currentOrderId; // NÂNG CẤP: Lưu ID của order (kiểu int?)
+  int? _currentOrderId;
+  bool _isSaving = false;
+
+  //List<Item> items = [];
 
   @override
   void initState() {
     super.initState();
-    _loadExistingOrder();
+    Future.microtask(_loadItemsAndOrder);
   }
 
-  // HÀM TẢI ORDER (ĐÃ CẬP NHẬT DÙNG int)
-  Future<void> _loadExistingOrder() async {
-    setState(() {
-      _isLoading = true;
-    });
-
+  // HÀM TẢI ORDER (ĐÃ CẬP NHẬT)
+  Future<void> _loadItemsAndOrder() async {
+    if (mounted) setState(() => _isLoading = true); // setState này OK
     try {
-      final orderApi = ref.read(orderApiProvider);
+      // Tải menu
+      await ref
+          .read(menuNotifierProvider.notifier)
+          .loadMenusByCompanyId(widget.companyId ?? 1);
 
-      // 1. Tìm order của bàn
-      final existingOrders =
-          await orderApi.fetchOrdersByTableIdToday(widget.tableId);
-
-      if (existingOrders.isNotEmpty) {
-        final order = existingOrders.first;
-        _currentOrderId = order.id; // Lưu ID (kiểu int?)
-
-        if (_currentOrderId == null) return; // Không có ID order thì dừng
-
-        // 2. Tải các OrderItem của order này
-        print('Đang tải items cho order ID: $_currentOrderId');
-        final fetchedItems = await orderApi.fetchOrderItems(_currentOrderId! as String);
-
-        // 3. Cập nhật state (giỏ hàng)
-        setState(() {
-          _selectedItems.clear();
-          for (var item in fetchedItems) {
-            // item.itemId bây giờ là int
-            _selectedItems[item.itemId] = item.quantity;
-          }
-        });
+      // Lấy order cũ
+      await ref
+          .read(orderNotifierProvider.notifier)
+          .fetchByTableIdToday(widget.tableId);
+      final orders = ref.read(orderNotifierProvider);
+      if (orders.isNotEmpty) {
+        _currentOrderId = orders.first.id;
+        // TODO: Tải OrderItem và add vào cartProvider
       }
     } catch (e) {
-      print('Lỗi khi tải order cũ: $e');
+      print('Lỗi khi tải menu items: $e');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) setState(() => _isLoading = false); // setState này OK
     }
   }
 
-  // HÀM LƯU ORDER (ĐÃ CẬP NHẬT DÙNG int)
+  //Hàm lưu (ĐÃ HOÀN THIỆN)
   Future<void> _saveOrder() async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Đang lưu order...')),
-    );
+    // Đọc giỏ hàng (List<Item>) từ provider
+    final cartItems = ref.read(cartNotifierProvider);
+
+    if (_isSaving || cartItems.isEmpty) return;
+
+    setState(() => _isSaving = true); // setState này OK
 
     try {
-      final orderApi = ref.read(orderApiProvider);
+      int? orderId = _currentOrderId;
 
-      // 1. Kiểm tra xem đã có order chưa
-      if (_currentOrderId == null) {
-        // CHƯA CÓ: Tạo Order mới
-        // TODO: Cung cấp các ID này từ provider (ví dụ: userProvider)
-        const int mockUserId = 1;
-        const int mockCompanyId = 1;
-        const int mockBranchId = 1;
-
-        print('Tạo order mới cho bàn ${widget.tableId}');
-        final newOrder = await orderApi.createOrder(
+      // 1. TẠO ORDER MỚI (nếu bàn này chưa có order)
+     if (orderId == null) {
+        Order orderData = Order.create(
           tableId: widget.tableId,
-          userId: mockUserId,
-          companyId: mockCompanyId,
-          branchId: mockBranchId,
+          companyId: widget.companyId ?? 1, 
+          branchId: widget.branchId ?? 1,   // Giả sử ID mặc định là 1
+          userId: widget.userId ?? 1,       // Giữ nguyên
+          statusId: 1, // 1 = Trạng thái "Mới"
         );
-        _currentOrderId = newOrder.id; // Lưu ID (kiểu int)
+        final newOrder = await ref
+            .read(orderNotifierProvider.notifier)
+            .createOrder(orderData);
+        if (newOrder == null || newOrder.id == null) {
+          throw Exception('Không thể tạo order mới từ server.');
+        }
+        orderId = newOrder.id!;
       }
 
-      if (_currentOrderId == null) {
-        throw Exception('Không thể tạo hoặc lấy order ID');
+      // 1. Đếm số lượng từ List<Item> (Rất chậm)
+      final Map<int, int> itemCounts = {};
+      for (var item in cartItems) {
+        itemCounts[item.id!] = (itemCounts[item.id!] ?? 0) + 1;
       }
 
-      // 2. Chuẩn bị danh sách OrderItem từ _selectedItems
-      final List<Map<String, dynamic>> itemsToSave = [];
-      _selectedItems.forEach((itemId, quantity) {
-        itemsToSave.add({
-          // Gửi đi itemId (kiểu int)
-          'item_id': itemId, 
-          'quantity': quantity,
-          'note': null, 
-          // Bạn có thể cần thêm orderId vào mỗi item nếu backend yêu cầu
-          'order_id': _currentOrderId,
-        });
-      });
+      // 2. TẠO LIST<ORDERITEM> TỪ Map ĐẾM ĐƯỢC
+      final List<OrderItem> itemsToSave = [];
 
-      // 3. Gọi API để lưu OrderItem
-      print('Đang lưu ${itemsToSave.length} món cho order: $_currentOrderId');
-      final success =
-          await orderApi.saveOrderItems(_currentOrderId! as String, itemsToSave);
+      for (var entry in itemCounts.entries) {
+        final itemId = entry.key;
+        final quantity = entry.value;
 
-      // 4. Thông báo kết quả
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      if (success) {
+        // 3. GÁN orderId VÀO TỪNG MÓN ĂN
+        final orderItem = OrderItem.create(
+          orderId: orderId,
+          itemId: itemId,
+          quantity: quantity,
+          statusId: 1,
+          addedBy: widget.userId ?? 72,
+          createdAt: DateTime.now(),
+        );
+        itemsToSave.add(orderItem);
+      }
+
+      // 4. GỬI DANH SÁCH MÓN ĂN LÊN API
+      if (itemsToSave.isNotEmpty) {
+        ref.read(orderItemNotifierProvider.notifier).addOrderItem(itemsToSave);
+      }
+
+      // 5. XỬ LÝ THÀNH CÔNG
+      ref.read(cartNotifierProvider.notifier).clearCart(); // Xóa giỏ hàng
+
+      if (mounted) {
+        Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Lưu order thành công!'),
-            backgroundColor: Colors.green,
-          ),
+          SnackBar(content: Text('Đã gửi order cho ${widget.tableName}!')),
         );
-      } else {
-        throw Exception('Lưu order thất bại');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Lỗi khi lưu order: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      print('Lỗi khi gửi order: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gửi order thất bại: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
 
-  // --- Các hàm tính toán (ĐÃ CẬP NHẬT DÙNG int) ---
+  // --- HÀM THÊM ITEM (KHÔNG DÙNG setState) ---
+  void _addItem(Item item) {
+    ref.read(cartNotifierProvider.notifier).addItemToCart(item);
+  }
+
+  // --- HÀM BỚT ITEM (KHÔNG DÙNG setState) ---
+  void _removeItem(Item item) {
+    ref.read(cartNotifierProvider.notifier).removeItemFromCart(item);
+  }
+
+  // --- Các hàm tính toán (ĐỌC TỪ PROVIDER) ---
   int get _totalItemCount {
+    final _selectedItems = ref.read(cartNotifierProvider); // Đọc state mới nhất
     if (_selectedItems.isEmpty) return 0;
-    return _selectedItems.values.reduce((sum, count) => sum + count);
+    return _selectedItems.length;
   }
 
   double get _totalPrice {
-    if (_selectedItems.isEmpty) return 0.0;
-    double total = 0.0;
-    _selectedItems.forEach((itemId, quantity) {
-      final item = _findItemById(itemId); // Tìm bằng int ID
-      total += item.price * quantity;
-    });
-    return total;
-  }
+    // Đọc giỏ hàng (List<Item>) từ provider
+    final _selectedItems = ref.read(cartNotifierProvider);
 
-  _MenuItem _findItemById(int id) {
-    // Tìm món ăn trong menu theo int ID
-    return _menuItems.firstWhere((item) => item.id == id,
-        orElse: () => _MenuItem(id: 0, name: 'Món lạ', price: 0));
+    if (_selectedItems.isEmpty) return 0.0;
+
+    // Dùng .fold() để cộng dồn giá của từng item trong List
+    // 'sum' là tổng, 'item' là món ăn hiện tại
+    return _selectedItems.fold(0.0, (sum, item) => sum + item.price);
   }
 
   @override
   Widget build(BuildContext context) {
+    final _menuItems = ref.watch(menuNotifierProvider);
+    final _selectedItems = ref.watch(cartNotifierProvider);
     final drawerWidth = MediaQuery.of(context).size.width * 0.82;
+
     return Scaffold(
       key: _scaffoldKey,
       onEndDrawerChanged: (isOpened) {
         ref.read(_openBillProvider.notifier).state = isOpened;
       },
-      // --- GIỎ HÀNG (ENDDRAWER) (ĐÃ CẬP NHẬT DÙNG int) ---
+      // --- GIỎ HÀNG (ENDDRAWER) (ĐÃ CẬP NHẬT LOGIC) ---
       endDrawer: Drawer(
         width: drawerWidth,
         child: SafeArea(
@@ -221,70 +223,98 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
               ),
               const Divider(height: 1),
               Expanded(
-                child: _selectedItems.isEmpty
-                    ? const Center(
-                        child: Text('Chưa có món ăn nào được chọn.'),
-                      )
-                    : ListView.builder(
-                        padding: EdgeInsets.zero,
-                        itemCount: _selectedItems.length,
-                        itemBuilder: (context, index) {
-                          final itemId = _selectedItems.keys.elementAt(index); // itemId là int
-                          final item = _findItemById(itemId);
-                          final quantity = _selectedItems[itemId]!;
+                child: Builder( // Dùng Builder để lấy _menuItems từ context
+                  builder: (context) {
+                    // *** ĐỌC GIỎ HÀNG (List<Item>) TỪ PROVIDER ***
+                    final _selectedItems = ref.watch(cartNotifierProvider); 
 
-                          return ListTile(
-                            title: Text(item.name),
-                            subtitle: Text(
-                              '${item.price.toStringAsFixed(3)} đ',
-                              style: Style.fontCaption,
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(LucideIcons.minusCircle,
-                                      size: 20, color: Colors.red),
-                                  onPressed: () {
-                                    setState(() {
-                                      if (quantity > 1) {
-                                        _selectedItems[itemId] = quantity - 1;
-                                      } else {
-                                        _selectedItems.remove(itemId);
-                                      }
-                                    });
-                                  },
+                    if (_selectedItems.isEmpty) {
+                      return const Center(
+                        child: Text('Chưa có món ăn nào được chọn.'),
+                      );
+                    }
+
+                    // *** BƯỚC 1: ĐẾM SỐ LƯỢNG (Group by ID) ***
+                    final Map<int, int> itemCounts = {};
+                    final Map<int, Item> itemMap = {}; // Lưu trữ item duy nhất
+                    
+                    for (var item in _selectedItems) {
+                      if (item.id != null) {
+                        // Đếm số lần 'itemId' xuất hiện
+                        itemCounts[item.id!] = (itemCounts[item.id!] ?? 0) + 1;
+                        itemMap[item.id!] = item; // Lưu lại item mẫu (chỉ cần 1)
+                      }
+                    }
+                    
+                    // Lấy danh sách ID duy nhất
+                    final uniqueItemIds = itemCounts.keys.toList();
+
+                    // *** BƯỚC 2: BUILD LISTVIEW TỪ MAP ĐÃ ĐẾM ***
+                    return ListView.builder(
+                      padding: EdgeInsets.zero,
+                      itemCount: uniqueItemIds.length, // Lặp qua số item DUY NHẤT
+                      itemBuilder: (context, index) {
+                        final itemId = uniqueItemIds[index];
+                        final quantity = itemCounts[itemId]!; // Lấy số lượng đã đếm
+                        final item = itemMap[itemId]!; // Lấy item mẫu từ Map
+
+                        return ListTile(
+                          title: Text(item.name, style: Style.fontNormal),
+                          subtitle: Text(
+                            '${item.price.toStringAsFixed(3)} đ',
+                            style: Style.fontCaption,
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  LucideIcons.minusCircle,
+                                  size: 20,
+                                  color: Colors.red,
                                 ),
-                                Text(
-                                  '$quantity',
-                                  style: Style.fontNormal.copyWith(
-                                      fontWeight: FontWeight.bold),
+                                onPressed: () {
+                                  _removeItem(item); // Gọi hàm provider
+                                },
+                              ),
+                              Text(
+                                '$quantity', // Hiển thị số lượng đã đếm
+                                style: Style.fontNormal.copyWith(
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                IconButton(
-                                  icon: const Icon(LucideIcons.plusCircle,
-                                      size: 20, color: Colors.green),
-                                  onPressed: () {
-                                    setState(() {
-                                      _selectedItems[itemId] = quantity + 1;
-                                    });
-                                  },
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  LucideIcons.plusCircle,
+                                  size: 20,
+                                  color: Colors.green,
                                 ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                                onPressed: () {
+                                  _addItem(item); // Gọi hàm provider
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
+              // *** KẾT THÚC SỬA LISTVIEW ***
               const Divider(height: 1),
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
+                    // *** BỎ COMMENT VÀ SỬA LẠI TỔNG TIỀN ***
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Tổng cộng (${_totalItemCount} món):',
-                            style: Style.fontNormal),
+                        Text(
+                          'Tổng cộng ($_totalItemCount món):',
+                          style: Style.fontNormal,
+                        ),
                         Text(
                           '${_totalPrice.toStringAsFixed(3)} đ',
                           style: Style.fontTitleMini.copyWith(
@@ -293,6 +323,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                         ),
                       ],
                     ),
+                    // *** KẾT THÚC SỬA TỔNG TIỀN ***
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
@@ -323,22 +354,23 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
             horizontal: Style.paddingPhone,
             vertical: 16,
           ),
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _textSpinner(context),
-                        const SizedBox(height: 16),
-                        Expanded(child: _listMenu()),
-                      ],
-                    ),
-                    _actionButton(context),
-                  ],
-                ),
+          child:
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _textSpinner(context),
+                          const SizedBox(height: 16),
+                          Expanded(child: _listMenu(_menuItems)),
+                        ],
+                      ),
+                      _actionButton(context),
+                    ],
+                  ),
         ),
       ),
     );
@@ -360,19 +392,20 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
         DropdownButtonHideUnderline(
           child: DropdownButton2<String>(
             isExpanded: true,
-            items: dropdownMenus
-                .map(
-                  (value) => DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(
-                      value,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface,
+            items:
+                dropdownMenus
+                    .map(
+                      (value) => DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(
+                          value,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                )
-                .toList(),
+                    )
+                    .toList(),
             value: ref.watch(_selectedMenuProvider),
             onChanged: (value) {
               if (value == null) return;
@@ -417,19 +450,20 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
         DropdownButtonHideUnderline(
           child: DropdownButton2<String>(
             isExpanded: true,
-            items: dropdownItems
-                .map(
-                  (value) => DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(
-                      value,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface,
+            items:
+                dropdownItems
+                    .map(
+                      (value) => DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(
+                          value,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                )
-                .toList(),
+                    )
+                    .toList(),
             value: ref.watch(_selectedCategoryProvider),
             onChanged: (value) {
               if (value == null) return;
@@ -474,16 +508,17 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
     );
   }
 
-  // --- _listMenu (ĐÃ CẬP NHẬT DÙNG int) ---
-  Widget _listMenu() {
+  // --- _listMenu (ĐÃ CẬP NHẬT CÁC NÚT BẤM) ---
+  Widget _listMenu(List<Item> menuItems) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
     final surface = theme.colorScheme.surface;
     final onSurface = theme.colorScheme.onSurface;
+    final cartItems = ref.watch(cartNotifierProvider);
 
     return GridView.builder(
       padding: const EdgeInsets.only(bottom: 96),
-      itemCount: _menuItems.length,
+      itemCount: menuItems.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         mainAxisSpacing: 12,
@@ -491,16 +526,18 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
         childAspectRatio: 1.5,
       ),
       itemBuilder: (context, index) {
-        final item = _menuItems[index];
+        final item = menuItems[index];
         // Lấy số lượng bằng item.id (int)
-        final quantity = _selectedItems[item.id] ?? 0;
+        final quantity =
+            cartItems.where((cartItem) => cartItem.id == item.id).length;
         final isSelected = quantity > 0;
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? primary.withOpacity(0.1) : surface,
+            color:
+                cartItems.contains(item) ? primary.withOpacity(0.1) : surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected ? primary : Colors.grey.shade300,
@@ -536,7 +573,10 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                     '${item.price.toStringAsFixed(3)} đ',
                     style: TextStyle(
                       fontSize: 12,
-                      color: isSelected ? primary.withOpacity(0.8) : Colors.grey.shade600,
+                      color:
+                          isSelected
+                              ? primary.withOpacity(0.8)
+                              : Colors.grey.shade600,
                     ),
                   ),
                 ],
@@ -548,11 +588,9 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                     icon: Icon(LucideIcons.plusCircle, color: primary),
+                    // *** SỬA ONPRESSED ***
                     onPressed: () {
-                      setState(() {
-                        // Thêm bằng item.id (int)
-                        _selectedItems[item.id] = 1;
-                      });
+                      _addItem(item);
                     },
                   ),
                 )
@@ -563,18 +601,14 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                     IconButton(
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
-                      icon: const Icon(LucideIcons.minusCircle,
-                          size: 22, color: Colors.red),
+                      icon: const Icon(
+                        LucideIcons.minusCircle,
+                        size: 22,
+                        color: Colors.red,
+                      ),
+                      // *** SỬA ONPRESSED ***
                       onPressed: () {
-                        setState(() {
-                          if (quantity > 1) {
-                            // Cập nhật bằng item.id (int)
-                            _selectedItems[item.id] = quantity - 1;
-                          } else {
-                            // Xóa bằng item.id (int)
-                            _selectedItems.remove(item.id);
-                          }
-                        });
+                        _removeItem(item);
                       },
                     ),
                     Padding(
@@ -591,12 +625,14 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                     IconButton(
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
-                      icon: Icon(LucideIcons.plusCircle, size: 22, color: primary),
+                      icon: Icon(
+                        LucideIcons.plusCircle,
+                        size: 22,
+                        color: primary,
+                      ),
+                      // *** SỬA ONPRESSED ***
                       onPressed: () {
-                        setState(() {
-                          // Cập nhật bằng item.id (int)
-                          _selectedItems[item.id] = quantity + 1;
-                        });
+                        _addItem(item);
                       },
                     ),
                   ],
@@ -655,17 +691,4 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
       ),
     );
   }
-}
-
-// NÂNG CẤP: Lớp _MenuItem giờ có ID là SỐ (int)
-class _MenuItem {
-  final int id;
-  final String name;
-  final double price;
-
-  const _MenuItem({
-    required this.id,
-    required this.name,
-    required this.price,
-  });
 }

@@ -101,7 +101,7 @@ class User {
       'backImage': backImage,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
-      'deletedAt': deletedAt != null ? deletedAt!.toIso8601String() : null,
+      'deletedAt': deletedAt?.toIso8601String(),
     };
   }
 
@@ -109,7 +109,7 @@ class User {
     // helper to parse int safely
     // ignore: no_leading_underscores_for_local_identifiers
     //Hàm kiểm tra kiểu dữ liệu
-    int? _parseInt(dynamic v) {
+    int? parseInt(dynamic v) {
       if (v == null) return null;
       if (v is int) return v;
       return int.tryParse(v.toString());
@@ -140,8 +140,8 @@ class User {
       email: map['email'] ?? '',
       phone: map['phone'] ?? '',
       passworkHash: map['passworkHash'] ?? '',
-      statusId: _parseInt(map['statusId']) ?? 0,
-      role: _parseInt(map['statusId']) ?? 0,
+      statusId: parseInt(map['statusId']) ?? 0,
+      role: parseInt(map['statusId']) ?? 0,
       fontImage: map['fontImage'] ?? '',
       backImage: map['backImage'] ?? '',
       createdAt: _parseDate(map['createdAt']),

@@ -26,7 +26,7 @@ class UserNotifier extends StateNotifier<User?> {
 
   // Đăng ký user
   Future<int> signUpInfor(User user, String branchCode, int index) async {
-    print(' user : ${user}');
+    print(' user : $user');
     // Gọi API để tìm chi nhánh
     final Branch? branch;
     bool check = false;
@@ -88,7 +88,7 @@ class UserNotifier extends StateNotifier<User?> {
   }
 
   Future<User?> signInInfor(String email, String password) async {
-    print(' email : ${email} , password : ${password}');
+    print(' email : $email , password : $password');
     try {
       final user = await userAPI.signIn(email);
       if (user != null) {
