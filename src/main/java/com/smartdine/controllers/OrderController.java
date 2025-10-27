@@ -23,6 +23,19 @@ public class OrderController {
     @Autowired
     OrderServices orderServices;
 
+    // save order
+
+    @PostMapping("/save")
+    public ResponseEntity<?> saveOrder(@RequestBody Order order) {
+        try {
+            Order savedOrder = orderServices.saveOrder(order);
+            return ResponseEntity.ok(savedOrder);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     // Lấy tất cả order
     @GetMapping
     public List<Order> getAll() {

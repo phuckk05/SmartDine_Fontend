@@ -16,6 +16,11 @@ public class OrderItemService {
     @Autowired
     private OrderItemRepository orderItemRepository;
 
+    // Thêm order item
+    public OrderItem addOrderItem(OrderItem orderItem) {
+        return orderItemRepository.save(orderItem);
+    }
+
     // Lấy danh sách OrderItem theo các orderId
     public List<OrderItem> getOrderItemsByOrderIds(List<Integer> orderIds) {
         if (orderIds == null || orderIds.isEmpty()) {

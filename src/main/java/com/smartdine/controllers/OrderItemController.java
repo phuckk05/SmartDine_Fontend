@@ -26,6 +26,18 @@ public class OrderItemController {
         this.orderServices = orderServices;
     }
 
+    // save order item
+    @GetMapping("/save")
+    public ResponseEntity<?> saveOrderItem(@RequestBody OrderItem orderItem) {
+        try {
+            OrderItem savedOrderItem = orderItemServices.addOrderItem(orderItem);
+            return ResponseEntity.ok(savedOrderItem);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     // Lấy tất cả order item ngày hôm nay
     @GetMapping("/today/branch/{branchId}")
     public ResponseEntity<List<OrderItem>> getOrderItemsToday(@PathVariable Integer branchId) {

@@ -19,6 +19,11 @@ public class OrderServices {
     @Autowired
     OrderRepository orderRepository;
 
+    // save order
+    public Order saveOrder(Order order) {
+        return orderRepository.save(order);
+    }
+
     // Lấy tất cả order
     public java.util.List<Order> getAll() {
         return orderRepository.findAll();
