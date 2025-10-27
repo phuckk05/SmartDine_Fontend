@@ -16,6 +16,7 @@ class KitchenOrderNotifier extends StateNotifier<AsyncValue<List<OrderItem>>> {
       print('Kitchen orders fetched: ${orders.length}');
       state = AsyncValue.data(orders);
     } catch (error, stackTrace) {
+      //kitchen- 3
       // ignore: avoid_print
       print('Kitchen orders load failed: $error');
       state = AsyncValue.error(error, stackTrace);
