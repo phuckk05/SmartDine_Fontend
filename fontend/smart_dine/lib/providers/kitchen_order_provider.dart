@@ -22,6 +22,43 @@ class KitchenOrderNotifier extends StateNotifier<AsyncValue<List<OrderItem>>> {
       state = AsyncValue.error(error, stackTrace);
     }
   }
+
+  Future<void> loadOrderItemsByBranch({required int branchId}) async {
+    state = const AsyncValue.loading();
+    try {
+      final orders = await _api.getOrderItemsByBranch(branchId);
+      // ignore: avoid_print
+      print('All order items fetched: ${orders.length}');
+      state = AsyncValue.data(orders);
+    } catch (error, stackTrace) {
+      // ignore: avoid_print
+      print('Order items by branch load failed: $error');
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
+
+  //Cập nhật trạng thái order item
+  Future<bool> updateOrderItemStatus(int orderItemId, int status) async {
+    try {
+      final updatedItem = await _api.updateOrderItemStatus(orderItemId, status);
+      final currentOrders = state.asData?.value;
+
+      if (currentOrders != null) {
+        final updatedOrders = [
+          for (final order in currentOrders)
+            if (order.id == orderItemId) updatedItem else order,
+        ];
+
+        state = AsyncValue.data(updatedOrders);
+      }
+
+      return true;
+    } catch (e) {
+      // ignore: avoid_print
+      print('Error updating order item status: $e');
+      return false;
+    }
+  }
 }
 
 final kitchenOrderNotifierProvider =

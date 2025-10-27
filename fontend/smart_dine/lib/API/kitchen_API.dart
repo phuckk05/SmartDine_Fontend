@@ -23,6 +23,40 @@ class KitchenApi {
     print("loi lấy order item chua phuc vu: ${response.statusCode}");
     return [];
   }
+
+  Future<List<OrderItem>> getOrderItemsByBranch(int branchId) async {
+    final response = await http.get(
+      Uri.parse('$uri2/branch/$branchId'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data
+          .map((item) => OrderItem.fromMap(item as Map<String, dynamic>))
+          .toList();
+    }
+    print('loi lay order item theo branch: ${response.statusCode}');
+    return [];
+  }
+
+  //Cập nhật trạng thái order item
+  Future<OrderItem> updateOrderItemStatus(int orderItemId, int statusId) async {
+    final uri = Uri.parse('$uri2/$orderItemId/status');
+    final response = await http.put(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(statusId),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(
+        'Failed to update order item status: ${response.statusCode}',
+      );
+    }
+
+    final Map<String, dynamic> data = jsonDecode(response.body);
+    return OrderItem.fromMap(data);
+  }
 }
 
 final kitchenApiProvider = Provider<KitchenApi>((ref) => KitchenApi());

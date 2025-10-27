@@ -1,19 +1,18 @@
 import 'dart:convert';
-import 'package:uuid/uuid.dart';
 
 class OrderItem {
-  final String id;
-  final String orderId;
-  final String itemId;
+  final int id;
+  final int orderId;
+  final int itemId;
   final int quantity;
   final String? note;
   final int statusId;
-  final String? addedBy;
-  final String? servedBy;
+  final int? addedBy;
+  final int? servedBy;
   final DateTime createdAt;
 
   OrderItem({
-    String? id,
+    int? id,
     required this.orderId,
     required this.itemId,
     required this.quantity,
@@ -22,7 +21,7 @@ class OrderItem {
     this.addedBy,
     this.servedBy,
     DateTime? createdAt,
-  }) : id = id ?? const Uuid().v4(),
+  }) : id = id ?? 0,
        createdAt = createdAt ?? DateTime.now();
 
   // Robust parsers
@@ -30,6 +29,12 @@ class OrderItem {
     if (v == null) return 0;
     if (v is int) return v;
     return int.tryParse(v.toString()) ?? 0;
+  }
+
+  static int? _parseNullableInt(dynamic v) {
+    if (v == null || (v is String && v.trim().isEmpty)) return null;
+    if (v is int) return v;
+    return int.tryParse(v.toString());
   }
 
   static DateTime _parseDate(dynamic v) {
@@ -47,14 +52,14 @@ class OrderItem {
 
   factory OrderItem.fromMap(Map<String, dynamic> map) {
     return OrderItem(
-      id: map['id']?.toString(),
-      orderId: map['order_id']?.toString() ?? map['orderId']?.toString() ?? '',
-      itemId: map['item_id']?.toString() ?? map['itemId']?.toString() ?? '',
+      id: _parseInt(map['id']),
+      orderId: _parseInt(map['order_id'] ?? map['orderId']),
+      itemId: _parseInt(map['item_id'] ?? map['itemId']),
       quantity: _parseInt(map['quantity'] ?? map['qty']),
       note: map['note']?.toString(),
       statusId: _parseInt(map['status_id'] ?? map['statusId']),
-      addedBy: map['added_by']?.toString() ?? map['addedBy']?.toString(),
-      servedBy: map['served_by']?.toString() ?? map['servedBy']?.toString(),
+      addedBy: _parseNullableInt(map['added_by'] ?? map['addedBy']),
+      servedBy: _parseNullableInt(map['served_by'] ?? map['servedBy']),
       createdAt: _parseDate(
         map['created_at'] ?? map['createdAt'] ?? map['created'],
       ),
@@ -81,14 +86,14 @@ class OrderItem {
   String toJson() => json.encode(toMap());
 
   OrderItem copyWith({
-    String? id,
-    String? orderId,
-    String? itemId,
+    int? id,
+    int? orderId,
+    int? itemId,
     int? quantity,
     String? note,
     int? statusId,
-    String? addedBy,
-    String? servedBy,
+    int? addedBy,
+    int? servedBy,
     DateTime? createdAt,
   }) {
     return OrderItem(

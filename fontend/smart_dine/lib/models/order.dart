@@ -1,21 +1,20 @@
 import 'dart:convert';
-import 'package:uuid/uuid.dart';
 
 class Order {
-  final String id;
-  final String tableId;
-  final String companyId;
-  final String branchId;
-  final String userId;
-  final String? promotionId;
+  final int id;
+  final int tableId;
+  final int companyId;
+  final int branchId;
+  final int userId;
+  final int? promotionId;
   final String? note;
-  final String statusId;
+  final int statusId;
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? deletedAt;
 
   Order({
-    String? id,
+    int? id,
     required this.tableId,
     required this.companyId,
     required this.branchId,
@@ -26,9 +25,21 @@ class Order {
     DateTime? createdAt,
     DateTime? updatedAt,
     this.deletedAt,
-  }) : id = id ?? const Uuid().v4(),
+  }) : id = id ?? 0,
        createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
+
+  static int _parseInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is int) return v;
+    return int.tryParse(v.toString()) ?? 0;
+  }
+
+  static int? _parseNullableInt(dynamic v) {
+    if (v == null || (v is String && v.trim().isEmpty)) return null;
+    if (v is int) return v;
+    return int.tryParse(v.toString());
+  }
 
   // Helpers for parsing
   static DateTime _parseDate(dynamic v) {
@@ -46,18 +57,14 @@ class Order {
 
   factory Order.fromMap(Map<String, dynamic> map) {
     return Order(
-      id: map['id']?.toString(),
-      tableId: map['table_id']?.toString() ?? map['tableId']?.toString() ?? '',
-      companyId:
-          map['company_id']?.toString() ?? map['companyId']?.toString() ?? '',
-      branchId:
-          map['branch_id']?.toString() ?? map['branchId']?.toString() ?? '',
-      userId: map['user_id']?.toString() ?? map['userId']?.toString() ?? '',
-      promotionId:
-          map['promotion_id']?.toString() ?? map['promotionId']?.toString(),
+      id: _parseInt(map['id']),
+      tableId: _parseInt(map['table_id'] ?? map['tableId']),
+      companyId: _parseInt(map['company_id'] ?? map['companyId']),
+      branchId: _parseInt(map['branch_id'] ?? map['branchId']),
+      userId: _parseInt(map['user_id'] ?? map['userId']),
+      promotionId: _parseNullableInt(map['promotion_id'] ?? map['promotionId']),
       note: map['note']?.toString(),
-      statusId:
-          map['status_id']?.toString() ?? map['statusId']?.toString() ?? '',
+      statusId: _parseInt(map['status_id'] ?? map['statusId']),
       createdAt: _parseDate(map['created_at'] ?? map['createdAt']),
       updatedAt: _parseDate(map['updated_at'] ?? map['updatedAt']),
       deletedAt:
@@ -86,14 +93,14 @@ class Order {
   String toJson() => json.encode(toMap());
 
   Order copyWith({
-    String? id,
-    String? tableId,
-    String? companyId,
-    String? branchId,
-    String? userId,
-    String? promotionId,
+    int? id,
+    int? tableId,
+    int? companyId,
+    int? branchId,
+    int? userId,
+    int? promotionId,
     String? note,
-    String? statusId,
+    int? statusId,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? deletedAt,
