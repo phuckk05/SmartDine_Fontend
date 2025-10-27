@@ -31,7 +31,6 @@ class SmartDineApp extends ConsumerWidget {
               ref.watch(modeProvider) ? Brightness.dark : Brightness.light,
         ),
       ),
-
       home: const ScreenChooseTable(),
     );
   }

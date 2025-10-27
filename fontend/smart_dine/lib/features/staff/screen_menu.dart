@@ -13,9 +13,13 @@ import 'package:mart_dine/models/order_item.dart';
 
 class ScreenMenu extends ConsumerStatefulWidget {
   final String tableName;
-  final int tableId;
+  final int tableId; // ID của bàn (đã là int)
 
-  const ScreenMenu({super.key, required this.tableName, required this.tableId});
+  const ScreenMenu({
+    super.key,
+    required this.tableName,
+    required this.tableId,
+  });
 
   @override
   ConsumerState<ScreenMenu> createState() => _ScreenMenuState();
@@ -29,64 +33,63 @@ final _openBillProvider = StateProvider<bool>((ref) => false);
 class _ScreenMenuState extends ConsumerState<ScreenMenu> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // Danh sách món ăn (Menu)
+  // NÂNG CẤP: Danh sách món ăn giờ có ID là SỐ (int)
   final List<_MenuItem> _menuItems = const [
-    _MenuItem(id: 'menu-01', name: 'Bánh mì', price: 242.3243),
-    _MenuItem(id: 'menu-02', name: 'Phở bò', price: 185.000),
-    _MenuItem(id: 'menu-03', name: 'Gỏi cuốn', price: 82.000),
-    _MenuItem(id: 'menu-04', name: 'Cà phê sữa', price: 45.000),
-    _MenuItem(id: 'menu-05', name: 'Trà đào', price: 55.000),
-    _MenuItem(id: 'menu-06', name: 'Bánh flan', price: 39.000),
-    _MenuItem(id: 'menu-07', name: 'Bít tết', price: 289.000),
-    _MenuItem(id: 'menu-08', name: 'Mì Ý', price: 165.000),
-    _MenuItem(id: 'menu-09', name: 'Súp bí đỏ', price: 98.0000),
-    _MenuItem(id: 'menu-10', name: 'Salad cá ngừ', price: 123.000),
-    _MenuItem(id: 'menu-11', name: 'Bánh mì pate', price: 74.500),
-    _MenuItem(id: 'menu-12', name: 'Trà trái cây', price: 69.0000),
+    _MenuItem(id: 1, name: 'Bánh mì', price: 242.3243),
+    _MenuItem(id: 2, name: 'Phở bò', price: 185.000),
+    _MenuItem(id: 3, name: 'Gỏi cuốn', price: 82.000),
+    _MenuItem(id: 4, name: 'Cà phê sữa', price: 45.000),
+    _MenuItem(id: 5, name: 'Trà đào', price: 55.000),
+    _MenuItem(id: 6, name: 'Bánh flan', price: 39.000),
+    _MenuItem(id: 7, name: 'Bít tết', price: 289.000),
+    _MenuItem(id: 8, name: 'Mì Ý', price: 165.000),
+    _MenuItem(id: 9, name: 'Súp bí đỏ', price: 98.0000),
+    _MenuItem(id: 10, name: 'Salad cá ngừ', price: 123.000),
+    _MenuItem(id: 11, name: 'Bánh mì pate', price: 74.500),
+    _MenuItem(id: 12, name: 'Trà trái cây', price: 69.0000),
   ];
 
-  // Map lưu trữ giỏ hàng: {itemId: quantity}
-  final Map<String, int> _selectedItems = {};
+  // NÂNG CẤP: Sử dụng Map<int, int> để lưu {itemId: quantity}
+  final Map<int, int> _selectedItems = {};
 
   // Biến trạng thái
   bool _isLoading = true;
-  String? _currentOrderId; // Lưu ID của order hiện tại (kiểu String)
+  int? _currentOrderId; // NÂNG CẤP: Lưu ID của order (kiểu int?)
 
   @override
   void initState() {
     super.initState();
-    // Tải các món ăn đã chọn trước đó (nếu có)
     _loadExistingOrder();
   }
 
-  // HÀM TẢI ORDER (ĐÃ CẬP NHẬT)
+  // HÀM TẢI ORDER (ĐÃ CẬP NHẬT DÙNG int)
   Future<void> _loadExistingOrder() async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // 1. Lấy API provider
       final orderApi = ref.read(orderApiProvider);
 
-      // 2. Gọi API thật: tìm order của bàn
-      final existingOrders = await orderApi.fetchOrdersByTableIdToday(
-        widget.tableId,
-      );
+      // 1. Tìm order của bàn
+      final existingOrders =
+          await orderApi.fetchOrdersByTableIdToday(widget.tableId);
 
       if (existingOrders.isNotEmpty) {
-        // Lấy order đầu tiên
         final order = existingOrders.first;
-        _currentOrderId = order.id.toString(); // Lưu ID (dưới dạng String)
+        _currentOrderId = order.id; // Lưu ID (kiểu int?)
 
-        // 3. Gọi API thật: Tải các OrderItem của order này
+        if (_currentOrderId == null) return; // Không có ID order thì dừng
+
+        // 2. Tải các OrderItem của order này
         print('Đang tải items cho order ID: $_currentOrderId');
-        final fetchedItems = await orderApi.fetchOrderItems(_currentOrderId!);
+        final fetchedItems = await orderApi.fetchOrderItems(_currentOrderId! as String);
 
-        // 4. Cập nhật state (giỏ hàng)
+        // 3. Cập nhật state (giỏ hàng)
         setState(() {
           _selectedItems.clear();
           for (var item in fetchedItems) {
+            // item.itemId bây giờ là int
             _selectedItems[item.itemId] = item.quantity;
           }
         });
@@ -100,50 +103,54 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
     }
   }
 
-  // HÀM LƯU ORDER (ĐÃ CẬP NHẬT)
+  // HÀM LƯU ORDER (ĐÃ CẬP NHẬT DÙNG int)
   Future<void> _saveOrder() async {
-    // Hiển thị loading
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Đang lưu order...')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Đang lưu order...')),
+    );
 
     try {
       final orderApi = ref.read(orderApiProvider);
 
       // 1. Kiểm tra xem đã có order chưa
       if (_currentOrderId == null) {
-        // CHƯA CÓ: Gọi API để tạo Order mới
-        // Bạn cần cung cấp các ID này từ một provider khác (ví dụ: userProvider)
+        // CHƯA CÓ: Tạo Order mới
+        // TODO: Cung cấp các ID này từ provider (ví dụ: userProvider)
         const int mockUserId = 1;
         const int mockCompanyId = 1;
         const int mockBranchId = 1;
 
-        print('TODO: Cần tạo order mới cho bàn ${widget.tableId}');
+        print('Tạo order mới cho bàn ${widget.tableId}');
         final newOrder = await orderApi.createOrder(
           tableId: widget.tableId,
           userId: mockUserId,
           companyId: mockCompanyId,
           branchId: mockBranchId,
         );
-        _currentOrderId = newOrder.id.toString(); // Lưu ID (dưới dạng String)
+        _currentOrderId = newOrder.id; // Lưu ID (kiểu int)
+      }
+
+      if (_currentOrderId == null) {
+        throw Exception('Không thể tạo hoặc lấy order ID');
       }
 
       // 2. Chuẩn bị danh sách OrderItem từ _selectedItems
       final List<Map<String, dynamic>> itemsToSave = [];
       _selectedItems.forEach((itemId, quantity) {
         itemsToSave.add({
-          'item_id': itemId,
+          // Gửi đi itemId (kiểu int)
+          'item_id': itemId, 
           'quantity': quantity,
-          'note': null, // Thêm note nếu có
+          'note': null, 
+          // Bạn có thể cần thêm orderId vào mỗi item nếu backend yêu cầu
+          'order_id': _currentOrderId,
         });
       });
 
-      // 3. Gọi API thật: để lưu/cập nhật OrderItem
+      // 3. Gọi API để lưu OrderItem
       print('Đang lưu ${itemsToSave.length} món cho order: $_currentOrderId');
-      final success = await orderApi.saveOrderItems(
-        _currentOrderId!,
-        itemsToSave,
-      );
+      final success =
+          await orderApi.saveOrderItems(_currentOrderId! as String, itemsToSave);
 
       // 4. Thông báo kết quả
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -168,7 +175,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
     }
   }
 
-  // --- Các hàm tính toán ---
+  // --- Các hàm tính toán (ĐÃ CẬP NHẬT DÙNG int) ---
   int get _totalItemCount {
     if (_selectedItems.isEmpty) return 0;
     return _selectedItems.values.reduce((sum, count) => sum + count);
@@ -178,18 +185,16 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
     if (_selectedItems.isEmpty) return 0.0;
     double total = 0.0;
     _selectedItems.forEach((itemId, quantity) {
-      final item = _findItemById(itemId);
+      final item = _findItemById(itemId); // Tìm bằng int ID
       total += item.price * quantity;
     });
     return total;
   }
 
-  _MenuItem _findItemById(String id) {
-    // Tìm món ăn trong menu theo ID
-    return _menuItems.firstWhere(
-      (item) => item.id == id,
-      orElse: () => _MenuItem(id: 'unknown', name: 'Món lạ', price: 0),
-    );
+  _MenuItem _findItemById(int id) {
+    // Tìm món ăn trong menu theo int ID
+    return _menuItems.firstWhere((item) => item.id == id,
+        orElse: () => _MenuItem(id: 0, name: 'Món lạ', price: 0));
   }
 
   @override
@@ -200,7 +205,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
       onEndDrawerChanged: (isOpened) {
         ref.read(_openBillProvider.notifier).state = isOpened;
       },
-      // --- GIỎ HÀNG (ENDDRAWER) ---
+      // --- GIỎ HÀNG (ENDDRAWER) (ĐÃ CẬP NHẬT DÙNG int) ---
       endDrawer: Drawer(
         width: drawerWidth,
         child: SafeArea(
@@ -216,67 +221,59 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
               ),
               const Divider(height: 1),
               Expanded(
-                child:
-                    _selectedItems.isEmpty
-                        ? const Center(
-                          child: Text('Chưa có món ăn nào được chọn.'),
-                        )
-                        : ListView.builder(
-                          padding: EdgeInsets.zero,
-                          itemCount: _selectedItems.length,
-                          itemBuilder: (context, index) {
-                            final itemId = _selectedItems.keys.elementAt(index);
-                            final item = _findItemById(itemId);
-                            final quantity = _selectedItems[itemId]!;
+                child: _selectedItems.isEmpty
+                    ? const Center(
+                        child: Text('Chưa có món ăn nào được chọn.'),
+                      )
+                    : ListView.builder(
+                        padding: EdgeInsets.zero,
+                        itemCount: _selectedItems.length,
+                        itemBuilder: (context, index) {
+                          final itemId = _selectedItems.keys.elementAt(index); // itemId là int
+                          final item = _findItemById(itemId);
+                          final quantity = _selectedItems[itemId]!;
 
-                            return ListTile(
-                              title: Text(item.name),
-                              subtitle: Text(
-                                '${item.price.toStringAsFixed(3)} đ',
-                                style: Style.fontCaption,
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(
-                                      LucideIcons.minusCircle,
-                                      size: 20,
-                                      color: Colors.red,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        if (quantity > 1) {
-                                          _selectedItems[itemId] = quantity - 1;
-                                        } else {
-                                          _selectedItems.remove(itemId);
-                                        }
-                                      });
-                                    },
-                                  ),
-                                  Text(
-                                    '$quantity',
-                                    style: Style.fontNormal.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(
-                                      LucideIcons.plusCircle,
-                                      size: 20,
-                                      color: Colors.green,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _selectedItems[itemId] = quantity + 1;
-                                      });
-                                    },
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
+                          return ListTile(
+                            title: Text(item.name),
+                            subtitle: Text(
+                              '${item.price.toStringAsFixed(3)} đ',
+                              style: Style.fontCaption,
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(LucideIcons.minusCircle,
+                                      size: 20, color: Colors.red),
+                                  onPressed: () {
+                                    setState(() {
+                                      if (quantity > 1) {
+                                        _selectedItems[itemId] = quantity - 1;
+                                      } else {
+                                        _selectedItems.remove(itemId);
+                                      }
+                                    });
+                                  },
+                                ),
+                                Text(
+                                  '$quantity',
+                                  style: Style.fontNormal.copyWith(
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                IconButton(
+                                  icon: const Icon(LucideIcons.plusCircle,
+                                      size: 20, color: Colors.green),
+                                  onPressed: () {
+                                    setState(() {
+                                      _selectedItems[itemId] = quantity + 1;
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
               ),
               const Divider(height: 1),
               Padding(
@@ -286,10 +283,8 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Tổng cộng (${_totalItemCount} món):',
-                          style: Style.fontNormal,
-                        ),
+                        Text('Tổng cộng (${_totalItemCount} món):',
+                            style: Style.fontNormal),
                         Text(
                           '${_totalPrice.toStringAsFixed(3)} đ',
                           style: Style.fontTitleMini.copyWith(
@@ -301,7 +296,6 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
-                      // NÚT GỬI ORDER (ĐÃ CẬP NHẬT)
                       child: ElevatedButton(
                         onPressed: _selectedItems.isEmpty ? null : _saveOrder,
                         child: const Text('GỬI ORDER'),
@@ -329,24 +323,22 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
             horizontal: Style.paddingPhone,
             vertical: 16,
           ),
-          // Hiển thị loading khi tải order
-          child:
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _textSpinner(context),
-                          const SizedBox(height: 16),
-                          Expanded(child: _listMenu()),
-                        ],
-                      ),
-                      _actionButton(context),
-                    ],
-                  ),
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _textSpinner(context),
+                        const SizedBox(height: 16),
+                        Expanded(child: _listMenu()),
+                      ],
+                    ),
+                    _actionButton(context),
+                  ],
+                ),
         ),
       ),
     );
@@ -368,20 +360,19 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
         DropdownButtonHideUnderline(
           child: DropdownButton2<String>(
             isExpanded: true,
-            items:
-                dropdownMenus
-                    .map(
-                      (value) => DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(
-                          value,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
+            items: dropdownMenus
+                .map(
+                  (value) => DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(
+                      value,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
-                    )
-                    .toList(),
+                    ),
+                  ),
+                )
+                .toList(),
             value: ref.watch(_selectedMenuProvider),
             onChanged: (value) {
               if (value == null) return;
@@ -426,20 +417,19 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
         DropdownButtonHideUnderline(
           child: DropdownButton2<String>(
             isExpanded: true,
-            items:
-                dropdownItems
-                    .map(
-                      (value) => DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(
-                          value,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
+            items: dropdownItems
+                .map(
+                  (value) => DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(
+                      value,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
-                    )
-                    .toList(),
+                    ),
+                  ),
+                )
+                .toList(),
             value: ref.watch(_selectedCategoryProvider),
             onChanged: (value) {
               if (value == null) return;
@@ -484,7 +474,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
     );
   }
 
-  // --- _listMenu (Không đổi) ---
+  // --- _listMenu (ĐÃ CẬP NHẬT DÙNG int) ---
   Widget _listMenu() {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
@@ -502,6 +492,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
       ),
       itemBuilder: (context, index) {
         final item = _menuItems[index];
+        // Lấy số lượng bằng item.id (int)
         final quantity = _selectedItems[item.id] ?? 0;
         final isSelected = quantity > 0;
 
@@ -545,10 +536,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                     '${item.price.toStringAsFixed(3)} đ',
                     style: TextStyle(
                       fontSize: 12,
-                      color:
-                          isSelected
-                              ? primary.withOpacity(0.8)
-                              : Colors.grey.shade600,
+                      color: isSelected ? primary.withOpacity(0.8) : Colors.grey.shade600,
                     ),
                   ),
                 ],
@@ -562,6 +550,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                     icon: Icon(LucideIcons.plusCircle, color: primary),
                     onPressed: () {
                       setState(() {
+                        // Thêm bằng item.id (int)
                         _selectedItems[item.id] = 1;
                       });
                     },
@@ -574,16 +563,15 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                     IconButton(
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
-                      icon: const Icon(
-                        LucideIcons.minusCircle,
-                        size: 22,
-                        color: Colors.red,
-                      ),
+                      icon: const Icon(LucideIcons.minusCircle,
+                          size: 22, color: Colors.red),
                       onPressed: () {
                         setState(() {
                           if (quantity > 1) {
+                            // Cập nhật bằng item.id (int)
                             _selectedItems[item.id] = quantity - 1;
                           } else {
+                            // Xóa bằng item.id (int)
                             _selectedItems.remove(item.id);
                           }
                         });
@@ -603,13 +591,10 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                     IconButton(
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
-                      icon: Icon(
-                        LucideIcons.plusCircle,
-                        size: 22,
-                        color: primary,
-                      ),
+                      icon: Icon(LucideIcons.plusCircle, size: 22, color: primary),
                       onPressed: () {
                         setState(() {
+                          // Cập nhật bằng item.id (int)
                           _selectedItems[item.id] = quantity + 1;
                         });
                       },
@@ -672,11 +657,15 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
   }
 }
 
-// Lớp _MenuItem (Không đổi)
+// NÂNG CẤP: Lớp _MenuItem giờ có ID là SỐ (int)
 class _MenuItem {
-  final String id;
+  final int id;
   final String name;
   final double price;
 
-  const _MenuItem({required this.id, required this.name, required this.price});
+  const _MenuItem({
+    required this.id,
+    required this.name,
+    required this.price,
+  });
 }

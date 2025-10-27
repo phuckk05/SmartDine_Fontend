@@ -12,7 +12,10 @@ class TableAPI {
   // Your existing code here
   Future<List<Table>> fetchTables() async {
     final response = await http.get(
-      Uri.parse('${uri2}/all'),
+      Uri.parse('${uri2}'),
+      // !!! LỖI 400 BAD REQUEST XẢY RA Ở ĐÂY !!!
+      // Yêu cầu này bị thiếu thông tin mà backend cần,
+      // ví dụ như 'branchId' hoặc 'Authorization'.
       headers: {'Content-Type': 'application/json'},
     );
 
@@ -23,6 +26,8 @@ class TableAPI {
           .toList();
     } else {
       print("Loi lay table: ${response.statusCode}");
+      // In ra nội dung lỗi để xem chi tiết
+      print("Noi dung loi: ${response.body}"); 
       return [];
     }
   }

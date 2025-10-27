@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:mart_dine/models/order.dart';
@@ -8,11 +9,15 @@ import 'package:mart_dine/models/order_item.dart';
 final uri1 = 'https://spring-boot-smartdine.onrender.com/api/orders';
 final uri2 = 'https://smartdine-backend-oq2x.onrender.com/api/orders';
 
+// URL MỚI CHO ORDER ITEMS (Dựa trên sửa lỗi của bạn)
+final uriOrderItems = 'https://smartdine-backend-oq2x.onrender.com/api/order-items';
+
+
 class OrderAPI {
   //Lấy danh sách order (Hàm gốc)
   Future<List<Order>> fetchOrders() async {
     final response = await http.get(
-      Uri.parse('${uri2}/all'),
+      Uri.parse(uri2), // <-- ĐÃ SỬA (bỏ /all)
       headers: {'Content-Type': 'application/json'},
     );
 
@@ -75,7 +80,7 @@ class OrderAPI {
   }
 
   // ===================================================================
-  // HÀM TẠO ORDER (ĐÃ CẬP NHẬT LÊN API THẬT)
+  // HÀM TẠO ORDER (ĐÃ SỬA LỖI 405)
   // ===================================================================
   Future<Order> createOrder(
       {required int tableId,
@@ -84,7 +89,6 @@ class OrderAPI {
       required int branchId}) async {
     print('--- API THẬT: Đang tạo order mới cho bàn $tableId ---');
 
-    // Tạo đối tượng Order (không có id) để gửi đi
     final newOrderData = Order(
       tableId: tableId,
       companyId: companyId,
@@ -93,20 +97,18 @@ class OrderAPI {
       statusId: 1, // 1 = "Chưa thanh toán" (giả định)
     );
 
-    final body = newOrderData.toJson(); // Dùng hàm toJson() của model
+    final body = newOrderData.toJson();
 
     try {
-      // Giả định endpoint là /create
+      // SỬA LẠI URL (bỏ /create)
       final response = await http.post(
-        Uri.parse('$uri1/create'), // <-- URL API thật của bạn
+        Uri.parse(uri2), // <-- ĐÃ SỬA
         headers: {'Content-Type': 'application/json'},
         body: body,
       );
 
-      if (response.statusCode == 201) {
-        // 201 Created
+      if (response.statusCode == 201 || response.statusCode == 200) { // 201 Created hoặc 200 OK
         print('--- API THẬT: Đã tạo order thành công ---');
-        // Server trả về order đã tạo (với ID và createdAt)
         return Order.fromJson(response.body);
       } else {
         print(
@@ -120,14 +122,14 @@ class OrderAPI {
   }
 
   // ===================================================================
-  // HÀM LẤY ORDER ITEMS (ĐÃ CẬP NHẬT LÊN API THẬT)
+  // HÀM LẤY ORDER ITEMS (ĐÃ SỬA LỖI 404)
   // ===================================================================
   Future<List<OrderItem>> fetchOrderItems(String orderId) async {
     print('--- API THẬT: Đang tải items cho order $orderId ---');
     try {
-      // Giả định endpoint là /$orderId/items
+      // Dùng URL mới mà bạn đã tìm ra
       final response = await http.get(
-        Uri.parse('$uri1/$orderId/items'), // <-- URL API thật của bạn
+        Uri.parse('$uriOrderItems?orderId=$orderId'), // <-- ĐÃ SỬA
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -149,24 +151,28 @@ class OrderAPI {
   }
 
   // ===================================================================
-  // HÀM LƯU ORDER ITEMS (ĐÃ CẬP NHẬT LÊN API THẬT)
+  // HÀM LƯU ORDER ITEMS (ĐÃ SỬA LỖI 404)
   // ===================================================================
   Future<bool> saveOrderItems(
       String orderId, List<Map<String, dynamic>> items) async {
     print('--- API THẬT: Đang gửi ${items.length} món cho order $orderId ---');
     print('Dữ liệu gửi đi: $items');
 
+    // Bạn có thể cần thêm orderId vào nội dung (body) của items
+    // Tùy thuộc vào yêu cầu của backend
+    
     final body = json.encode(items);
 
     try {
-      // Giả định dùng PUT để *cập nhật toàn bộ* danh sách món
-      final response = await http.put(
-        Uri.parse('$uri1/$orderId/items'), // <-- URL API thật của bạn
+      // SỬA LẠI URL (dùng URL mới, và có thể là POST thay vì PUT)
+      // Giả sử backend dùng POST để *thêm* items
+      final response = await http.post( 
+        Uri.parse(uriOrderItems), // <-- ĐÃ SỬA
         headers: {'Content-Type': 'application/json'},
         body: body,
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         print('--- API THẬT: Gửi thành công ---');
         return true;
       } else {
