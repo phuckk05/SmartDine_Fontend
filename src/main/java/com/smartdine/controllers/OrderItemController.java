@@ -53,6 +53,21 @@ public class OrderItemController {
 
     }
 
+    // Lấy tất cả order item theo branch
+    @GetMapping("/branch/{branchId}")
+    public ResponseEntity<List<OrderItem>> getOrderItemsByBranch(@PathVariable Integer branchId) {
+        try {
+            List<Order> orders = orderServices.getOrdersByBranchId(branchId);
+            List<Integer> orderIds = orders.stream().map(Order::getId).toList();
+            List<OrderItem> orderItems = orderItemServices.getOrderItemsByOrderIds(orderIds);
+            return ResponseEntity.ok(orderItems);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+
+    }
+
     // Lấy danh sách order item theo orderId
     @GetMapping("/order/{orderId}")
     public ResponseEntity<List<OrderItem>> getOrderItemsByOrder(@PathVariable Integer orderId) {
@@ -67,9 +82,9 @@ public class OrderItemController {
 
     // Cập nhật trạng thái của order item
     @PutMapping("/{id}/status")
-    public ResponseEntity<OrderItem> updateOrderItemStatus(@PathVariable Integer id, @RequestBody Integer status) {
+    public ResponseEntity<OrderItem> updateOrderItemStatus(@PathVariable Integer id, @RequestBody Integer statusId) {
         try {
-            OrderItem updatedOrderItem = orderItemServices.updateOrderItemStatus(id, status);
+            OrderItem updatedOrderItem = orderItemServices.updateOrderItemStatus(id, statusId);
             return ResponseEntity.ok(updatedOrderItem);
         } catch (Exception e) {
             e.printStackTrace();

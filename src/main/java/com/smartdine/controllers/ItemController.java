@@ -18,16 +18,48 @@ public class ItemController {
     @Autowired
     private ItemServices itemServices;
 
-    //lay item by comapnyId
+    // lay item by comapnyId
     @GetMapping("/company/{companyId}")
-    public ResponseEntity<?> getByCompanyId(@PathVariable Integer companyId){
+    public ResponseEntity<?> getByCompanyId(@PathVariable Integer companyId) {
         try {
             List<Item> getItems = itemServices.getByCompanyId(companyId);
             return ResponseEntity.ok(getItems);
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
-        
+
+    }
+
+    // Lay item by id
+    @GetMapping("/get/{id}")
+    public ResponseEntity<?> getById(@PathVariable Integer id) {
+        try {
+            Item item = itemServices.getById(id);
+            if (item != null) {
+                return ResponseEntity.ok(item);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+
+    // Cap nhat trang thai item
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateItemStatus(@PathVariable Integer id, @RequestParam Integer statusId) {
+        try {
+            Item updatedItem = itemServices.updateItemStatus(id, statusId);
+            if (updatedItem != null) {
+                return ResponseEntity.ok(updatedItem);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
     }
 }
