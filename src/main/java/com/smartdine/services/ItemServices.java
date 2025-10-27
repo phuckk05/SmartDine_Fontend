@@ -27,7 +27,7 @@ public class ItemServices {
     public Item updateItemStatus(Integer id, Integer statusId) {
         Item item = getById(id);
         if (item != null) {
-            item.setStatus(statusId);
+            item.setStatusId(statusId);
             return itemRepository.save(item);
         }
         return null;
