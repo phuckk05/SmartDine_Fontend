@@ -45,8 +45,6 @@ public class VerificationCodeController {
     static class CreateVerificationCodeRequest {
         public String email;
         public String code;
-
-        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         public LocalDateTime expiresAt;
     }
 
