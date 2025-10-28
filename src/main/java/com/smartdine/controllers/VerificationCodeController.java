@@ -22,12 +22,17 @@ public class VerificationCodeController {
 
     @PostMapping
     public ResponseEntity<?> createCode(@RequestBody CreateVerificationCodeRequest request) {
-        if (request.email == null || request.code == null || request.expiresAt == null) {
-            return ResponseEntity.badRequest().body("email, code và expiresAt là bắt buộc");
+        try {
+            if (request.email == null || request.code == null || request.expiresAt == null) {
+                return ResponseEntity.badRequest().body("email, code và expiresAt là bắt buộc");
+            }
+            VerificationCode verificationCode = verificationCodeService.saveCode(request.email, request.code,
+                    request.expiresAt);
+            return ResponseEntity.ok(verificationCode);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Lỗi: " + e.getMessage());
         }
-        VerificationCode verificationCode = verificationCodeService.saveCode(request.email, request.code,
-                request.expiresAt);
-        return ResponseEntity.ok(verificationCode);
     }
 
     @PostMapping("/verify")
