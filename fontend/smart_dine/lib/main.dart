@@ -27,7 +27,6 @@ class SmartDineApp extends ConsumerWidget {
         ),
       ),
 
-
       home: const ScreenBottomNavigation(index: 1), // Chạy Admin
     );
   }
