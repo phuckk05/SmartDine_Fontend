@@ -1,6 +1,94 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mart_dine/providers/setting_provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+final settingProvider = StateNotifierProvider<SettingNotifier, SettingState>(
+  (ref) => SettingNotifier(),
+);
+
+class SettingState {
+  final bool isLoading;
+  final bool isLoggedOut;
+  final Map<String, dynamic>? user;
+  final String? roleName;
+  final bool vibrationEnabled;
+  final bool darkModeEnabled;
+
+  SettingState({
+    this.isLoading = false,
+    this.isLoggedOut = false,
+    this.user,
+    this.roleName,
+    this.vibrationEnabled = true,
+    this.darkModeEnabled = false,
+  });
+
+  SettingState copyWith({
+    bool? isLoading,
+    bool? isLoggedOut,
+    Map<String, dynamic>? user,
+    String? roleName,
+    bool? vibrationEnabled,
+    bool? darkModeEnabled,
+  }) {
+    return SettingState(
+      isLoading: isLoading ?? this.isLoading,
+      isLoggedOut: isLoggedOut ?? this.isLoggedOut,
+      user: user ?? this.user,
+      roleName: roleName ?? this.roleName,
+      vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
+      darkModeEnabled: darkModeEnabled ?? this.darkModeEnabled,
+    );
+  }
+}
+
+class SettingNotifier extends StateNotifier<SettingState> {
+  SettingNotifier() : super(SettingState());
+
+  Future<void> fetchUserData(String email) async {
+    try {
+      state = state.copyWith(isLoading: true);
+
+      final userRes = await http.get(
+        Uri.parse(
+          'https://smartdine-backend-oq2x.onrender.com/api/users/email/$email',
+        ),
+      );
+      final userData = json.decode(userRes.body);
+
+      // Gọi API roles để lấy tên vai trò
+      final rolesRes = await http.get(
+        Uri.parse('https://smartdine-backend-oq2x.onrender.com/api/roles/all'),
+      );
+      final List<dynamic> roles = json.decode(rolesRes.body);
+
+      final roleMatch = roles.firstWhere(
+        (r) => r['id'] == userData['role'],
+        orElse: () => {'name': 'Unknown'},
+      );
+
+      state = state.copyWith(
+        user: userData,
+        roleName: roleMatch['name'],
+        isLoading: false,
+      );
+    } catch (e) {
+      print('Lỗi khi fetch dữ liệu: $e');
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  void toggleVibration(bool value) =>
+      state = state.copyWith(vibrationEnabled: value);
+
+  void toggleDarkMode(bool value) =>
+      state = state.copyWith(darkModeEnabled: value);
+
+  void logout() {
+    state = state.copyWith(isLoggedOut: true);
+  }
+}
 
 class ScreenSetting extends ConsumerStatefulWidget {
   const ScreenSetting({super.key});
@@ -15,7 +103,9 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(settingProvider.notifier).fetchChef(4);
+      ref
+          .read(settingProvider.notifier)
+          .fetchUserData('phuckk2101@gmail.com'); // Gọi API
     });
   }
 
@@ -24,7 +114,6 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
     final state = ref.watch(settingProvider);
     final notifier = ref.read(settingProvider.notifier);
 
-    // Xử lý điều hướng khi logout
     if (state.isLoggedOut) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.of(context).pushReplacementNamed('/login');
@@ -49,8 +138,6 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
                       ),
                     ),
                     const SizedBox(height: 8),
-
-                    /// Thông tin Chef
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -60,28 +147,28 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          /// Bên trái: Thông tin cá nhân
+                          /// Bên trái: Thông tin user
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                state.chef?.name ?? 'Không có tên',
+                                state.user?['fullName'] ?? 'Không có tên',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Text('ID: ${state.chef?.id ?? ''}'),
+                              Text('ID: ${state.user?['id'] ?? ''}'),
                               const SizedBox(height: 4),
-                              Text(state.chef?.email ?? ''),
+                              Text(state.user?['email'] ?? ''),
                             ],
                           ),
 
-                          /// Bên phải: vai trò (label cố định)
-                          const Text(
-                            'Bếp trưởng',
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                          /// Bên phải: Vai trò
+                          Text(
+                            state.roleName ?? 'Không xác định',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -97,7 +184,6 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
                     ),
                     const SizedBox(height: 10),
 
-                    /// Cài đặt ứng dụng
                     SwitchListTile(
                       title: const Text('Rung khi có món mới'),
                       value: state.vibrationEnabled,
@@ -111,7 +197,6 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
 
                     const Spacer(),
 
-                    /// Nút đăng xuất
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
