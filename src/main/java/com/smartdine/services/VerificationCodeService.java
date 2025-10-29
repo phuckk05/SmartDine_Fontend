@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.smartdine.models.VerificationCode;
 import com.smartdine.repository.VerificationCodeRepository;
@@ -15,6 +16,7 @@ public class VerificationCodeService {
     @Autowired
     private VerificationCodeRepository verificationCodeRepository;
 
+    @Transactional
     public VerificationCode saveCode(String email, String code, LocalDateTime expiresAt) {
         verificationCodeRepository.deleteByEmail(email);
         VerificationCode verificationCode = new VerificationCode(email, code, expiresAt);
@@ -22,6 +24,7 @@ public class VerificationCodeService {
         return verificationCodeRepository.save(verificationCode);
     }
 
+    @Transactional
     public boolean verifyCode(String email, String code) {
         LocalDateTime now = LocalDateTime.now();
         Optional<VerificationCode> stored = verificationCodeRepository.findByEmailAndCode(email, code);
