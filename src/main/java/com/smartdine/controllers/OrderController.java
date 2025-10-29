@@ -86,9 +86,6 @@ public class OrderController {
             // Lấy tất cả orders
             List<Order> allOrders = orderServices.getAll();
 
-            // Filter orders theo branchId (thông qua RestaurantTable)
-            // TODO: Cần implement method trong OrderServices để filter theo branchId
-
             // Thống kê cơ bản
             LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
             LocalDateTime startOfDay = now.withHour(0).withMinute(0).withSecond(0).withNano(0);

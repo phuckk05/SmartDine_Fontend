@@ -24,8 +24,12 @@ public class UserController {
 
     // Lấy user theo email
     @GetMapping("/email/{email}")
-    public User getUserByEmail(@PathVariable String email) {
-        return userService.getUserByEmail(email);
+    public ResponseEntity<?> getUserByEmail(@PathVariable String email) {
+        User user = userService.getUserByEmail(email);
+        if (user == null) {
+            return ResponseEntity.status(404).body("{\"error\": \"User not found with email: " + email + "\"}");
+        }
+        return ResponseEntity.ok(user);
     }
 
     // Tạo user
