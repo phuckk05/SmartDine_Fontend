@@ -5,6 +5,7 @@ import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -235,6 +236,46 @@ public class RestaurantTableController {
             result.put("timestamp", LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).toString());
             
             return ResponseEntity.ok(result);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+        }
+    }
+
+    // Thống kê bàn ăn theo chi nhánh
+    @GetMapping("/statistics/branch/{branchId}")
+    public ResponseEntity<?> getTableStatisticsByBranch(@PathVariable Integer branchId) {
+        try {
+            List<RestaurantTable> allTables = restaurantTableServices.getByBranchId(branchId);
+            List<Integer> unpaidTableIds = orderServices.getUnpaidOrderTableIdsToday();
+            
+            long occupiedTables = allTables.stream()
+                .mapToInt(RestaurantTable::getId)
+                .filter(unpaidTableIds::contains)
+                .count();
+            
+            long availableTables = allTables.size() - occupiedTables;
+            double occupancyRate = allTables.size() > 0 ? 
+                Math.round((double) occupiedTables / allTables.size() * 10000.0) / 100.0 : 0;
+            
+            // Thống kê theo loại bàn
+            Map<String, Integer> tableTypeStats = allTables.stream()
+                .collect(Collectors.groupingBy(
+                    table -> table.getTypeId() != null ? "Type " + table.getTypeId() : "Unknown",
+                    Collectors.collectingAndThen(Collectors.counting(), Math::toIntExact)
+                ));
+            
+            Map<String, Object> statistics = new HashMap<>();
+            statistics.put("branchId", branchId);
+            statistics.put("totalTables", allTables.size());
+            statistics.put("occupiedTables", occupiedTables);
+            statistics.put("availableTables", availableTables);
+            statistics.put("occupancyRate", occupancyRate);
+            statistics.put("tableTypeBreakdown", tableTypeStats);
+            statistics.put("averageTableSize", allTables.size() > 0 ? 
+                allTables.stream().mapToInt(t -> 4).average().orElse(4.0) : 0); // Mock average
+            statistics.put("timestamp", LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).toString());
+            
+            return ResponseEntity.ok(statistics);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
         }
