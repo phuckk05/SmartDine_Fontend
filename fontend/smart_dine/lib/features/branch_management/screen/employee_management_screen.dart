@@ -1,21 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
-import '../../../models/employee.dart';
-import '../../../models/role.dart';
-import '../../../services/mock_data_service.dart';
+import '../../../models/user.dart';
+import '../../../providers/employee_management_provider.dart';
 
-class EmployeeManagementScreen extends StatefulWidget {
+// Status class for user statuses
+class UserStatus {
+  final int id;
+  final String name;
+  final String code;
+
+  UserStatus({
+    required this.id,
+    required this.name,
+    required this.code,
+  });
+}
+
+// Role class for user roles
+class Role {
+  final int id;
+  final String name;
+  final String code;
+
+  Role({
+    required this.id,
+    required this.name,
+    required this.code,
+  });
+}
+
+class EmployeeManagementScreen extends ConsumerStatefulWidget {
   final bool showBackButton;
   
   const EmployeeManagementScreen({super.key, this.showBackButton = true});
 
   @override
-  State<EmployeeManagementScreen> createState() => _EmployeeManagementScreenState();
+  ConsumerState<EmployeeManagementScreen> createState() => _EmployeeManagementScreenState();
 }
 
-class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
+class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final MockDataService _mockDataService = MockDataService();
   
   // Track which employee card is expanded
   int? _expandedIndex;
@@ -24,45 +49,24 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _cccdController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   
   // Data
-  List<Employee> _employees = [];
-  List<UserStatus> _userStatuses = [];
-  List<Role> _roles = [];
-  bool _isLoading = true;
-  String? _selectedStatusId;
-  String? _selectedRoleId;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadData();
-  }
-
-  Future<void> _loadData() async {
-    try {
-      final employees = await _mockDataService.loadEmployees();
-      final statuses = await _mockDataService.loadUserStatuses();
-      final roles = await _mockDataService.loadRoles();
-      
-      setState(() {
-        _employees = employees;
-        _userStatuses = statuses;
-        _roles = roles;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi khi tải dữ liệu: $e')),
-        );
-      }
-    }
-  }
+  List<UserStatus> _userStatuses = [
+    UserStatus(id: 1, name: 'Hoạt động', code: 'ACTIVE'),
+    UserStatus(id: 2, name: 'Tạm ngưng', code: 'INACTIVE'),
+    UserStatus(id: 3, name: 'Bị khóa', code: 'BLOCKED'),
+  ];
+  
+  List<Role> _roles = [
+    Role(id: 1, name: 'Quản lý', code: 'MANAGER'),
+    Role(id: 2, name: 'Nhân viên phục vụ', code: 'WAITER'),
+    Role(id: 3, name: 'Đầu bếp', code: 'CHEF'),
+    Role(id: 4, name: 'Thu ngân', code: 'CASHIER'),
+  ];
+  
+  int? _selectedStatusId;
+  int? _selectedRoleId;
 
   @override
   void dispose() {
@@ -70,12 +74,26 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
     _fullNameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
-    _cccdController.dispose();
+    _passwordController.dispose();
     super.dispose();
+  }
+
+  int? _getBranchId() {
+    // TODO: Get branchId từ user context thông qua UserBranch
+    // For now, return mock branchId
+    return 1; // Mock branch ID
   }
 
   @override
   Widget build(BuildContext context) {
+    final branchId = _getBranchId();
+    if (branchId == null) {
+      return const Scaffold(
+        body: Center(child: Text('Không tìm thấy thông tin chi nhánh')),
+      );
+    }
+
+    final employeesAsyncValue = ref.watch(employeeManagementProvider(branchId));
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Style.colorLight : Style.colorDark;
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
@@ -96,9 +114,40 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
             automaticallyImplyLeading: false,
             title: Text('Quản lý nhân viên', style: Style.fontTitle),
           ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _buildEmployeeListView(isDark, textColor, cardColor),
+      body: employeesAsyncValue.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Colors.red[300],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Lỗi khi tải dữ liệu',
+                style: Style.fontTitleMini.copyWith(color: Colors.red),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                error.toString(),
+                style: Style.fontCaption.copyWith(color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  ref.invalidate(employeeManagementProvider(branchId));
+                },
+                child: const Text('Thử lại'),
+              ),
+            ],
+          ),
+        ),
+        data: (employees) => _buildEmployeeListView(employees, isDark, textColor, cardColor),
+      ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.blue,
         onPressed: () => _showAddEmployeeDialog(context, isDark, textColor, cardColor),
@@ -108,7 +157,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
   }
 
   // Màn hình danh sách nhân viên
-  Widget _buildEmployeeListView(bool isDark, Color textColor, Color cardColor) {
+  Widget _buildEmployeeListView(List<User> employees, bool isDark, Color textColor, Color cardColor) {
     return Column(
       children: [
         // Search bar
@@ -135,48 +184,43 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
         ),
         
         // Employee list
-        Expanded(
-          child: Builder(
-            builder: (context) {
-              // Filter by search query
-              List<Employee> filteredEmployees = _employees.where((employee) {
-                final searchQuery = _searchController.text.toLowerCase();
-                return searchQuery.isEmpty ||
-                    employee.fullName.toLowerCase().contains(searchQuery) ||
-                    employee.phone.toLowerCase().contains(searchQuery) ||
-                    employee.email.toLowerCase().contains(searchQuery) ||
-                    employee.getPrimaryRole().toLowerCase().contains(searchQuery);
-              }).toList();
-              
-              if (filteredEmployees.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.people_outline,
-                        size: 64,
-                        color: Colors.grey[400],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Không tìm thấy nhân viên nào',
-                        style: Style.fontTitleMini.copyWith(
-                          color: Colors.grey[500],
-                        ),
-                      ),
-                    ],
-                  ),
+        Builder(
+          builder: (context) {
+            // Map roleId, statusId, companyId sang tên nếu thiếu
+            List<User> mappedEmployees = employees.map((employee) {
+              String? statusName = employee.statusName;
+              if (statusName == null && employee.statusId != null) {
+                final found = _userStatuses.firstWhere(
+                  (s) => s.id == employee.statusId,
+                  orElse: () => UserStatus(id: 0, name: 'Không xác định', code: 'UNKNOWN'),
                 );
+                statusName = found.name;
               }
-              
-              return ListView.builder(
+              String? roleName = employee.roleName;
+              if (roleName == null && employee.role != null) {
+                final found = _roles.firstWhere(
+                  (r) => r.id == employee.role,
+                  orElse: () => Role(id: 0, name: 'Chưa có', code: 'NONE'),
+                );
+                roleName = found.name;
+              }
+              String? companyName = employee.companyName;
+              if (companyName == null && employee.companyId != null) {
+                companyName = 'ID: [${employee.companyId}]';
+              }
+              return employee.copyWith(
+                statusName: statusName,
+                roleName: roleName,
+                companyName: companyName,
+              );
+            }).toList();
+            return Expanded(
+              child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: filteredEmployees.length,
+                itemCount: mappedEmployees.length,
                 itemBuilder: (context, index) {
-                  final employee = filteredEmployees[index];
+                  final employee = mappedEmployees[index];
                   final isExpanded = _expandedIndex == index;
-                  
                   return _buildEmployeeCard(
                     employee,
                     index,
@@ -186,16 +230,16 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                     cardColor,
                   );
                 },
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ],
     );
   }
 
   Widget _buildEmployeeCard(
-    Employee employee,
+    User employee,
     int index,
     bool isExpanded,
     bool isDark,
@@ -234,7 +278,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                     radius: 28,
                     backgroundColor: Colors.blue,
                     child: Text(
-                      employee.getAvatarInitial(),
+                      _getAvatarInitial(employee.fullName),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -258,7 +302,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          employee.getPrimaryRole(),
+                          employee.roleName ?? 'Chưa xác định',
                           style: Style.fontCaption.copyWith(
                             color: isDark ? Colors.grey[400] : Colors.grey[600],
                           ),
@@ -288,15 +332,11 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: employee.isActive() 
-                          ? Colors.green 
-                          : employee.isInactive() 
-                              ? Colors.orange 
-                              : Colors.red,
+                      color: _getStatusColor(employee.statusId),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      employee.status?.name ?? 'Không xác định',
+                      employee.statusName ?? 'Không xác định',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 11,
@@ -331,13 +371,11 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                   
                   // Detailed info
                   _buildDetailRow(Icons.email_outlined, 'Email', employee.email, isDark),
-                  if (employee.cccd != null)
-                    _buildDetailRow(Icons.badge_outlined, 'CCCD', employee.cccd!, isDark),
+                  _buildDetailRow(Icons.business_outlined, 'Công ty', employee.companyName ?? 'Chưa có', isDark),
                   _buildDetailRow(Icons.calendar_today, 'Ngày tạo', 
                     _formatDate(employee.createdAt), isDark),
-                  if (employee.roles != null && employee.roles!.isNotEmpty)
-                    _buildDetailRow(Icons.work_outline, 'Các vai trò', 
-                      employee.roles!.map((r) => r.name).join(', '), isDark),
+                  _buildDetailRow(Icons.work_outline, 'Vai trò', 
+                    employee.roleName ?? 'Chưa có', isDark),
                   
                   const SizedBox(height: 16),
                   
@@ -418,13 +456,35 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 
+  String _getAvatarInitial(String fullName) {
+    if (fullName.isEmpty) return '?';
+    final words = fullName.trim().split(' ');
+    if (words.length >= 2) {
+      return '${words.first[0]}${words.last[0]}'.toUpperCase();
+    }
+    return fullName[0].toUpperCase();
+  }
+
+  Color _getStatusColor(int? statusId) {
+    switch (statusId) {
+      case 1:
+        return Colors.green;
+      case 2:
+        return Colors.orange;
+      case 3:
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
   // Dialog thêm nhân viên mới
   void _showAddEmployeeDialog(BuildContext context, bool isDark, Color textColor, Color cardColor) {
     // Reset controllers
     _fullNameController.clear();
     _phoneController.clear();
     _emailController.clear();
-    _cccdController.clear();
+    _passwordController.clear();
     _selectedStatusId = _userStatuses.isNotEmpty ? _userStatuses.first.id : null;
     _selectedRoleId = _roles.isNotEmpty ? _roles.first.id : null;
 
@@ -470,7 +530,8 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                       _buildFormField('Email:', _emailController, isDark, textColor, cardColor,
                         keyboardType: TextInputType.emailAddress),
                       const SizedBox(height: 16),
-                      _buildFormField('CCCD:', _cccdController, isDark, textColor, cardColor),
+                      _buildFormField('Mật khẩu:', _passwordController, isDark, textColor, cardColor,
+                        obscureText: true),
                       const SizedBox(height: 16),
                       
                       // Status dropdown
@@ -523,38 +584,47 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: () {
+                              onPressed: () async {
                                 if (_fullNameController.text.isNotEmpty &&
                                     _phoneController.text.isNotEmpty &&
                                     _emailController.text.isNotEmpty &&
+                                    _passwordController.text.isNotEmpty &&
                                     _selectedStatusId != null &&
                                     _selectedRoleId != null) {
                                   
-                                  final newEmployee = Employee(
-                                    id: 'employee-${DateTime.now().millisecondsSinceEpoch}',
-                                    fullName: _fullNameController.text,
-                                    phone: _phoneController.text,
-                                    email: _emailController.text,
-                                    passwordHash: '\$2a\$10\$example', // Default hash
-                                    statusId: _selectedStatusId!,
-                                    cccd: _cccdController.text.isEmpty ? null : _cccdController.text,
-                                    createdAt: DateTime.now(),
-                                    updatedAt: DateTime.now(),
-                                    roleIds: [_selectedRoleId!],
-                                    branchIds: ['branch-001'], // Mock branch
-                                    companyIds: ['company-001'], // Mock company
-                                  );
-                                  
-                                  // Set relations
-                                  newEmployee.status = _userStatuses.firstWhere((s) => s.id == _selectedStatusId);
-                                  newEmployee.roles = [_roles.firstWhere((r) => r.id == _selectedRoleId)];
-                                  
-                                  setState(() {
-                                    _employees.add(newEmployee);
-                                  });
-                                  
-                                  Navigator.pop(context);
-                                  _showSuccessDialog(context, 'Thêm Nhân Viên Thành Công', isDark, cardColor);
+                                  // Call API to add employee
+                                  final branchId = _getBranchId();
+                                  if (branchId != null) {
+                                    try {
+                                      final newUser = User(
+                                        fullName: _fullNameController.text,
+                                        email: _emailController.text,
+                                        phone: _phoneController.text,
+                                        passworkHash: _passwordController.text, // This will be hashed by backend
+                                        statusId: _selectedStatusId,
+                                        role: _selectedRoleId,
+                                        companyId: 1, // Mock company ID
+                                        createdAt: DateTime.now(),
+                                        updatedAt: DateTime.now(),
+                                        roleName: _roles.firstWhere((r) => r.id == _selectedRoleId).name,
+                                        statusName: _userStatuses.firstWhere((s) => s.id == _selectedStatusId).name,
+                                        branchIds: [branchId],
+                                      );
+                                      
+                                      await ref.read(employeeManagementProvider(branchId).notifier)
+                                        .addEmployee(newUser);
+                                      
+                                      Navigator.pop(context);
+                                      _showSuccessDialog(context, 'Thêm Nhân Viên Thành Công', isDark, cardColor);
+                                    } catch (e) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Lỗi khi thêm nhân viên: $e'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  }
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
@@ -591,14 +661,14 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
   }
 
   // Dialog chỉnh sửa nhân viên
-  void _showEditEmployeeDialog(BuildContext context, Employee employee, bool isDark, Color textColor, Color cardColor) {
+  void _showEditEmployeeDialog(BuildContext context, User employee, bool isDark, Color textColor, Color cardColor) {
     // Populate controllers
     _fullNameController.text = employee.fullName;
     _phoneController.text = employee.phone;
     _emailController.text = employee.email;
-    _cccdController.text = employee.cccd ?? '';
+    _passwordController.clear(); // Don't populate password for security
     _selectedStatusId = employee.statusId;
-    _selectedRoleId = employee.roleIds?.first;
+    _selectedRoleId = employee.role;
 
     showDialog(
       context: context,
@@ -642,7 +712,8 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                       _buildFormField('Email:', _emailController, isDark, textColor, cardColor,
                         keyboardType: TextInputType.emailAddress),
                       const SizedBox(height: 16),
-                      _buildFormField('CCCD:', _cccdController, isDark, textColor, cardColor),
+                      _buildFormField('Mật khẩu mới (để trống nếu không đổi):', _passwordController, isDark, textColor, cardColor,
+                        obscureText: true),
                       const SizedBox(height: 16),
                       
                       _buildDropdown(
@@ -696,39 +767,42 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: () {
+                              onPressed: () async {
                                 if (_fullNameController.text.isNotEmpty &&
                                     _phoneController.text.isNotEmpty &&
                                     _emailController.text.isNotEmpty &&
                                     _selectedStatusId != null &&
                                     _selectedRoleId != null) {
                                   
-                                  setState(() {
-                                    final index = _employees.indexWhere((e) => e.id == employee.id);
-                                    if (index != -1) {
-                                      _employees[index] = Employee(
-                                        id: employee.id,
+                                  final branchId = _getBranchId();
+                                  if (branchId != null && employee.id != null) {
+                                    try {
+                                      final updatedUser = employee.copyWith(
                                         fullName: _fullNameController.text,
                                         phone: _phoneController.text,
                                         email: _emailController.text,
-                                        passwordHash: employee.passwordHash,
+                                        passworkHash: _passwordController.text.isEmpty ? employee.passworkHash : _passwordController.text,
                                         statusId: _selectedStatusId!,
-                                        cccd: _cccdController.text.isEmpty ? null : _cccdController.text,
-                                        createdAt: employee.createdAt,
+                                        role: _selectedRoleId!,
                                         updatedAt: DateTime.now(),
-                                        roleIds: [_selectedRoleId!],
-                                        branchIds: employee.branchIds,
-                                        companyIds: employee.companyIds,
+                                        roleName: _roles.firstWhere((r) => r.id == _selectedRoleId).name,
+                                        statusName: _userStatuses.firstWhere((s) => s.id == _selectedStatusId).name,
                                       );
                                       
-                                      // Set relations
-                                      _employees[index].status = _userStatuses.firstWhere((s) => s.id == _selectedStatusId);
-                                      _employees[index].roles = [_roles.firstWhere((r) => r.id == _selectedRoleId)];
+                                      await ref.read(employeeManagementProvider(branchId).notifier)
+                                        .updateEmployee(employee.id!, updatedUser);
+                                      
+                                      Navigator.pop(context);
+                                      _showSuccessDialog(context, 'Lưu Thay Đổi Thành Công', isDark, cardColor);
+                                    } catch (e) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Lỗi khi cập nhật: $e'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
                                     }
-                                  });
-                                  
-                                  Navigator.pop(context);
-                                  _showSuccessDialog(context, 'Lưu Thay Đổi Thành Công', isDark, cardColor);
+                                  }
                                 }
                               },
                               style: ElevatedButton.styleFrom(
@@ -760,9 +834,9 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
   // Helper widgets
   Widget _buildDropdown(
     String label,
-    String? value,
-    List<DropdownMenuItem<String>> items,
-    void Function(String?) onChanged,
+    int? value,
+    List<DropdownMenuItem<int>> items,
+    void Function(int?) onChanged,
     bool isDark,
     Color textColor,
   ) {
@@ -785,7 +859,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
             border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
           ),
           child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
+            child: DropdownButton<int>(
               value: value,
               isExpanded: true,
               dropdownColor: isDark ? Colors.grey[800] : Colors.white,
@@ -807,6 +881,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
     Color cardColor, {
     TextInputType? keyboardType,
     int maxLines = 1,
+    bool obscureText = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -823,6 +898,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
           controller: controller,
           keyboardType: keyboardType,
           maxLines: maxLines,
+          obscureText: obscureText,
           style: Style.fontNormal.copyWith(color: textColor),
           decoration: InputDecoration(
             filled: true,
@@ -847,7 +923,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
   }
 
   // Dialog xác nhận xóa
-  void _showDeleteConfirmDialog(BuildContext context, Employee employee, bool isDark, Color textColor, Color cardColor) {
+  void _showDeleteConfirmDialog(BuildContext context, User employee, bool isDark, Color textColor, Color cardColor) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -904,12 +980,25 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            _employees.removeWhere((e) => e.id == employee.id);
-                          });
-                          Navigator.pop(context);
-                          _showSuccessDialog(context, 'Xóa Thành Công', isDark, cardColor);
+                        onPressed: () async {
+                          final branchId = _getBranchId();
+                          if (branchId != null && employee.id != null) {
+                            try {
+                              await ref.read(employeeManagementProvider(branchId).notifier)
+                                .deleteEmployee(employee.id!);
+                              
+                              Navigator.pop(context);
+                              _showSuccessDialog(context, 'Xóa Thành Công', isDark, cardColor);
+                            } catch (e) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Lỗi khi xóa: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,

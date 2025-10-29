@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/user.dart';
 
-final _uri = 'https://spring-boot-smartdine.onrender.com/api/users';
+final _uri = 'https://smartdine-backend-oq2x.onrender.com/api/users';
 
 class UserAPI {
   //Tạo user

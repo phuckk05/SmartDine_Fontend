@@ -1,231 +1,162 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
-import 'package:mart_dine/widgets/appbar.dart';
 import 'package:mart_dine/features/branch_management/screen/order_detail_screen.dart';
 import '../../../models/order.dart';
-import '../../../services/mock_data_service.dart';
+import '../../../providers/order_management_provider.dart';
 
-class OrderListScreen extends StatefulWidget {
+class OrderListScreen extends ConsumerStatefulWidget {
   final bool showBackButton;
   
   const OrderListScreen({super.key, this.showBackButton = true});
 
   @override
-  State<OrderListScreen> createState() => _OrderListScreenState();
+  ConsumerState<OrderListScreen> createState() => _OrderListScreenState();
 }
 
-class _OrderListScreenState extends State<OrderListScreen> {
-  final MockDataService _mockDataService = MockDataService();
+class _OrderListScreenState extends ConsumerState<OrderListScreen> {
   final TextEditingController _searchController = TextEditingController();
   
-  List<Order> _orders = [];
-  List<OrderStatus> _orderStatuses = [];
-  bool _isLoading = true;
   String? _selectedStatusFilter;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadData();
-  }
-
-  Future<void> _loadData() async {
-    try {
-      final orders = await _mockDataService.loadOrders();
-      final statuses = await _mockDataService.loadOrderStatuses();
-      
-      // Set relations
-      for (final order in orders) {
-        order.status = statuses.firstWhere(
-          (s) => s.id == order.statusId,
-          orElse: () => OrderStatus(id: 'unknown', code: 'UNKNOWN', name: 'Không xác định'),
-        );
-      }
-      
-      setState(() {
-        _orders = orders;
-        _orderStatuses = statuses;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi khi tải dữ liệu: $e')),
-        );
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  String? _getBranchId() {
+    // TODO: Get branchId từ user context thông qua UserBranch
+    // For now, return mock branchId
+    return '1'; // Mock branch ID as String
   }
 
   @override
   Widget build(BuildContext context) {
+    // Lấy branchId từ route giống như các screen khác
+    final branchId = _getBranchId();
+    if (branchId == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Danh sách đơn hàng')),
+        body: const Center(child: Text('Không tìm thấy thông tin chi nhánh')),
+      );
+    }
+    
+    final branchIdInt = int.tryParse(branchId) ?? 1;
+    final ordersAsyncValue = ref.watch(ordersByBranchProvider(branchIdInt));
+    final statusesAsyncValue = ref.watch(orderStatusProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Style.colorLight : Style.colorDark;
-    final cardColor = isDark ? Colors.grey[900]! : Colors.white;
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
-      appBar: widget.showBackButton 
-        ? AppBarCus(
-            title: 'Danh sách đơn hàng',
-          )
-        : AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            centerTitle: true,
-            title: Text('Danh sách đơn hàng', style: Style.fontTitle),
-            automaticallyImplyLeading: false,
-          ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _buildOrderListView(isDark, textColor, cardColor),
-    );
-  }
-
-  Widget _buildOrderListView(bool isDark, Color textColor, Color cardColor) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        title: Text(
+          'Danh sách đơn hàng',
+          style: Style.fontTitle,
+        ),
+        leading: widget.showBackButton
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
+      ),
+      body: Column(
         children: [
-          // Header and filters
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Tất cả thông tin đơn hàng',
-                  style: Style.fontTitleMini.copyWith(color: textColor),
-                ),
-              ),
-              // Status filter dropdown
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedStatusFilter,
-                    hint: Text(
-                      'Lọc trạng thái',
-                      style: Style.fontCaption.copyWith(color: Colors.grey[600]),
+          _buildFilters(statusesAsyncValue, isDark),
+          Expanded(
+            child: ordersAsyncValue.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stackTrace) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error, size: 64, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text('Lỗi tải dữ liệu: $error'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        final branchIdInt = int.tryParse(_getBranchId() ?? '1') ?? 1;
+                        // ignore: unused_result
+                        ref.refresh(ordersByBranchProvider(branchIdInt));
+                      },
+                      child: const Text('Thử lại'),
                     ),
-                    dropdownColor: cardColor,
-                    style: Style.fontNormal.copyWith(color: textColor),
-                    items: [
-                      const DropdownMenuItem(
-                        value: null,
-                        child: Text('Tất cả'),
-                      ),
-                      ..._orderStatuses.map((status) => DropdownMenuItem(
-                        value: status.id,
-                        child: Text(status.name),
-                      )),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedStatusFilter = value;
-                      });
-                    },
-                  ),
+                  ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          
-          // Search bar
-          TextField(
-            controller: _searchController,
-            onChanged: (value) {
-              setState(() {}); // Rebuild để apply search filter
-            },
-            style: Style.fontNormal.copyWith(color: textColor),
-            decoration: InputDecoration(
-              hintText: 'Tìm kiếm đơn hàng theo mã, bàn, nhân viên...',
-              hintStyle: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey),
-              prefixIcon: Icon(Icons.search, color: textColor),
-              filled: true,
-              fillColor: cardColor,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+              data: (orders) => statusesAsyncValue.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stackTrace) => Center(
+                  child: Text('Lỗi tải trạng thái: $error'),
+                ),
+                data: (statuses) => _buildOrderList(orders, statuses, isDark),
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilters(AsyncValue<List<OrderStatus>> statusesAsyncValue, bool isDark) {
+    final cardColor = isDark ? Colors.grey[900]! : Colors.white;
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Search bar
+          TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              labelText: 'Tìm kiếm đơn hàng',
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onChanged: (value) {
+              setState(() {});
+            },
+          ),
           const SizedBox(height: 16),
-          
-          // Orders list
-          Expanded(
-            child: Builder(
-              builder: (context) {
-                // Apply filters
-                List<Order> filteredOrders = _orders.where((order) {
-                  // Status filter
-                  if (_selectedStatusFilter != null && order.statusId != _selectedStatusFilter) {
-                    return false;
-                  }
-                  
-                  // Search filter
-                  final searchQuery = _searchController.text.toLowerCase();
-                  if (searchQuery.isNotEmpty) {
-                    return order.getOrderCode().toLowerCase().contains(searchQuery) ||
-                           (order.tableName ?? '').toLowerCase().contains(searchQuery) ||
-                           (order.userName ?? '').toLowerCase().contains(searchQuery) ||
-                           order.getStatusName().toLowerCase().contains(searchQuery) ||
-                           (order.note ?? '').toLowerCase().contains(searchQuery);
-                  }
-                  
-                  return true;
-                }).toList();
-                
-                // Sort by created date (newest first)
-                filteredOrders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-                
-                if (filteredOrders.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.receipt_long_outlined,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Không tìm thấy đơn hàng nào',
-                          style: Style.fontTitleMini.copyWith(
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-                
-                return ListView.builder(
-                  itemCount: filteredOrders.length,
-                  itemBuilder: (context, index) {
-                    final order = filteredOrders[index];
-                    return _buildOrderCard(
-                      order,
-                      isDark,
-                      textColor,
-                      cardColor,
-                    );
-                  },
-                );
+          // Status filter
+          statusesAsyncValue.when(
+            loading: () => const CircularProgressIndicator(),
+            error: (error, stackTrace) => Text('Lỗi: $error'),
+            data: (statuses) => DropdownButtonFormField<String>(
+              value: _selectedStatusFilter,
+              decoration: InputDecoration(
+                labelText: 'Lọc theo trạng thái',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              items: [
+                const DropdownMenuItem<String>(
+                  value: null,
+                  child: Text('Tất cả trạng thái'),
+                ),
+                ...statuses.map((status) => DropdownMenuItem<String>(
+                  value: status.id.toString(),
+                  child: Text(status.name),
+                )),
+              ],
+              onChanged: (value) {
+                setState(() {
+                  _selectedStatusFilter = value;
+                });
               },
             ),
           ),
@@ -234,19 +165,70 @@ class _OrderListScreenState extends State<OrderListScreen> {
     );
   }
 
-  Widget _buildOrderCard(Order order, bool isDark, Color textColor, Color cardColor) {
-    // Determine status color
-    Color statusColor = Colors.grey;
-    if (order.isPaid()) {
-      statusColor = Colors.green;
-    } else if (order.isDone()) {
-      statusColor = Colors.orange;
-    } else if (order.isCooking()) {
-      statusColor = Colors.blue;
-    } else if (order.isPending()) {
-      statusColor = Colors.amber;
+  Widget _buildOrderList(List<Order> orders, List<OrderStatus> statuses, bool isDark) {
+    // Set status relations
+    for (final order in orders) {
+      order.status = statuses.firstWhere(
+        (s) => s.id == order.statusId,
+        orElse: () => OrderStatus(id: -1, code: 'UNKNOWN', name: 'Không xác định'),
+      );
     }
 
+    // Apply filters
+    List<Order> filteredOrders = orders.where((order) {
+      final matchesSearch = _searchController.text.isEmpty ||
+          order.id.toString().contains(_searchController.text) ||
+          (order.userName?.toLowerCase().contains(_searchController.text.toLowerCase()) ?? false);
+      
+      final matchesStatus = _selectedStatusFilter == null ||
+          order.statusId == _selectedStatusFilter;
+
+      return matchesSearch && matchesStatus;
+    }).toList();
+
+    if (filteredOrders.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.receipt_long,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Không có đơn hàng nào',
+              style: Style.fontContent.copyWith(
+                fontSize: 18,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        final branchIdInt = int.tryParse(_getBranchId() ?? '1') ?? 1;
+        return ref.refresh(ordersByBranchProvider(branchIdInt));
+      },
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: filteredOrders.length,
+        itemBuilder: (context, index) {
+          final order = filteredOrders[index];
+          return _buildOrderCard(order, isDark);
+        },
+      ),
+    );
+  }
+
+  Widget _buildOrderCard(Order order, bool isDark) {
+    final cardColor = isDark ? Colors.grey[900]! : Colors.white;
+    final textColor = isDark ? Style.colorLight : Style.colorDark;
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -261,138 +243,107 @@ class _OrderListScreenState extends State<OrderListScreen> {
         ],
       ),
       child: InkWell(
+        borderRadius: BorderRadius.circular(12),
         onTap: () {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => OrderDetailScreen(
-                orderId: order.getOrderCode(),
+                orderId: order.id?.toString() ?? '',
                 tableName: order.getTableDisplayName(),
                 date: order.getFormattedDate(),
-                amount: order.getTotalAmount() > 0 
-                    ? _formatCurrency(order.getTotalAmount())
-                    : '0 đ',
+                amount: _formatCurrency(order.getTotalAmount()),
                 status: order.getStatusName(),
-                statusColor: statusColor,
+                statusColor: _getStatusColor(order.status?.code ?? 'UNKNOWN'),
               ),
             ),
           );
         },
-        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Order ID
                   Text(
-                    order.getOrderCode(),
-                    style: Style.fontTitleMini.copyWith(
+                    'Đơn hàng #${order.id}',
+                    style: Style.fontTitle.copyWith(
+                      fontSize: 16,
                       color: textColor,
-                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  // Status badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: statusColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      order.getStatusName(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                  _buildStatusChip(order.status!, isDark),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (order.userName != null) ...[
+                Row(
+                  children: [
+                    Icon(Icons.person, size: 16, color: Colors.grey[600]),
+                    const SizedBox(width: 4),
+                    Text(
+                      order.userName!,
+                      style: Style.fontContent.copyWith(
+                        color: Colors.grey[600],
                       ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+              ],
+              Row(
+                children: [
+                  Icon(Icons.table_restaurant, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Bàn ${order.tableId}',
+                    style: Style.fontContent.copyWith(
+                      color: Colors.grey[600],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              
-              // Details grid
+              const SizedBox(height: 4),
               Row(
                 children: [
-                  Expanded(
-                    child: _buildDetailItem(
-                      Icons.table_restaurant_outlined,
-                      'Bàn',
-                      order.getTableDisplayName(),
-                      isDark,
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildDetailItem(
-                      Icons.person_outline,
-                      'Nhân viên',
-                      order.userName ?? 'Không xác định',
-                      isDark,
+                  Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 4),
+                  Text(
+                    _formatDateTime(order.createdAt),
+                    style: Style.fontContent.copyWith(
+                      color: Colors.grey[600],
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
-              
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    child: _buildDetailItem(
-                      Icons.access_time_outlined,
-                      'Thời gian',
-                      order.getFormattedDate(),
-                      isDark,
+                  Text(
+                    'Tổng: ${_formatCurrency(order.getTotalAmount())}',
+                    style: Style.fontContent.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF6200EE),
+                      fontSize: 16,
                     ),
                   ),
-                  Expanded(
-                    child: _buildDetailItem(
-                      Icons.attach_money_outlined,
-                      'Tổng tiền',
-                      order.getTotalAmount() > 0 
-                          ? _formatCurrency(order.getTotalAmount())
-                          : '0 đ',
-                      isDark,
-                    ),
-                  ),
-                ],
-              ),
-              
-              // Note if exists
-              if (order.note != null && order.note!.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.grey[800] : Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
+                  Row(
                     children: [
-                      Icon(
-                        Icons.note_outlined,
-                        size: 16,
-                        color: Colors.grey[600],
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          order.note!,
-                          style: Style.fontCaption.copyWith(
-                            color: isDark ? Colors.grey[300] : Colors.grey[700],
-                            fontStyle: FontStyle.italic,
-                          ),
+                      Icon(Icons.restaurant_menu, size: 16, color: Colors.grey[600]),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${order.items?.length ?? 0} món',
+                        style: Style.fontContent.copyWith(
+                          color: Colors.grey[600],
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ],
           ),
         ),
@@ -400,45 +351,94 @@ class _OrderListScreenState extends State<OrderListScreen> {
     );
   }
 
-  Widget _buildDetailItem(IconData icon, String label, String value, bool isDark) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 16,
-          color: Colors.grey[600],
+  Widget _buildStatusChip(OrderStatus status, bool isDark) {
+    Color backgroundColor;
+    Color textColor;
+
+    switch (status.code) {
+      case 'PENDING':
+        backgroundColor = Colors.orange.withOpacity(0.2);
+        textColor = Colors.orange;
+        break;
+      case 'COOKING':
+        backgroundColor = Colors.blue.withOpacity(0.2);
+        textColor = Colors.blue;
+        break;
+      case 'READY':
+        backgroundColor = Colors.purple.withOpacity(0.2);
+        textColor = Colors.purple;
+        break;
+      case 'SERVED':
+        backgroundColor = Colors.green.withOpacity(0.2);
+        textColor = Colors.green;
+        break;
+      case 'PAID':
+        backgroundColor = Colors.grey.withOpacity(0.2);
+        textColor = Colors.grey;
+        break;
+      case 'CANCELLED':
+        backgroundColor = Colors.red.withOpacity(0.2);
+        textColor = Colors.red;
+        break;
+      default:
+        backgroundColor = Colors.grey.withOpacity(0.2);
+        textColor = Colors.grey;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        status.name,
+        style: Style.fontContent.copyWith(
+          color: textColor,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
         ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: Style.fontCaption.copyWith(
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                ),
-              ),
-              Text(
-                value,
-                style: Style.fontNormal.copyWith(
-                  color: isDark ? Style.colorLight : Style.colorDark,
-                  fontWeight: FontWeight.w500,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  String _formatCurrency(double amount) {
+  String _formatDateTime(DateTime? dateTime) {
+    if (dateTime == null) return 'N/A';
+    
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _formatCurrency(double? amount) {
+    if (amount == null) return '0đ';
+    
     return '${amount.toStringAsFixed(0).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), 
-      (Match m) => '${m[1]}.',
-    )} đ';
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]},',
+    )}đ';
+  }
+
+  Color _getStatusColor(String statusCode) {
+    switch (statusCode) {
+      case 'PENDING':
+        return Colors.orange;
+      case 'COOKING':
+        return Colors.blue;
+      case 'READY':
+        return Colors.purple;
+      case 'SERVED':
+        return Colors.green;
+      case 'PAID':
+        return Colors.grey;
+      case 'CANCELLED':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 }

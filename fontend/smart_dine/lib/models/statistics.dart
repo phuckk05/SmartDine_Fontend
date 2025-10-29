@@ -20,17 +20,35 @@ class BranchMetrics {
   });
 
   factory BranchMetrics.fromJson(Map<String, dynamic> json) {
-    return BranchMetrics(
-      period: json['period'] ?? '',
-      dateRange: json['date_range'] ?? '',
-      totalRevenue: json['total_revenue'] ?? 0,
-      totalOrders: json['total_orders'] ?? 0,
-      avgOrderValue: json['avg_order_value'] ?? 0,
-      newCustomers: json['new_customers'] ?? 0,
-      customerSatisfaction: (json['customer_satisfaction'] ?? 0.0).toDouble(),
-      growthRates: GrowthRates.fromJson(json['growth_rates'] ?? {}),
-    );
+    // Handle both old format and new API response format
+    if (json.containsKey('totalOrdersToday')) {
+      // New API format from OrderController
+      return BranchMetrics(
+        period: 'today',
+        dateRange: json['date'] ?? '',
+        totalRevenue: 0, // API chưa có revenue data
+        totalOrders: json['totalOrdersToday'] ?? 0,
+        avgOrderValue: 0, // Sẽ tính sau
+        newCustomers: json['pendingOrdersToday'] ?? 0, // Tạm dùng pending orders
+        customerSatisfaction: json['completionRate'] ?? 0.0,
+        growthRates: GrowthRates.fromJson({}), // Empty for now
+      );
+    } else {
+      // Old format
+      return BranchMetrics(
+        period: json['period'] ?? '',
+        dateRange: json['date_range'] ?? '',
+        totalRevenue: json['total_revenue'] ?? 0,
+        totalOrders: json['total_orders'] ?? 0,
+        avgOrderValue: json['avg_order_value'] ?? 0,
+        newCustomers: json['new_customers'] ?? 0,
+        customerSatisfaction: (json['customer_satisfaction'] ?? 0.0).toDouble(),
+        growthRates: GrowthRates.fromJson(json['growth_rates'] ?? {}),
+      );
+    }
   }
+
+  factory BranchMetrics.fromMap(Map<String, dynamic> map) => BranchMetrics.fromJson(map);
 
   Map<String, dynamic> toJson() {
     return {
@@ -101,6 +119,8 @@ class RevenueTrend {
     );
   }
 
+  factory RevenueTrend.fromMap(Map<String, dynamic> map) => RevenueTrend.fromJson(map);
+
   Map<String, dynamic> toJson() {
     return {
       'period': period,
@@ -146,6 +166,8 @@ class TopDish {
       rank: json['rank'] ?? 0,
     );
   }
+
+  factory TopDish.fromMap(Map<String, dynamic> map) => TopDish.fromJson(map);
 
   Map<String, dynamic> toJson() {
     return {
@@ -195,6 +217,8 @@ class EmployeePerformance {
       bonus: json['bonus'] ?? 0,
     );
   }
+
+  factory EmployeePerformance.fromMap(Map<String, dynamic> map) => EmployeePerformance.fromJson(map);
 
   Map<String, dynamic> toJson() {
     return {

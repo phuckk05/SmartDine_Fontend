@@ -18,7 +18,7 @@ class _BranchManagementNavigationState extends State<BranchManagementNavigation>
   final List<Widget> _screens = [
     const BranchDashboardScreen(),
     const EmployeeManagementScreen(showBackButton: false),
-    const TableManagementScreen(showBackButton: false),
+              const TableManagementScreen(showBackButton: false),
     const BranchReportsScreen(showBackButton: false),
   ];
 

@@ -1,24 +1,82 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/widgets/appbar.dart';
+import '../../../providers/today_activities_provider.dart';
 
-class TodayActivitiesScreen extends StatelessWidget {
+class TodayActivitiesScreen extends ConsumerStatefulWidget {
   const TodayActivitiesScreen({super.key});
+
+  @override
+  ConsumerState<TodayActivitiesScreen> createState() => _TodayActivitiesScreenState();
+}
+
+class _TodayActivitiesScreenState extends ConsumerState<TodayActivitiesScreen> {
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Style.colorLight : Style.colorDark;
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
+    
+    // Giả sử branchId = 1, trong thực tế nên lấy từ user state
+    const branchId = 1;
+    final todayActivitiesAsync = ref.watch(todayActivitiesProvider(branchId));
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
       appBar: AppBarCus(
         title: 'Hoạt động hôm nay',
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
+      body: todayActivitiesAsync.when(
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Colors.red[300],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Có lỗi xảy ra khi tải dữ liệu',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: textColor,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                error.toString(),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  ref.read(todayActivitiesProvider(branchId).notifier).refresh();
+                },
+                child: const Text('Thử lại'),
+              ),
+            ],
+          ),
+        ),
+        data: (data) => _buildContent(context, data, textColor, cardColor),
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context, TodayActivitiesData data, Color textColor, Color cardColor) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Doanh thu card
@@ -47,7 +105,7 @@ class TodayActivitiesScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '5,850,000 đ',
+                    '${_calculateRevenue(data)} đ',
                     style: Style.fontTitle.copyWith(
                       color: Colors.white,
                       fontSize: 28,
@@ -73,7 +131,7 @@ class TodayActivitiesScreen extends StatelessWidget {
                 Expanded(
                   child: _buildStatCard(
                     'Tổng số bàn',
-                    '52',
+                    '${data.totalTables}',
                     cardColor,
                     textColor,
                   ),
@@ -81,8 +139,8 @@ class TodayActivitiesScreen extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatCard(
-                    'Bàn đặt trước',
-                    '8',
+                    'Bàn chưa thanh toán',
+                    '${data.unpaidTables}',
                     cardColor,
                     textColor,
                   ),
@@ -94,8 +152,8 @@ class TodayActivitiesScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: _buildStatCard(
-                    'Đã thanh toán',
-                    '38',
+                    'Đã hoàn thành',
+                    '${data.completedOrders}',
                     cardColor,
                     textColor,
                   ),
@@ -103,8 +161,8 @@ class TodayActivitiesScreen extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatCard(
-                    'Chưa thanh toán',
-                    '14',
+                    'Đang phục vụ',
+                    '${data.servingOrders}',
                     cardColor,
                     textColor,
                   ),
@@ -298,7 +356,6 @@ class TodayActivitiesScreen extends StatelessWidget {
               ],
             ),
           ],
-        ),
       ),
     );
   }
@@ -372,5 +429,17 @@ class TodayActivitiesScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  String _calculateRevenue(TodayActivitiesData data) {
+    // Giả sử mỗi order trung bình 585,000 đ
+    final averageOrderValue = 585000;
+    final totalRevenue = data.completedOrders * averageOrderValue;
+    return _formatCurrency(totalRevenue);
+  }
+
+  String _formatCurrency(int amount) {
+    return amount.toString().replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},');
   }
 }

@@ -1,24 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
 import '../../../models/notification.dart' as model;
-import '../../../services/mock_data_service.dart';
+import '../../../providers/notification_management_provider.dart';
 
-class NotificationsScreen extends StatefulWidget {
+class NotificationsScreen extends ConsumerStatefulWidget {
   final bool showBackButton;
   
   const NotificationsScreen({super.key, this.showBackButton = true});
 
   @override
-  State<NotificationsScreen> createState() => _NotificationsScreenState();
+  ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
-class _NotificationsScreenState extends State<NotificationsScreen> {
-  final MockDataService _mockDataService = MockDataService();
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   final TextEditingController _searchController = TextEditingController();
   
-  List<model.Notification> _notifications = [];
-  List<model.NotificationCategory> _categories = [];
-  bool _isLoading = true;
   String? _selectedCategoryFilter;
   bool _showOnlyNew = false;
 
@@ -29,25 +26,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _loadData() async {
-    try {
-      final notifications = await _mockDataService.loadNotifications();
-      final categories = await _mockDataService.loadNotificationCategories();
-      
-      setState(() {
-        _notifications = notifications;
-        _categories = categories;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi khi tải dữ liệu: $e')),
-        );
-      }
-    }
+    // Load notifications and categories using the provider
+    ref.read(notificationManagementProvider.notifier).loadNotifications('branch-001', 'company-001');
+    ref.read(notificationCategoryProvider.notifier).loadCategories();
   }
 
   @override
@@ -61,6 +42,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Style.colorLight : Style.colorDark;
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
+
+    final notificationsAsyncValue = ref.watch(notificationManagementProvider);
+    final categoriesAsyncValue = ref.watch(notificationCategoryProvider);
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
@@ -92,13 +76,47 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ),
             ],
           ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _buildNotificationListView(isDark, textColor, cardColor),
+      body: notificationsAsyncValue.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error, color: Colors.red, size: 64),
+              const SizedBox(height: 16),
+              Text('Lỗi khi tải dữ liệu: $error'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadData,
+                child: const Text('Thử lại'),
+              ),
+            ],
+          ),
+        ),
+        data: (notifications) => categoriesAsyncValue.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stackTrace) => Center(
+            child: Text('Lỗi khi tải danh mục: $error'),
+          ),
+          data: (categories) => _buildNotificationListView(
+            isDark, 
+            textColor, 
+            cardColor, 
+            notifications, 
+            categories
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildNotificationListView(bool isDark, Color textColor, Color cardColor) {
+  Widget _buildNotificationListView(
+    bool isDark, 
+    Color textColor, 
+    Color cardColor, 
+    List<model.Notification> notifications,
+    List<model.NotificationCategory> categories,
+  ) {
     return Column(
       children: [
         // Filter and search controls
@@ -153,7 +171,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               value: null,
                               child: Text('Tất cả danh mục'),
                             ),
-                            ..._categories.map((category) => DropdownMenuItem(
+                            ...categories.map((category) => DropdownMenuItem(
                               value: category.name,
                               child: Text(category.name),
                             )),
@@ -215,7 +233,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         // Statistics row
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: _buildStatisticsRow(isDark, textColor, cardColor),
+          child: _buildStatisticsRow(isDark, textColor, cardColor, notifications),
         ),
         const SizedBox(height: 16),
         
@@ -224,7 +242,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           child: Builder(
             builder: (context) {
               // Apply filters
-              List<model.Notification> filteredNotifications = _notifications.where((notification) {
+              List<model.Notification> filteredNotifications = notifications.where((notification) {
                 // Category filter
                 if (_selectedCategoryFilter != null && notification.category != _selectedCategoryFilter) {
                   return false;
@@ -297,10 +315,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  Widget _buildStatisticsRow(bool isDark, Color textColor, Color cardColor) {
-    final totalCount = _notifications.length;
-    final newCount = _notifications.where((n) => n.isNew).length;
-    final highPriorityCount = _notifications.where((n) => n.isHighPriority()).length;
+  Widget _buildStatisticsRow(bool isDark, Color textColor, Color cardColor, List<model.Notification> notifications) {
+    final totalCount = notifications.length;
+    final newCount = notifications.where((n) => n.isNew).length;
+    final highPriorityCount = notifications.where((n) => n.isHighPriority()).length;
     
     return Row(
       children: [
@@ -558,27 +576,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   void _markAsRead(model.Notification notification) {
-    setState(() {
-      final index = _notifications.indexWhere((n) => n.id == notification.id);
-      if (index != -1) {
-        // Tạo notification mới với trạng thái đã đọc
-        _notifications[index] = model.Notification(
-          id: notification.id,
-          category: notification.category,
-          type: notification.type,
-          message: notification.message,
-          icon: notification.icon,
-          iconColor: notification.iconColor,
-          isNew: !notification.isNew, // Toggle read status
-          priority: notification.priority,
-          createdAt: notification.createdAt,
-          userId: notification.userId,
-          branchId: notification.branchId,
-          companyId: notification.companyId,
-          userName: notification.userName,
-        );
-      }
-    });
+    ref.read(notificationManagementProvider.notifier).markAsRead(notification.id);
     
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -589,27 +587,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   void _markAllAsRead() {
-    setState(() {
-      for (int i = 0; i < _notifications.length; i++) {
-        if (_notifications[i].isNew) {
-          _notifications[i] = model.Notification(
-            id: _notifications[i].id,
-            category: _notifications[i].category,
-            type: _notifications[i].type,
-            message: _notifications[i].message,
-            icon: _notifications[i].icon,
-            iconColor: _notifications[i].iconColor,
-            isNew: false,
-            priority: _notifications[i].priority,
-            createdAt: _notifications[i].createdAt,
-            userId: _notifications[i].userId,
-            branchId: _notifications[i].branchId,
-            companyId: _notifications[i].companyId,
-            userName: _notifications[i].userName,
-          );
-        }
-      }
-    });
+    ref.read(notificationManagementProvider.notifier).markAllAsRead('branch-001');
     
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -637,9 +615,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
             TextButton(
               onPressed: () {
-                setState(() {
-                  _notifications.removeWhere((n) => n.id == notification.id);
-                });
+                ref.read(notificationManagementProvider.notifier).deleteNotification(notification.id);
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Đã xóa thông báo')),
