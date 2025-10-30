@@ -20,13 +20,13 @@ public class VerificationCodeService {
     public VerificationCode saveCode(String email, String code, LocalDateTime expiresAt) {
         verificationCodeRepository.deleteByEmail(email);
         VerificationCode verificationCode = new VerificationCode(email, code, expiresAt);
-        verificationCode.setCreatedAt(LocalDateTime.now());
+        verificationCode.setCreatedAt(LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")));
         return verificationCodeRepository.save(verificationCode);
     }
 
     @Transactional
     public boolean verifyCode(String email, String code) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
         Optional<VerificationCode> stored = verificationCodeRepository.findByEmailAndCode(email, code);
         if (stored.isPresent() && !stored.get().getExpiresAt().isBefore(now)) {
             verificationCodeRepository.delete(stored.get());
@@ -36,6 +36,7 @@ public class VerificationCodeService {
     }
 
     public boolean existsValidCode(String email, String code) {
-        return verificationCodeRepository.existsByEmailAndCodeAndExpiresAtAfter(email, code, LocalDateTime.now());
+        return verificationCodeRepository.existsByEmailAndCodeAndExpiresAtAfter(email, code,
+                LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")));
     }
 }

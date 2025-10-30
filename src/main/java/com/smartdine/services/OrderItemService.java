@@ -29,7 +29,7 @@ public class OrderItemService {
 
         orderItems.forEach(item -> {
             if (item.getCreatedAt() == null) {
-                item.setCreatedAt(LocalDateTime.now());
+                item.setCreatedAt(LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")));
             }
         });
 
