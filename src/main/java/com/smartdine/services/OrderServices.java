@@ -47,6 +47,15 @@ public class OrderServices {
                 branchId);
     }
 
+    // Lấy danh sách tableId đã có order chưa thanh toán (tất cả chi nhánh)
+    public List<Integer> getUnpaidOrderTableIdsToday() {
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+        LocalDateTime startOfDay = now.withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime endOfDay = now.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+
+        return orderRepository.findDistinctTableIdByStatusIdAndCreatedAtBetween(2, startOfDay, endOfDay);
+    }
+
     // Lấy danh sách order theo tableId ngay hôm nay
     public List<Order> getOrdersByTableIdToday(Integer tableId) {
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
