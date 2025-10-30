@@ -73,6 +73,17 @@ public class OrderController {
         }
     }
 
+    // Lấy danh sách tableId đã có order chưa thanh toán theo chi nhánh ngay hôm nay
+    @GetMapping("/unpaid-tables/today/branch/{branchId}")
+    public ResponseEntity<?> getUnpaidOrderTableIdsTodayByBranch(@PathVariable Integer branchId) {
+        try {
+            List<Integer> tableIds = orderServices.getUnpaidOrderTableIdsTodayByBranch(branchId);
+            return ResponseEntity.ok(tableIds);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+        }
+    }
+
     // Lấy danh sách orders theo branchId
     @GetMapping("/branch/{branchId}")
     public List<Order> getOrdersByBranchId(@PathVariable Integer branchId) {
@@ -242,4 +253,16 @@ public class OrderController {
         }
     }
 
+    // Lấy danh sách order chưa thanh toán theo chi nhánh, trạng thái default trạng
+    // thái là 2 (đang phục vụ)
+    @GetMapping("/unpaid-orders/branch/{branchId}")
+    public ResponseEntity<?> getUnpaidOrdersByBranchAndStatus(@PathVariable Integer branchId) {
+        try {
+            Integer statusId = 2; // Mặc định trạng thái là 2 (đang phục vụ)
+            List<Order> unpaidOrders = orderServices.getOrdersByBranchIdAndStatus(branchId, statusId);
+            return ResponseEntity.ok(unpaidOrders);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+        }
+    }
 }

@@ -37,12 +37,14 @@ public class OrderServices {
     // Lấy danh sách tableId đã có order chưa thanh toán ngay hôm nay
     // statusId = 2 là "SERVING" (đang phục vụ, chưa thanh toán)
     // Sử dụng múi giờ Việt Nam (Asia/Ho_Chi_Minh - GMT+7)
-    public List<Integer> getUnpaidOrderTableIdsToday() {
+    // by branchID
+    public List<Integer> getUnpaidOrderTableIdsTodayByBranch(Integer branchId) {
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
         LocalDateTime startOfDay = now.withHour(0).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime endOfDay = now.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
 
-        return orderRepository.findDistinctTableIdByStatusIdAndCreatedAtBetween(2, startOfDay, endOfDay);
+        return orderRepository.findDistinctTableIdByStatusIdAndCreatedAtBetweenAndBranchId(2, startOfDay, endOfDay,
+                branchId);
     }
 
     // Lấy danh sách order theo tableId ngay hôm nay
@@ -119,4 +121,20 @@ public class OrderServices {
                 })
                 .collect(Collectors.toList());
     }
+
+    // Lấy danh sách orders theo branchId và trạng thái
+    public List<Order> getOrdersByBranchIdAndStatus(Integer branchId, Integer statusId) {
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+        LocalDateTime startOfDay = now.withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime endOfDay = now.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+
+        int targetStatus = statusId != null ? statusId : 2;
+
+        return orderRepository.findUnpaidOrdersTodayByBranchId(
+                branchId,
+                targetStatus,
+                startOfDay,
+                endOfDay);
+    }
+
 }
