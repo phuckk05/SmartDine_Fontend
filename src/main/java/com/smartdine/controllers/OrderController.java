@@ -265,4 +265,21 @@ public class OrderController {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
         }
     }
+
+    // Cập nhật trạng thái order sang 4 (yêu cầu thanh toán)
+    @PutMapping("/{id}/request-payment")
+    public ResponseEntity<?> requestPayment(@PathVariable Integer id) {
+        try {
+            Order order = orderServices.getById(id);
+            if (order == null) {
+                return ResponseEntity.notFound().build();
+            }
+            order.setStatusId(4); // 4 = yêu cầu thanh toán
+            order.setUpdatedAt(java.time.LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")));
+            Order updated = orderServices.saveOrder(order);
+            return ResponseEntity.ok(updated);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+        }
+    }
 }
