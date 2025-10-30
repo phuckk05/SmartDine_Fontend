@@ -31,8 +31,43 @@ public class OrderController {
 
     // Lấy order theo id
     @GetMapping("/{id}")
-    public Order getById(@PathVariable Integer id) {
-        return orderServices.getById(id);
+    public Map<String, Object> getById(@PathVariable Integer id) {
+        Order order = orderServices.getById(id);
+        if (order == null) return null;
+
+        // Lấy danh sách món (OrderItem)
+        List<com.smartdine.models.OrderItem> items = orderServices.getOrderItemsByOrderId(id);
+
+        // Lấy trạng thái đơn hàng
+        com.smartdine.models.status.OrderStatus status = orderServices.getOrderStatusById(order.getStatusId());
+
+        // Lấy tên nhân viên
+        String userName = orderServices.getUserNameById(order.getUserId());
+
+        // Lấy tên chi nhánh
+        String branchName = orderServices.getBranchNameById(order.getBranchId());
+
+        // Tính tổng tiền
+        Double totalAmount = orderServices.getTotalAmountByOrderId(id);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", order.getId());
+        result.put("tableId", order.getTableId());
+        result.put("companyId", order.getCompanyId());
+        result.put("branchId", order.getBranchId());
+        result.put("userId", order.getUserId());
+        result.put("promotionId", order.getPromotionId());
+        result.put("note", order.getNote());
+        result.put("statusId", order.getStatusId());
+        result.put("createdAt", order.getCreatedAt());
+        result.put("updatedAt", order.getUpdatedAt());
+        result.put("deletedAt", order.getDeletedAt());
+        result.put("items", items);
+        result.put("status", status);
+        result.put("userName", userName);
+        result.put("branchName", branchName);
+        result.put("totalAmount", totalAmount);
+        return result;
     }
 
     // Lấy danh sách tableId đã có order chưa thanh toán ngay hôm nay
@@ -103,21 +138,21 @@ public class OrderController {
             LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
             LocalDateTime startOfDay = now.withHour(0).withMinute(0).withSecond(0).withNano(0);
             LocalDateTime endOfDay = now.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
-            
+
             List<Order> allOrders = orderServices.getAll();
-            
-            // Filter orders hôm nay
+            // Lọc orders hôm nay theo branch
             List<Order> todayOrders = allOrders.stream()
                 .filter(order -> order.getCreatedAt().isAfter(startOfDay) && order.getCreatedAt().isBefore(endOfDay))
+                .filter(order -> order.getBranchId() != null && order.getBranchId().equals(branchId))
                 .toList();
-            
+
             // Thống kê theo trạng thái
             Map<String, Long> statusCounts = new HashMap<>();
             statusCounts.put("pending", todayOrders.stream().filter(o -> o.getStatusId() == 1).count());
             statusCounts.put("serving", todayOrders.stream().filter(o -> o.getStatusId() == 2).count());
             statusCounts.put("completed", todayOrders.stream().filter(o -> o.getStatusId() == 3).count());
             statusCounts.put("cancelled", todayOrders.stream().filter(o -> o.getStatusId() == 4).count());
-            
+
             // Thống kê theo giờ
             Map<Integer, Long> hourlyOrders = new HashMap<>();
             for (int hour = 0; hour < 24; hour++) {
@@ -127,7 +162,69 @@ public class OrderController {
                     .count();
                 hourlyOrders.put(hour, count);
             }
-            
+
+            // Tổng hợp OrderItem hôm nay
+            List<Integer> todayOrderIds = todayOrders.stream().map(Order::getId).toList();
+            List<com.smartdine.models.OrderItem> todayOrderItems = new java.util.ArrayList<>();
+            for (Integer oid : todayOrderIds) {
+                todayOrderItems.addAll(orderServices.getOrderItemsByOrderId(oid));
+            }
+
+            // Lấy tên món ăn
+            org.springframework.context.ApplicationContext context = org.springframework.web.context.ContextLoader.getCurrentWebApplicationContext();
+            com.smartdine.repository.ItemRepository itemRepo = context.getBean(com.smartdine.repository.ItemRepository.class);
+            java.util.Map<Integer, String> itemIdToName = new java.util.HashMap<>();
+            itemRepo.findAll().forEach(item -> itemIdToName.put(item.getId(), item.getName()));
+
+            // Sold dishes: group by itemId, sum quantity, statusId != 5 (not cancelled)
+            List<Map<String, Object>> soldDishes = todayOrderItems.stream()
+                .filter(oi -> oi.getStatusId() == null || oi.getStatusId() != 5)
+                .collect(java.util.stream.Collectors.groupingBy(
+                    com.smartdine.models.OrderItem::getItemId,
+                    java.util.stream.Collectors.summingInt(com.smartdine.models.OrderItem::getQuantity)
+                ))
+                .entrySet().stream().map(e -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("itemId", e.getKey());
+                    m.put("name", itemIdToName.getOrDefault(e.getKey(), ""));
+                    m.put("quantity", e.getValue());
+                    return m;
+                }).toList();
+
+            // Cancelled dishes: statusId == 5 (giả định 5 là cancelled)
+            List<Map<String, Object>> cancelledDishes = todayOrderItems.stream()
+                .filter(oi -> oi.getStatusId() != null && oi.getStatusId() == 5)
+                .collect(java.util.stream.Collectors.groupingBy(
+                    com.smartdine.models.OrderItem::getItemId,
+                    java.util.stream.Collectors.summingInt(com.smartdine.models.OrderItem::getQuantity)
+                ))
+                .entrySet().stream().map(e -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("itemId", e.getKey());
+                    m.put("name", itemIdToName.getOrDefault(e.getKey(), ""));
+                    m.put("quantity", e.getValue());
+                    return m;
+                }).toList();
+
+            // Extra dishes: statusId == 6 (giả định 6 là extra/added)
+            List<Map<String, Object>> extraDishes = todayOrderItems.stream()
+                .filter(oi -> oi.getStatusId() != null && oi.getStatusId() == 6)
+                .collect(java.util.stream.Collectors.groupingBy(
+                    com.smartdine.models.OrderItem::getItemId,
+                    java.util.stream.Collectors.summingInt(com.smartdine.models.OrderItem::getQuantity)
+                ))
+                .entrySet().stream().map(e -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("itemId", e.getKey());
+                    m.put("name", itemIdToName.getOrDefault(e.getKey(), ""));
+                    m.put("quantity", e.getValue());
+                    return m;
+                }).toList();
+
+            // Supplies/documents: chưa có bảng riêng, trả về rỗng
+            List<Map<String, Object>> extraSupplies = new java.util.ArrayList<>();
+            List<Map<String, Object>> extraDocuments = new java.util.ArrayList<>();
+
             Map<String, Object> summary = new HashMap<>();
             summary.put("branchId", branchId);
             summary.put("date", now.toLocalDate().toString());
@@ -135,7 +232,12 @@ public class OrderController {
             summary.put("statusBreakdown", statusCounts);
             summary.put("hourlyBreakdown", hourlyOrders);
             summary.put("lastUpdated", now.toString());
-            
+            summary.put("soldDishes", soldDishes);
+            summary.put("extraDishes", extraDishes);
+            summary.put("cancelledDishes", cancelledDishes);
+            summary.put("extraSupplies", extraSupplies);
+            summary.put("extraDocuments", extraDocuments);
+
             return ResponseEntity.ok(summary);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
