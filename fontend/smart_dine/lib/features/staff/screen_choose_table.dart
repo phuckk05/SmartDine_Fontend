@@ -6,32 +6,50 @@ import 'package:mart_dine/features/staff/screen_menu.dart';
 import 'package:mart_dine/features/staff/screen_settings.dart';
 import 'package:mart_dine/providers/table_provider.dart';
 import 'package:mart_dine/routes.dart';
-
-// THÊM 2 IMPORTS NÀY:
 import 'package:mart_dine/models/order_item.dart';
-import 'package:mart_dine/API/order_API.dart'; // Để dùng orderApiProvider
+import 'package:mart_dine/API/order_API.dart';
 
 class ScreenChooseTable extends ConsumerStatefulWidget {
   final int? branchId;
-  const ScreenChooseTable({super.key, this.branchId});
+  final int? userId; // ✅ THÊM
+  final int? companyId; // ✅ THÊM
+
+  const ScreenChooseTable({
+    super.key,
+    this.branchId,
+    this.userId,
+    this.companyId,
+  });
 
   @override
   ConsumerState<ScreenChooseTable> createState() => _ScreenChooseTableState();
 }
 
 class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
-  //Table provider
-
   @override
   void initState() {
     super.initState();
     Future.microtask(_loadTables);
   }
 
-  //Load tables
+  // Load tables
   Future<void> _loadTables() async {
     final branchId = widget.branchId ?? 1;
     ref.read(tableNotifierProvider.notifier).getAll(branchId);
+  }
+
+  // ✅ HÀM HELPER ĐỂ NAVIGATE ĐẾN SCREEN MENU
+  void _navigateToMenu(int tableId, String tableName) {
+    Routes.pushRightLeftConsumerFul(
+      context,
+      ScreenMenu(
+        tableId: tableId,
+        tableName: tableName,
+        companyId: widget.companyId ?? 1, // ✅ Truyền companyId
+        branchId: widget.branchId ?? 1, // ✅ Truyền branchId
+        userId: widget.userId ?? 1, // ✅ Truyền userId
+      ),
+    );
   }
 
   @override
@@ -119,8 +137,8 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
 
   Widget _listTable() {
     final unpaidTableIds = ref.watch(getUnpaidTableIdsToday);
-    // TỐI ƯU: watch provider 1 lần ở đây
     final tables = ref.watch(tableNotifierProvider);
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -131,9 +149,9 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
-      itemCount: tables.length, // Dùng tables.length
+      itemCount: tables.length,
       itemBuilder: (context, index) {
-        final table = tables[index]; // Lấy table từ danh sách đã watch
+        final table = tables[index];
 
         // Check if table has unpaid orders
         final bool hasUnpaidOrders = unpaidTableIds.when(
@@ -143,35 +161,50 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
         );
 
         return InkWell(
-          // *** CẬP NHẬT LOGIC ONTAD DƯỚI ĐÂY ***
+          // ✅ SỬA LOGIC ONTAP
           onTap: () {
             if (table.id == null) return; // Kiểm tra an toàn
             final tableId = table.id!;
-            final tableName = table.name ?? 'Bàn - ${table.id}';
+            final tableName = table.name ?? 'Bàn ${table.id}';
 
             if (hasUnpaidOrders) {
-
-            } else {
-              // 2. BÀN TRỐNG: Đi tới màn hình Menu
-              Routes.pushRightLeftConsumerFul(
-                context,
-                ScreenMenu(tableId: tableId, tableName: tableName),
+              // ✅ BÀN CÓ KHÁCH: Hiện dialog hoặc đi thẳng vào menu
+              // Có thể uncomment dialog bên dưới nếu cần
+              showDialog(
+                context: context,
+                builder: (context) => _ExistingOrderDialog(
+                  tableId: tableId,
+                  tableName: tableName,
+                  onAddMore: () {
+                    Navigator.of(context).pop();
+                    _navigateToMenu(tableId, tableName);
+                  },
+                  onPayment: () {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Đã gửi yêu cầu thanh toán cho $tableName'),
+                      ),
+                    );
+                  },
+                ),
               );
+            } else {
+              // ✅ BÀN TRỐNG: Đi tới màn hình Menu
+              _navigateToMenu(tableId, tableName);
             }
           },
-          // *** KẾT THÚC CẬP NHẬT ONTAP ***
           child: Stack(
             children: [
               Container(
                 decoration: BoxDecoration(
-                  color:
-                      hasUnpaidOrders
-                          ? (Theme.of(context).brightness == Brightness.light
-                              ? Colors.blue.shade500
-                              : Colors.blue.shade500)
-                          : (Theme.of(context).brightness == Brightness.light
-                              ? Colors.grey.shade300
-                              : Colors.grey.shade300),
+                  color: hasUnpaidOrders
+                      ? (Theme.of(context).brightness == Brightness.light
+                          ? Colors.blue.shade500
+                          : Colors.blue.shade500)
+                      : (Theme.of(context).brightness == Brightness.light
+                          ? Colors.grey.shade300
+                          : Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Padding(
@@ -183,19 +216,17 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
                       Align(
                         alignment: Alignment.center,
                         child: Text(
-                          'Bàn - ${table.id}',
+                          'Bàn ${table.id}',
                           style: TextStyle(
-                            color:
-                                hasUnpaidOrders
-                                    ? (Theme.of(context).brightness ==
-                                            Brightness.light
-                                        ? Colors.white
-                                        : Colors.white)
-                                    : (Theme.of(context).brightness ==
-                                            Brightness.light
-                                        ? Colors.black
-                                        : Colors.black),
-
+                            color: hasUnpaidOrders
+                                ? (Theme.of(context).brightness ==
+                                        Brightness.light
+                                    ? Colors.white
+                                    : Colors.white)
+                                : (Theme.of(context).brightness ==
+                                        Brightness.light
+                                    ? Colors.black
+                                    : Colors.black),
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -209,26 +240,24 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
                               height: 20,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(6),
-                                color:
-                                    hasUnpaidOrders
-                                        ? (Theme.of(context).brightness ==
-                                                Brightness.light
-                                            ? Colors.red.shade100
-                                            : Colors.red.shade300)
-                                        : (Theme.of(context).brightness ==
-                                                Brightness.light
-                                            ? Colors.green.shade100
-                                            : Colors.green.shade300),
+                                color: hasUnpaidOrders
+                                    ? (Theme.of(context).brightness ==
+                                            Brightness.light
+                                        ? Colors.red.shade100
+                                        : Colors.red.shade300)
+                                    : (Theme.of(context).brightness ==
+                                            Brightness.light
+                                        ? Colors.green.shade100
+                                        : Colors.green.shade300),
                               ),
                               child: Center(
                                 child: Text(
                                   hasUnpaidOrders ? 'Có Khách' : 'Trống',
                                   style: TextStyle(
-                                    color:
-                                        Theme.of(context).brightness ==
-                                                Brightness.light
-                                            ? Colors.black87
-                                            : Colors.white,
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.light
+                                        ? Colors.black87
+                                        : Colors.white,
                                     fontSize: 10,
                                   ),
                                 ),
@@ -239,32 +268,29 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
                           Icon(
                             Icons.person,
                             size: 14,
-                            color:
-                                hasUnpaidOrders
-                                    ? (Theme.of(context).brightness ==
-                                            Brightness.light
-                                        ? Colors.white
-                                        : Colors.white)
-                                    : (Theme.of(context).brightness ==
-                                            Brightness.light
-                                        ? Colors.black
-                                        : Colors.black),
+                            color: hasUnpaidOrders
+                                ? (Theme.of(context).brightness ==
+                                        Brightness.light
+                                    ? Colors.white
+                                    : Colors.white)
+                                : (Theme.of(context).brightness ==
+                                        Brightness.light
+                                    ? Colors.black
+                                    : Colors.black),
                           ),
                           const SizedBox(width: 4),
                           Text(
                             table.typeId.toString(),
                             style: TextStyle(
-                              color:
-                                  hasUnpaidOrders
-                                      ? (Theme.of(context).brightness ==
-                                              Brightness.light
-                                          ? Colors.white
-                                          : Colors.white)
-                                      : (Theme.of(context).brightness ==
-                                              Brightness.light
-                                          ? Colors.black
-                                          : Colors.black),
-
+                              color: hasUnpaidOrders
+                                  ? (Theme.of(context).brightness ==
+                                          Brightness.light
+                                      ? Colors.white
+                                      : Colors.white)
+                                  : (Theme.of(context).brightness ==
+                                          Brightness.light
+                                      ? Colors.black
+                                      : Colors.black),
                               fontSize: 12,
                             ),
                           ),
@@ -282,103 +308,48 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
   }
 }
 
-// *** WIDGET DIALOG MỚI ***
+// ✅ WIDGET DIALOG ĐƠN GIẢN (Không cần FutureProvider phức tạp)
+class _ExistingOrderDialog extends StatelessWidget {
+  final int tableId;
+  final String tableName;
+  final VoidCallback onAddMore;
+  final VoidCallback onPayment;
 
-// // 1. Provider mới để tải tóm tắt order cho Dialog
-// final _dialogOrderSummaryProvider =
-//     FutureProvider.family<List<OrderItem>, int>((ref, tableId) async {
-//   final orderApi = ref.watch(orderApiProvider);
+  const _ExistingOrderDialog({
+    required this.tableId,
+    required this.tableName,
+    required this.onAddMore,
+    required this.onPayment,
+  });
 
-//   // Lấy order (chỉ lấy order đầu tiên của bàn trong ngày)
-//   final orders = await orderApi.fetchOrdersByTableIdToday(tableId);
-//   if (orders.isEmpty) {
-//     return []; // Không có order, trả về list rỗng
-//   }
-//   final order = orders.first;
-
-//   // Lấy danh sách items của order đó
-//   // final items = await orderApi.fetchOrderItems(order.id.toString());
-//   // return items;
-// });
-
-// // 2. Widget AlertDialog
-// class _ExistingOrderDialog extends ConsumerWidget {
-//   final int tableId;
-//   final String tableName;
-
-//   const _ExistingOrderDialog({
-//     required this.tableId,
-//     required this.tableName,
-//   });
-
-//   @override
-//   Widget build(BuildContext context, WidgetRef ref) {
-//     // Watch provider mới
-//     final orderItemsAsync = ref.watch(_dialogOrderSummaryProvider(tableId));
-
-//     return AlertDialog(
-//       title: Text('Order của $tableName'),
-//       content: Container(
-//         // Đặt chiều cao cố định để dialog không bị nhảy size khi loading
-//         height: 70,
-//         child: orderItemsAsync.when(
-//           data: (items) {
-//             if (items.isEmpty) {
-//               return const Center(child: Text('Bàn này chưa chọn món.'));
-//             }
-//             // Đếm tổng số lượng món
-//             final totalQuantity =
-//                 items.fold(0, (sum, item) => sum + item.quantity);
-//             // Đếm số loại món
-//             final totalItemTypes = items.length;
-
-//             return Center(
-//               child: Text(
-//                 'Đã order $totalItemTypes loại món.\n(Tổng số lượng: $totalQuantity)',
-//                 textAlign: TextAlign.center,
-//                 style: Style.fontNormal,
-//               ),
-//             );
-//           },
-//           loading: () => const Center(child: CircularProgressIndicator()),
-//           error: (err, stack) => const Center(
-//             child: Text('Lỗi tải chi tiết order.'),
-//           ),
-//         ),
-//       ),
-//       actionsAlignment: MainAxisAlignment.spaceBetween,
-//       actions: [
-//         // Nút Thanh Toán
-//         TextButton(
-//           onPressed: () {
-//             // TODO: Thêm logic gọi API thanh toán ở đây
-//             Navigator.of(context).pop(); // Đóng dialog
-//             print('Yêu cầu thanh toán cho bàn $tableId');
-//             ScaffoldMessenger.of(context).showSnackBar(
-//               SnackBar(content: Text('Đã gửi yêu cầu thanh toán cho $tableName')),
-//             );
-//           },
-//           child: Text(
-//             'Thanh Toán',
-//             style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold),
-//           ),
-//         ),
-//         // Nút Thêm Món
-//         ElevatedButton(
-//           onPressed: () {
-//             // Đóng dialog VÀ chuyển sang màn hình Menu
-//             Navigator.of(context).pop();
-//             Routes.pushRightLeftConsumerFul(
-//               context,
-//               ScreenMenu(
-//                 tableId: tableId,
-//                 tableName: tableName,
-//               ),
-//             );
-//           },
-//           child: const Text('Thêm Món'),
-//         ),
-//       ],
-//     );
-//   }
-// }
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Bàn $tableName'),
+      content: Text(
+        'Bàn này đã có order.\nBạn muốn làm gì?',
+        style: Style.fontNormal,
+        textAlign: TextAlign.center,
+      ),
+      actionsAlignment: MainAxisAlignment.spaceBetween,
+      actions: [
+        // Nút Thanh Toán
+        TextButton(
+          onPressed: onPayment,
+          child: Text(
+            'Thanh Toán',
+            style: TextStyle(
+              color: Colors.red.shade700,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        // Nút Thêm Món
+        ElevatedButton(
+          onPressed: onAddMore,
+          child: const Text('Thêm Món'),
+        ),
+      ],
+    );
+  }
+}

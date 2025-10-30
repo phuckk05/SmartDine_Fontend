@@ -1,9 +1,11 @@
-// order_item.dart
+// File: order_item.dart
+import 'dart:convert';
 
-import 'package:firebase_auth/firebase_auth.dart';
+/// 🧩 Mô tả:
+/// Dùng cho API /api/order-items/save của backend Spring Boot.
+/// Backend yêu cầu object con (order, item, status, user) chứ không nhận các ID rời.
 
 class OrderItem {
-  // SỬA TẤT CẢ CÁC ID TỪ String SANG int
   int? id;
   final int orderId;
   final int itemId;
@@ -26,6 +28,7 @@ class OrderItem {
     required this.createdAt,
   });
 
+  /// ✅ Tạo nhanh một OrderItem mới
   factory OrderItem.create({
     required int orderId,
     required int itemId,
@@ -36,8 +39,6 @@ class OrderItem {
     int? servedBy,
     required DateTime createdAt,
   }) {
-    //
-
     return OrderItem(
       orderId: orderId,
       itemId: itemId,
@@ -49,7 +50,11 @@ class OrderItem {
       createdAt: createdAt,
     );
   }
-  // HÀM PARSE AN TOÀN (RẤT QUAN TRỌNG)
+
+  // ----------------------
+  //  SAFE PARSE UTILITIES
+  // ----------------------
+
   static int _asInt(dynamic value) {
     if (value == null) return 0;
     if (value is int) return value;
@@ -63,68 +68,54 @@ class OrderItem {
   }
 
   static DateTime _parseDate(dynamic value) {
-    if (value == null) {
-      return DateTime.now(); // Trả về ngày giờ hiện tại nếu null
-    }
+    if (value == null) return DateTime.now();
     if (value is DateTime) return value;
     return DateTime.tryParse(value.toString()) ?? DateTime.now();
   }
 
+  // ----------------------
+  //  JSON PARSING
+  // ----------------------
+
+  /// ✅ Parse từ JSON trả về từ backend
   factory OrderItem.fromJson(Map<String, dynamic> json) {
     return OrderItem(
-      id: _asInt(json['id']),
-      orderId: _asInt(json['order_id']),
-      itemId: _asInt(json['item_id']),
+      id: json['id'],
+      orderId: json['order']?['id'] ?? 0,
+      itemId: json['item']?['id'] ?? 0,
       quantity: _asInt(json['quantity']),
-      note: json['note']?.toString(),
-      statusId: _asInt(json['status_id']),
-      addedBy: _asIntNullable(json['added_by']),
-      servedBy: _asIntNullable(json['served_by']),
-      createdAt: _parseDate(json['created_at']), // Dùng hàm parse an toàn
-    );
-  }
-  //From Map
-  factory OrderItem.fromMap(Map<String, dynamic> map) {
-    return OrderItem(
-      id: _asInt(map['id']),
-      orderId: _asInt(map['order_id']),
-      itemId: _asInt(map['item_id']),
-      quantity: _asInt(map['quantity']),
-      note: map['note']?.toString(),
-      statusId: _asInt(map['status_id']),
-      addedBy: _asIntNullable(map['createby'] ?? map['added_by']),
-      servedBy: _asIntNullable(map['added__by'] ?? map['served_by']),
-      createdAt: _parseDate(map['servedd_at'] ?? map['created_at']),
+      note: json['note'],
+      statusId: json['status']?['id'] ?? 0,
+      addedBy: json['addedBy']?['id'],
+      servedBy: json['servedBy']?['id'],
+      createdAt: _parseDate(json['createdAt']),
     );
   }
 
+  factory OrderItem.fromMap(Map<String, dynamic> map) =>
+      OrderItem.fromJson(map);
+
+  /// ✅ JSON gửi lên backend
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'order_id': orderId,
-      'item_id': itemId,
+      'order': {'id': orderId},
+      'item': {'id': itemId},
       'quantity': quantity,
       'note': note,
-      'status_id': statusId,
-      'added__by': servedBy,
-      'createby': addedBy,
-      'servedd_at': createdAt.toIso8601String(),
+      'status': {'id': statusId},
+      'addedBy': addedBy != null ? {'id': addedBy} : null,
+      'servedBy': servedBy != null ? {'id': servedBy} : null,
+      'createdAt': createdAt.toIso8601String(),
     };
   }
 
-  OrderItem toMap() {
-    return OrderItem(
-      id: id,
-      orderId: orderId,
-      itemId: itemId,
-      quantity: quantity,
-      note: note,
-      statusId: statusId,
-      addedBy: addedBy,
-      servedBy: servedBy,
-      createdAt: createdAt,
-    );
-  }
+  /// ✅ Dành cho debug log
+  @override
+  String toString() => jsonEncode(toJson());
+
+  // ----------------------
+  //  COPY UTIL
+  // ----------------------
 
   OrderItem copyWith({
     int? id,

@@ -47,7 +47,7 @@ class Order {
       promotionId: promotionId,
       createdAt: now,
       updatedAt: now,
-      deletedAt: null,
+      deletedAt: now,
     );
   }
 

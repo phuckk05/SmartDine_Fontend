@@ -18,7 +18,7 @@ class OrderItemNotifier extends StateNotifier<List<OrderItem>> {
   }
 
   // *** FIX 2: Tham số phải là List<OrderItem> (để khớp với _saveOrder) ***
-  void addOrderItem(List<OrderItem> items) async {
+  Future<void> addOrderItem(List<OrderItem> items) async {
     try {
       // Giờ bạn có thể dùng 'await' bên trong
       final createdItems = await _orderItemAPI.createOrderItem(items);
@@ -40,6 +40,8 @@ class OrderItemNotifier extends StateNotifier<List<OrderItem>> {
     state = [];
   }
 }
+
+
 
 // Provider đã khớp với Notifier (List<OrderItem>)
 final orderItemNotifierProvider =

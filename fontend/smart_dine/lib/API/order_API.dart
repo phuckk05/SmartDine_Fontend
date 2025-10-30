@@ -9,15 +9,11 @@ import 'package:mart_dine/models/order_item.dart';
 final uri1 = 'https://spring-boot-smartdine.onrender.com/api/orders';
 final uri2 = 'https://smartdine-backend-oq2x.onrender.com/api/orders';
 
-// URL MỚI CHO ORDER ITEMS (Dựa trên sửa lỗi của bạn)
-final uriOrderItems =
-    'https://smartdine-backend-oq2x.onrender.com/api/order-items';
-
 class OrderAPI {
   //Lấy danh sách order (Hàm gốc)
   Future<List<Order>> fetchOrders() async {
     final response = await http.get(
-      Uri.parse(uri2), // <-- ĐÃ SỬA (bỏ /all)
+      Uri.parse('$uri2/all'), // <-- ĐÃ SỬA (thêm /all)
       headers: {'Content-Type': 'application/json'},
     );
 
