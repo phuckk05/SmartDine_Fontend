@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,11 +28,11 @@ public class OrderItemController {
     }
 
     // save order item
-    @GetMapping("/save")
-    public ResponseEntity<?> saveOrderItem(@RequestBody OrderItem orderItem) {
+    @PostMapping("/save")
+    public ResponseEntity<?> saveOrderItems(@RequestBody List<OrderItem> orderItems) {
         try {
-            OrderItem savedOrderItem = orderItemServices.addOrderItem(orderItem);
-            return ResponseEntity.ok(savedOrderItem);
+            List<OrderItem> savedOrderItems = orderItemServices.addOrderItems(orderItems);
+            return ResponseEntity.ok(savedOrderItems);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();

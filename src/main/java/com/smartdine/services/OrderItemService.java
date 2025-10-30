@@ -1,5 +1,6 @@
 package com.smartdine.services;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -19,6 +20,20 @@ public class OrderItemService {
     // Thêm order item
     public OrderItem addOrderItem(OrderItem orderItem) {
         return orderItemRepository.save(orderItem);
+    }
+
+    public List<OrderItem> addOrderItems(List<OrderItem> orderItems) {
+        if (orderItems == null || orderItems.isEmpty()) {
+            return List.of();
+        }
+
+        orderItems.forEach(item -> {
+            if (item.getCreatedAt() == null) {
+                item.setCreatedAt(LocalDateTime.now());
+            }
+        });
+
+        return orderItemRepository.saveAll(orderItems);
     }
 
     // Lấy danh sách OrderItem theo các orderId
