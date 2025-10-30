@@ -34,8 +34,6 @@ dependencies:
   # Firebase Analytics 
   firebase_analytics: ^10.10.0
 
-  #icon app
-  flutter_launcher_icons: ^0.14.2
 
   #hash pw
   crypto: ^3.0.3

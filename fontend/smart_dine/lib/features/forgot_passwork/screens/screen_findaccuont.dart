@@ -188,7 +188,7 @@ class _ScreenFindaccuontState extends ConsumerState<ScreenFindaccuont> {
         recipient: email,
         code: code,
       );
-      if (!mounted) return;
+
       if (!sent) {
         Constrats.showThongBao(
           context,
@@ -199,13 +199,11 @@ class _ScreenFindaccuontState extends ConsumerState<ScreenFindaccuont> {
           context,
           'Đã gửi mã xác minh, vui lòng kiểm tra email.',
         );
+        Routes.pushRightLeftConsumerFul(
+          context,
+          ScreenConfirm(email: email, userId: user.id!),
+        );
       }
-
-      if (!mounted) return;
-      Routes.pushRightLeftConsumerFul(
-        context,
-        ScreenConfirm(email: email, userId: user.id!),
-      );
     } finally {
       ref.read(_findAccountLoadingProvider.notifier).state = false;
     }

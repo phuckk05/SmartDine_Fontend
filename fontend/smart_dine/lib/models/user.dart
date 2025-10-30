@@ -141,7 +141,7 @@ class User {
       phone: map['phone'] ?? '',
       passworkHash: map['passworkHash'] ?? '',
       statusId: _parseInt(map['statusId']) ?? 0,
-      role: _parseInt(map['statusId']) ?? 0,
+      role: _parseInt(map['role']) ?? 0,
       fontImage: map['fontImage'] ?? '',
       backImage: map['backImage'] ?? '',
       createdAt: _parseDate(map['createdAt']),

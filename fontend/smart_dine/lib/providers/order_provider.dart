@@ -50,7 +50,7 @@ class OrderProvider extends StateNotifier<List<Order>> {
   }
 
   Future<void> loadOrdersByBranchId(int branchId) async {
-    final orders = await orderApi.getOrderByBranchId(branchId);
+    final orders = await orderApi.getOrdersByBranchId(branchId);
     state = orders;
   }
 

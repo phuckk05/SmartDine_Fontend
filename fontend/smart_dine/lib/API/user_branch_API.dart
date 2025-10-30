@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-final uri2 = 'https://smartdine-backend-oq2x.onrender.com/api/user_branches';
-final uri1 = 'https://spring-boot-smartdine.onrender.com/api/user_branches';
+final uri2 = 'https://smartdine-backend-oq2x.onrender.com/api/user-branches';
+final uri1 = 'https://spring-boot-smartdine.onrender.com/api/user-branches';
 
 class UserBranchAPI {
   //Tạo user

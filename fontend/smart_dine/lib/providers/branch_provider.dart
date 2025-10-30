@@ -1,12 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/API/branch_API.dart';
 import 'package:mart_dine/API/company_API.dart';
+import 'package:mart_dine/API/user_branch_API.dart';
 import 'package:mart_dine/models/branch.dart';
 
 class BranchNotifier extends StateNotifier<Branch?> {
   final BranchAPI branchAPI;
   final CompanyAPI companyAPI;
-  BranchNotifier(this.branchAPI, this.companyAPI) : super(null);
+  final UserBranchAPI userBranchAPI;
+  BranchNotifier(this.branchAPI, this.companyAPI, this.userBranchAPI)
+    : super(null);
 
   Set<Branch> build() {
     return const {};
@@ -36,6 +39,21 @@ class BranchNotifier extends StateNotifier<Branch?> {
     }
     return 0;
   }
+
+  // Lấy branchId theo userId
+  Future<int?> getBranchIdByUserId(int userId) async {
+    try {
+      final userBranchData = await userBranchAPI.getBranchByUserId(userId);
+      if (userBranchData != null && userBranchData['branchId'] != null) {
+        return userBranchData['branchId'] as int;
+      }
+      print('Không tìm thấy branchId cho userId: $userId');
+      return null;
+    } catch (e) {
+      print('Lỗi lấy branchId: $e');
+      return null;
+    }
+  }
 }
 
 final branchNotifierProvider = StateNotifierProvider<BranchNotifier, Branch?>((
@@ -44,5 +62,6 @@ final branchNotifierProvider = StateNotifierProvider<BranchNotifier, Branch?>((
   return BranchNotifier(
     ref.watch(branchApiProvider),
     ref.watch(companyApiProvider),
+    ref.watch(userBranchApiProvider),
   );
 });

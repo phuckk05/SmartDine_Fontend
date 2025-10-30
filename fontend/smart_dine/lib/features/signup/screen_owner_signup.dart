@@ -308,10 +308,7 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
                             ? Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(
-                                  "Giấy phép kinh doanh",
-                                  style: Style.fontContent,
-                                ),
+                                Text("Giấy phép", style: Style.fontContent),
                                 const Icon(Icons.add, color: Colors.grey),
                               ],
                             )

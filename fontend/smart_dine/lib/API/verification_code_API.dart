@@ -14,15 +14,22 @@ class VerificationCodeAPI {
     required DateTime expiresAt,
   }) async {
     try {
+      final payload = {
+        'email': email.trim(),
+        'code': code.trim(),
+        'expiresAt': expiresAt.toIso8601String(),
+      };
+      debugPrint('Sending verification code: $payload');
+
       final response = await http.post(
         Uri.parse(_verificationBaseUrl),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email.trim(),
-          'code': code.trim(),
-          'expiresAt': expiresAt.toIso8601String(),
-        }),
+        body: jsonEncode(payload),
       );
+
+      debugPrint('Response status: ${response.statusCode}');
+      debugPrint('Response body: ${response.body}');
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       }
