@@ -15,7 +15,7 @@ public class ItemServices {
 
     // Lay item theo company id
     public List<Item> getByCompanyId(Integer companyId) {
-        return itemRepository.getByCompanyId(companyId);
+        return itemRepository.findByCompanyId(companyId);
     }
 
     // Lay item theo id
