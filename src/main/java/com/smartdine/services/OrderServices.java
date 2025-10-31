@@ -11,14 +11,30 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.smartdine.models.Order;
+import com.smartdine.models.OrderItem;
+import com.smartdine.models.Branch;
+import com.smartdine.models.User;
+import com.smartdine.repository.OrderItemRepository;
 import com.smartdine.repository.OrderRepository;
+import com.smartdine.repository.OrderStatusRepository;
+import com.smartdine.repository.UserRepository;
+import com.smartdine.repository.BranchRepository;
 
 @Service
 public class OrderServices {
 
     @Autowired
     OrderRepository orderRepository;
+    @Autowired
+    OrderItemRepository orderItemRepository;
+    @Autowired
+    OrderStatusRepository orderStatusRepository;
+    @Autowired
+    UserRepository userRepository;
+    @Autowired
+    BranchRepository branchRepository;
 
+<<<<<<< HEAD
     // save order
     public Order saveOrder(Order order) {
         return orderRepository.save(order);
@@ -26,14 +42,20 @@ public class OrderServices {
 
     // Lấy tất cả order
     public java.util.List<Order> getAll() {
+=======
+    /** Lấy tất cả order */
+    public List<Order> getAll() {
+>>>>>>> origin/branch-management-api-v1.2
         return orderRepository.findAll();
     }
 
-    // Lấy order theo id
+    /** Lấy order theo id */
     public Order getById(Integer id) {
+        if (id == null) return null;
         return orderRepository.findById(id).orElse(null);
     }
 
+<<<<<<< HEAD
     // Lấy danh sách tableId đã có order chưa thanh toán ngay hôm nay
     // statusId = 2 là "SERVING" (đang phục vụ, chưa thanh toán)
     // Sử dụng múi giờ Việt Nam (Asia/Ho_Chi_Minh - GMT+7)
@@ -48,23 +70,26 @@ public class OrderServices {
     }
 
     // Lấy danh sách tableId đã có order chưa thanh toán (tất cả chi nhánh)
+=======
+    /** Lấy danh sách tableId đã có order chưa thanh toán ngay hôm nay */
+>>>>>>> origin/branch-management-api-v1.2
     public List<Integer> getUnpaidOrderTableIdsToday() {
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
         LocalDateTime startOfDay = now.withHour(0).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime endOfDay = now.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
-
         return orderRepository.findDistinctTableIdByStatusIdAndCreatedAtBetween(2, startOfDay, endOfDay);
     }
 
-    // Lấy danh sách order theo tableId ngay hôm nay
+    /** Lấy danh sách order theo tableId ngay hôm nay */
     public List<Order> getOrdersByTableIdToday(Integer tableId) {
+        if (tableId == null) return List.of();
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
         LocalDateTime startOfDay = now.withHour(0).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime endOfDay = now.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
-
         return orderRepository.findByTableIdAndCreatedAtBetween(tableId, startOfDay, endOfDay);
     }
 
+<<<<<<< HEAD
     // Lấy danh sách order theo branchId ngay hôm nay
     public List<Order> getOrdersByBranchIdToday(Integer branchId) {
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
@@ -75,14 +100,20 @@ public class OrderServices {
     }
 
     // Lấy danh sách orders theo branchId
+=======
+    /** Lấy danh sách orders theo branchId */
+>>>>>>> origin/branch-management-api-v1.2
     public List<Order> getOrdersByBranchId(Integer branchId) {
+        if (branchId == null) return List.of();
         return orderRepository.findByBranchId(branchId);
     }
 
-    // Lấy xu hướng doanh thu theo branch trong 7 ngày gần đây
+    /** Lấy xu hướng doanh thu theo branch trong 7 ngày gần đây */
     public List<Map<String, Object>> getRevenueTrendsByBranch(Integer branchId) {
+        if (branchId == null) return List.of();
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
         LocalDateTime sevenDaysAgo = now.minusDays(7).withHour(0).withMinute(0).withSecond(0).withNano(0);
+<<<<<<< HEAD
 
         List<Order> orders = orderRepository.findByBranchIdAndCreatedAtBetween(branchId, sevenDaysAgo, now);
 
@@ -94,6 +125,15 @@ public class OrderServices {
                         Collectors.summingDouble(order -> 500000.0) // Giá trị giả định cho mỗi order
                 ));
 
+=======
+        List<Order> orders = orderRepository.findByBranchIdAndCreatedAtBetween(branchId, sevenDaysAgo, now);
+        Map<String, Double> dailyRevenue = orders.stream()
+            .filter(order -> order.getStatusId() != null && order.getStatusId() == 3)
+            .collect(Collectors.groupingBy(
+                order -> order.getCreatedAt().toLocalDate().toString(),
+                Collectors.summingDouble(order -> 500000.0)
+            ));
+>>>>>>> origin/branch-management-api-v1.2
         return dailyRevenue.entrySet().stream()
                 .map(entry -> {
                     Map<String, Object> dayData = new HashMap<>();
@@ -104,11 +144,13 @@ public class OrderServices {
                 .collect(Collectors.toList());
     }
 
-    // Lấy doanh thu theo giờ hôm nay
+    /** Lấy doanh thu theo giờ hôm nay */
     public List<Map<String, Object>> getHourlyRevenueByBranch(Integer branchId) {
+        if (branchId == null) return List.of();
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
         LocalDateTime startOfDay = now.withHour(0).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime endOfDay = now.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+<<<<<<< HEAD
 
         List<Order> todayOrders = orderRepository.findByBranchIdAndCreatedAtBetween(branchId, startOfDay, endOfDay);
 
@@ -120,6 +162,15 @@ public class OrderServices {
                         Collectors.summingDouble(order -> 500000.0) // Giá trị giả định cho mỗi order
                 ));
 
+=======
+        List<Order> todayOrders = orderRepository.findByBranchIdAndCreatedAtBetween(branchId, startOfDay, endOfDay);
+        Map<Integer, Double> hourlyRevenue = todayOrders.stream()
+            .filter(order -> order.getStatusId() != null && order.getStatusId() == 3)
+            .collect(Collectors.groupingBy(
+                order -> order.getCreatedAt().getHour(),
+                Collectors.summingDouble(order -> 500000.0)
+            ));
+>>>>>>> origin/branch-management-api-v1.2
         return hourlyRevenue.entrySet().stream()
                 .map(entry -> {
                     Map<String, Object> hourData = new HashMap<>();
@@ -146,4 +197,44 @@ public class OrderServices {
                 endOfDay);
     }
 
+    /** Lấy danh sách món theo orderId */
+    public List<OrderItem> getOrderItemsByOrderId(Integer orderId) {
+        if (orderId == null) return List.of();
+        return orderItemRepository.findByOrderId(orderId);
+    }
+
+    /** Lấy trạng thái đơn hàng */
+    public com.smartdine.models.status.OrderStatus getOrderStatusById(Integer statusId) {
+        if (statusId == null) return null;
+        return orderStatusRepository.findById(statusId).orElse(null);
+    }
+
+    /** Lấy tên nhân viên */
+    public String getUserNameById(Integer userId) {
+        if (userId == null) return null;
+        User user = userRepository.findById(userId).orElse(null);
+        return user != null ? user.getFullName() : null;
+    }
+
+    /** Lấy tên chi nhánh */
+    public String getBranchNameById(Integer branchId) {
+        if (branchId == null) return null;
+        Branch branch = branchRepository.findById(branchId).orElse(null);
+        return branch != null ? branch.getName() : null;
+    }
+
+    /** Tính tổng tiền đơn hàng */
+    public Double getTotalAmountByOrderId(Integer orderId) {
+        if (orderId == null) return 0.0;
+        List<OrderItem> items = getOrderItemsByOrderId(orderId);
+        return items.stream()
+            .mapToDouble(item -> {
+                try {
+                    java.lang.reflect.Method m = item.getClass().getMethod("getItemPrice");
+                    Object price = m.invoke(item);
+                    return price instanceof Number ? ((Number) price).doubleValue() : 0.0;
+                } catch(Exception e) { return 0.0; }
+            })
+            .sum();
+    }
 }
