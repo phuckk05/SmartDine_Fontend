@@ -22,27 +22,10 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     // Lấy danh sách order theo branchId trong khoảng thời gian
     List<Order> findByBranchIdAndCreatedAtBetween(Integer branchId, LocalDateTime startOfDay, LocalDateTime endOfDay);
 
+    // Lấy danh sách tableId đã có order với statusId cụ thể ngay hôm nay
     @Query("SELECT DISTINCT o.tableId FROM Order o WHERE o.statusId = :statusId AND o.createdAt BETWEEN :startOfDay AND :endOfDay")
     List<Integer> findDistinctTableIdByStatusIdAndCreatedAtBetween(
             @Param("statusId") Integer statusId,
             @Param("startOfDay") LocalDateTime startOfDay,
             @Param("endOfDay") LocalDateTime endOfDay);
-
-    // Lấy danh sách tableId đã có order với statusId cụ thể ngay hôm nay by
-    // branchId
-    @Query("SELECT DISTINCT o.tableId FROM Order o WHERE o.statusId = :statusId AND o.createdAt BETWEEN :startOfDay AND :endOfDay AND o.branchId = :branchId")
-    List<Integer> findDistinctTableIdByStatusIdAndCreatedAtBetweenAndBranchId(
-            @Param("statusId") Integer statusId,
-            @Param("startOfDay") LocalDateTime startOfDay,
-            @Param("endOfDay") LocalDateTime endOfDay,
-            @Param("branchId") Integer branchId);
-
-    // Lấy danh sách order chưa thanh toán ngay hôm nay by branchId , statusId = 2
-    @Query("SELECT o FROM Order o WHERE o.statusId = :statusId AND o.createdAt BETWEEN :startOfDay AND :endOfDay AND o.branchId = :branchId")
-    List<Order> findUnpaidOrdersTodayByBranchId(
-            @Param("branchId") Integer branchId,
-            @Param("statusId") Integer statusId,
-            @Param("startOfDay") LocalDateTime startOfDay,
-            @Param("endOfDay") LocalDateTime endOfDay);
-
 }

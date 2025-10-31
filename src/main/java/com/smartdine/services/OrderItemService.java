@@ -1,6 +1,5 @@
 package com.smartdine.services;
 
-import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -12,28 +11,17 @@ import org.springframework.stereotype.Service;
 import com.smartdine.models.OrderItem;
 import com.smartdine.repository.OrderItemRepository;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class OrderItemService {
     @Autowired
     private OrderItemRepository orderItemRepository;
 
     // Thêm order item
+    @Transactional
     public OrderItem addOrderItem(OrderItem orderItem) {
         return orderItemRepository.save(orderItem);
-    }
-
-    public List<OrderItem> addOrderItems(List<OrderItem> orderItems) {
-        if (orderItems == null || orderItems.isEmpty()) {
-            return List.of();
-        }
-
-        orderItems.forEach(item -> {
-            if (item.getCreatedAt() == null) {
-                item.setCreatedAt(LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")));
-            }
-        });
-
-        return orderItemRepository.saveAll(orderItems);
     }
 
     // Lấy danh sách OrderItem theo các orderId

@@ -29,7 +29,7 @@ public class UserService {
 
         User u = user.get();
         u.setPassworkHash(newPassword);
-        u.setUpdatedAt(LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")));
+        u.setUpdatedAt(LocalDateTime.now());
         return userRepository.save(u);
     }
 
@@ -50,9 +50,9 @@ public class UserService {
 
         // ensure timestamps
         if (user.getCreatedAt() == null) {
-            user.setCreatedAt(java.time.LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")));
+            user.setCreatedAt(java.time.LocalDateTime.now());
         }
-        user.setUpdatedAt(java.time.LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")));
+        user.setUpdatedAt(java.time.LocalDateTime.now());
 
         return userRepository.save(user);
     }

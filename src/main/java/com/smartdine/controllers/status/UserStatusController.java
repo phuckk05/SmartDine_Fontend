@@ -29,17 +29,6 @@ public class UserStatusController {
         }
     }
 
-    // Endpoint cho frontend - không có /all
-    @GetMapping
-    public ResponseEntity<?> getUserStatuses() {
-        try {
-            List<UserStatus> statuses = userStatusServices.getAll();
-            return ResponseEntity.ok(statuses);
-        } catch (Exception ex) {
-            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
-        }
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Integer id) {
         try {

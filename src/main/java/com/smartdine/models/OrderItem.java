@@ -18,6 +18,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "order_items")
+@Data
 public class OrderItem {
 
     @Id
@@ -165,7 +166,7 @@ public class OrderItem {
     @PrePersist
     protected void onCreate() {
         if (this.createdAt == null) {
-            this.createdAt = LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
+            this.createdAt = LocalDateTime.now();
         }
     }
 }

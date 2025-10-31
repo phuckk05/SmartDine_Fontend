@@ -11,10 +11,13 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.smartdine.models.Payment;
 import com.smartdine.services.PaymentService;
 
 @RestController
@@ -26,6 +29,7 @@ public class PaymentController {
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
     }
+    
 
     // Lấy doanh thu theo tuần theo chi nhánh/công ty (tùy chọn)
     @GetMapping("/revenue/week")
@@ -339,6 +343,39 @@ public class PaymentController {
             return ResponseEntity.ok(branchComparison);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+        }
+    }
+
+    // Tạo payment mới
+    @PostMapping("/payments/create")
+    public ResponseEntity<?> createPayment(@RequestBody Payment payment) {
+        try {
+            Payment createdPayment = paymentService.createPayment(payment);
+            return ResponseEntity.ok(Map.of("payment", createdPayment));
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body("Lỗi tạo payment: " + ex.getMessage());
+        }
+    }
+
+    // Lấy payments theo orderId
+    @GetMapping("/payments/order/{orderId}")
+    public ResponseEntity<?> getPaymentsByOrderId(@PathVariable Integer orderId) {
+        try {
+            List<Payment> payments = paymentService.getPaymentsByOrderId(orderId);
+            return ResponseEntity.ok(payments);
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body("Lỗi lấy payments: " + ex.getMessage());
+        }
+    }
+
+    // Lấy payments theo branchId hôm nay
+    @GetMapping("/payments/branch/{branchId}/today")
+    public ResponseEntity<?> getPaymentsByBranchToday(@PathVariable Integer branchId) {
+        try {
+            List<Payment> payments = paymentService.getPaymentsByBranchToday(branchId);
+            return ResponseEntity.ok(payments);
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body("Lỗi lấy payments: " + ex.getMessage());
         }
     }
 }

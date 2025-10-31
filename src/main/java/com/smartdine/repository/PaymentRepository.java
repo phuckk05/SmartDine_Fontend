@@ -2,6 +2,7 @@ package com.smartdine.repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -37,4 +38,15 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
             @Param("end") LocalDateTime end,
             @Param("branchId") Integer branchId,
             @Param("companyId") Integer companyId);
+
+    // Tìm payments theo orderId
+    List<Payment> findByOrderId(Integer orderId);
+
+    // Tìm payments theo branchId và ngày hôm nay
+    @Query("""
+            SELECT p FROM Payment p
+            WHERE p.branchId = :branchId
+              AND DATE(p.createdAt) = CURRENT_DATE
+            """)
+    List<Payment> findByBranchIdAndToday(@Param("branchId") Integer branchId);
 }

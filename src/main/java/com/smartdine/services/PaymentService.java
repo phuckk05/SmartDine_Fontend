@@ -5,9 +5,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.smartdine.models.Payment;
 import com.smartdine.repository.PaymentRepository;
 
 @Service
@@ -62,5 +64,48 @@ public class PaymentService {
             Integer branchId,
             Integer companyId) {
         return paymentRepository.sumFinalAmountBetween(start, end, branchId, companyId);
+    }
+
+    // Tạo payment mới
+    public Payment createPayment(Payment payment) {
+        if (payment.getOrderId() == null) {
+            throw new IllegalArgumentException("orderId must not be null");
+        }
+        if (payment.getCashierId() == null) {
+            throw new IllegalArgumentException("cashierId must not be null");
+        }
+        if (payment.getCompanyId() == null) {
+            throw new IllegalArgumentException("companyId must not be null");
+        }
+        if (payment.getBranchId() == null) {
+            throw new IllegalArgumentException("branchId must not be null");
+        }
+        if (payment.getTotalAmount() == null) {
+            throw new IllegalArgumentException("totalAmount must not be null");
+        }
+        if (payment.getFinalAmount() == null) {
+            throw new IllegalArgumentException("finalAmount must not be null");
+        }
+        if (payment.getStatusId() == null) {
+            throw new IllegalArgumentException("statusId must not be null");
+        }
+
+        return paymentRepository.save(payment);
+    }
+
+    // Lấy payments theo orderId
+    public List<Payment> getPaymentsByOrderId(Integer orderId) {
+        if (orderId == null) {
+            throw new IllegalArgumentException("orderId must not be null");
+        }
+        return paymentRepository.findByOrderId(orderId);
+    }
+
+    // Lấy payments theo branchId hôm nay
+    public List<Payment> getPaymentsByBranchToday(Integer branchId) {
+        if (branchId == null) {
+            throw new IllegalArgumentException("branchId must not be null");
+        }
+        return paymentRepository.findByBranchIdAndToday(branchId);
     }
 }

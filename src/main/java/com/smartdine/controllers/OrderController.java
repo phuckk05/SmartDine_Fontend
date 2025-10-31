@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,10 +23,10 @@ import com.smartdine.services.OrderServices;
 public class OrderController {
 
     @Autowired
-    OrderServices orderServices;
+    private OrderServices orderServices;
 
     // save order
-
+    
     @PostMapping("/save")
     public ResponseEntity<?> saveOrder(@RequestBody Order order) {
         try {
@@ -47,44 +46,8 @@ public class OrderController {
 
     // Lấy order theo id
     @GetMapping("/{id}")
-    public Map<String, Object> getById(@PathVariable Integer id) {
-        Order order = orderServices.getById(id);
-        if (order == null)
-            return null;
-
-        // Lấy danh sách món (OrderItem)
-        List<com.smartdine.models.OrderItem> items = orderServices.getOrderItemsByOrderId(id);
-
-        // Lấy trạng thái đơn hàng
-        com.smartdine.models.status.OrderStatus status = orderServices.getOrderStatusById(order.getStatusId());
-
-        // Lấy tên nhân viên
-        String userName = orderServices.getUserNameById(order.getUserId());
-
-        // Lấy tên chi nhánh
-        String branchName = orderServices.getBranchNameById(order.getBranchId());
-
-        // Tính tổng tiền
-        Double totalAmount = orderServices.getTotalAmountByOrderId(id);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("id", order.getId());
-        result.put("tableId", order.getTableId());
-        result.put("companyId", order.getCompanyId());
-        result.put("branchId", order.getBranchId());
-        result.put("userId", order.getUserId());
-        result.put("promotionId", order.getPromotionId());
-        result.put("note", order.getNote());
-        result.put("statusId", order.getStatusId());
-        result.put("createdAt", order.getCreatedAt());
-        result.put("updatedAt", order.getUpdatedAt());
-        result.put("deletedAt", order.getDeletedAt());
-        result.put("items", items);
-        result.put("status", status);
-        result.put("userName", userName);
-        result.put("branchName", branchName);
-        result.put("totalAmount", totalAmount);
-        return result;
+    public Order getById(@PathVariable Integer id) {
+        return orderServices.getById(id);
     }
 
     // Lấy danh sách tableId đã có order chưa thanh toán ngay hôm nay
@@ -110,17 +73,6 @@ public class OrderController {
         }
     }
 
-    // Lấy danh sách tableId đã có order chưa thanh toán theo chi nhánh ngay hôm nay
-    @GetMapping("/unpaid-tables/today/branch/{branchId}")
-    public ResponseEntity<?> getUnpaidOrderTableIdsTodayByBranch(@PathVariable Integer branchId) {
-        try {
-            List<Integer> tableIds = orderServices.getUnpaidOrderTableIdsTodayByBranch(branchId);
-            return ResponseEntity.ok(tableIds);
-        } catch (Exception ex) {
-            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
-        }
-    }
-
     // Lấy danh sách orders theo branchId
     @GetMapping("/branch/{branchId}")
     public List<Order> getOrdersByBranchId(@PathVariable Integer branchId) {
@@ -133,6 +85,9 @@ public class OrderController {
         try {
             // Lấy tất cả orders
             List<Order> allOrders = orderServices.getAll();
+
+            // Filter orders theo branchId (thông qua RestaurantTable)
+            // TODO: Cần implement method trong OrderServices để filter theo branchId
 
             // Thống kê cơ bản
             LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
@@ -290,33 +245,4 @@ public class OrderController {
         }
     }
 
-    // Lấy danh sách order chưa thanh toán theo chi nhánh, trạng thái default trạng
-    // thái là 2 (đang phục vụ)
-    @GetMapping("/unpaid-orders/branch/{branchId}")
-    public ResponseEntity<?> getUnpaidOrdersByBranchAndStatus(@PathVariable Integer branchId) {
-        try {
-            Integer statusId = 2; // Mặc định trạng thái là 2 (đang phục vụ)
-            List<Order> unpaidOrders = orderServices.getOrdersByBranchIdAndStatus(branchId, statusId);
-            return ResponseEntity.ok(unpaidOrders);
-        } catch (Exception ex) {
-            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
-        }
-    }
-
-    // Cập nhật trạng thái order sang 4 (yêu cầu thanh toán)
-    @PutMapping("/{id}/request-payment")
-    public ResponseEntity<?> requestPayment(@PathVariable Integer id) {
-        try {
-            Order order = orderServices.getById(id);
-            if (order == null) {
-                return ResponseEntity.notFound().build();
-            }
-            order.setStatusId(4); // 4 = yêu cầu thanh toán
-            order.setUpdatedAt(java.time.LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")));
-            Order updated = orderServices.saveOrder(order);
-            return ResponseEntity.ok(updated);
-        } catch (Exception ex) {
-            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
-        }
-    }
 }

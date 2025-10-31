@@ -9,4 +9,6 @@ import com.smartdine.models.Item;
 public interface ItemRepository extends JpaRepository<Item, Integer> {
     // Lấy items theo companyId
     List<Item> findByCompanyId(Integer companyId);
+
+    List<Item> getByCompanyId(Integer companyId);
 }

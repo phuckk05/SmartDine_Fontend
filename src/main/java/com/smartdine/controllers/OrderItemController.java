@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,11 +27,11 @@ public class OrderItemController {
     }
 
     // save order item
-    @PostMapping("/save")
-    public ResponseEntity<?> saveOrderItems(@RequestBody List<OrderItem> orderItems) {
+    @GetMapping("/save")
+    public ResponseEntity<?> saveOrderItem(@RequestBody OrderItem orderItem) {
         try {
-            List<OrderItem> savedOrderItems = orderItemServices.addOrderItems(orderItems);
-            return ResponseEntity.ok(savedOrderItems);
+            OrderItem savedOrderItem = orderItemServices.addOrderItem(orderItem);
+            return ResponseEntity.ok(savedOrderItem);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();
@@ -44,21 +43,6 @@ public class OrderItemController {
     public ResponseEntity<List<OrderItem>> getOrderItemsToday(@PathVariable Integer branchId) {
         try {
             List<Order> orders = orderServices.getOrdersByBranchIdToday(branchId);
-            List<Integer> orderIds = orders.stream().map(Order::getId).toList();
-            List<OrderItem> orderItems = orderItemServices.getOrderItemsByOrderIds(orderIds);
-            return ResponseEntity.ok(orderItems);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().build();
-        }
-
-    }
-
-    // Lấy tất cả order item theo branch
-    @GetMapping("/branch/{branchId}")
-    public ResponseEntity<List<OrderItem>> getOrderItemsByBranch(@PathVariable Integer branchId) {
-        try {
-            List<Order> orders = orderServices.getOrdersByBranchId(branchId);
             List<Integer> orderIds = orders.stream().map(Order::getId).toList();
             List<OrderItem> orderItems = orderItemServices.getOrderItemsByOrderIds(orderIds);
             return ResponseEntity.ok(orderItems);
@@ -83,9 +67,9 @@ public class OrderItemController {
 
     // Cập nhật trạng thái của order item
     @PutMapping("/{id}/status")
-    public ResponseEntity<OrderItem> updateOrderItemStatus(@PathVariable Integer id, @RequestBody Integer statusId) {
+    public ResponseEntity<OrderItem> updateOrderItemStatus(@PathVariable Integer id, @RequestBody Integer status) {
         try {
-            OrderItem updatedOrderItem = orderItemServices.updateOrderItemStatus(id, statusId);
+            OrderItem updatedOrderItem = orderItemServices.updateOrderItemStatus(id, status);
             return ResponseEntity.ok(updatedOrderItem);
         } catch (Exception e) {
             e.printStackTrace();

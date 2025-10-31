@@ -13,11 +13,13 @@ public class OrderItemStatusServices {
     @Autowired
     private OrderItemStatusRepository orderItemStatusRepository;
 
+    // Get all OrderItemStatus
     public List<OrderItemStatus> getAll() {
         return orderItemStatusRepository.findAll();
     }
-
+    // Get OrderItemStatus by ID
     public OrderItemStatus getById(Integer id) {
         return orderItemStatusRepository.findById(id).orElse(null);
     }
 }
+    

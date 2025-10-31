@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.smartdine.models.VerificationCode;
 import com.smartdine.services.VerificationCodeService;
 
@@ -22,17 +21,12 @@ public class VerificationCodeController {
 
     @PostMapping
     public ResponseEntity<?> createCode(@RequestBody CreateVerificationCodeRequest request) {
-        try {
-            if (request.email == null || request.code == null || request.expiresAt == null) {
-                return ResponseEntity.badRequest().body("email, code và expiresAt là bắt buộc");
-            }
-            VerificationCode verificationCode = verificationCodeService.saveCode(request.email, request.code,
-                    request.expiresAt);
-            return ResponseEntity.ok(verificationCode);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().body("Lỗi: " + e.getMessage());
+        if (request.email == null || request.code == null || request.expiresAt == null) {
+            return ResponseEntity.badRequest().body("email, code và expiresAt là bắt buộc");
         }
+        VerificationCode verificationCode = verificationCodeService.saveCode(request.email, request.code,
+                request.expiresAt);
+        return ResponseEntity.ok(verificationCode);
     }
 
     @PostMapping("/verify")

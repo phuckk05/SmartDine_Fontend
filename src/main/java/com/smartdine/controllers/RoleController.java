@@ -29,17 +29,6 @@ public class RoleController {
         }
     }
 
-    // Endpoint cho frontend - không có /all
-    @GetMapping
-    public ResponseEntity<?> getRoles() {
-        try {
-            List<Role> roles = roleServices.getAll();
-            return ResponseEntity.ok(roles);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Lỗi " + e.getMessage());
-        }
-    }
-
     // Lấy role theo id
     @GetMapping("/{id}")
     public ResponseEntity<?> getRoleById(@PathVariable Integer id) {
