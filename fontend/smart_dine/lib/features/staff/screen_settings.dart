@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mart_dine/features/historyService/screen_history_serivce.dart';
 import 'package:mart_dine/features/staff/screen_user_profile.dart';
 import 'package:mart_dine/providers/mode_provider.dart';
+import 'package:mart_dine/routes.dart';
 
 class ScreenSettings extends ConsumerWidget {
   const ScreenSettings({super.key});
@@ -50,10 +52,10 @@ class ScreenSettings extends ConsumerWidget {
             icon: Icons.history,
             title: 'Lịch sử gọi món',
             onTap: () {
-              // Navigator.push(
-              //   context,
-              //   MaterialPageRoute(builder: (_) => const ScreenOrderHistory()),
-              // );
+              Routes.pushRightLeftConsumerFul(
+                context,
+                ScreenHistoryService(branchId: 1, userId: 1),
+              );
             },
           ),
 

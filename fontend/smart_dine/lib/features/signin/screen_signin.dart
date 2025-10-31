@@ -9,6 +9,7 @@ import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/forgot_passwork/screens/screen_findaccuont.dart';
 import 'package:mart_dine/features/signup/screen_select_signup.dart';
+import 'package:mart_dine/features/staff/screen_choose_table.dart';
 import 'package:mart_dine/providers/branch_provider.dart';
 import 'package:mart_dine/providers/loading_provider.dart';
 import 'package:mart_dine/providers/user_provider.dart';
@@ -126,27 +127,46 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
           '',
         );
 
-        // if (user.role == 1) {
-        //   Routes.pushRightLeftConsumerFul(context, AdminHomeScreen());
-        // } else if (user.role == 2) {
-        //   Routes.pushRightLeftConsumerFul(context, ManagerHomeScreen());
-        // } else if (user.role == 3) {
-        //   Routes.pushRightLeftConsumerFul(context, StaffHomeScreen());
-        // } else if (user.role == 4) {
-        //   Routes.pushRightLeftConsumerFul(context, ChefHomeScreen());
-        // } else if (user.role == 5) {
-        //   Routes.pushRightLeftConsumerFul(context, OwnerHomeScreen());
-        // }
+        if (user.role == 3) {
+          // Try to resolve companyId from branchId if available
+          int? companyId;
+          if (branchId != null) {
+            final cid = await ref
+                .read(branchNotifierProvider.notifier)
+                .getCompanyIdByBranchId(branchId);
+            if (cid != null) companyId = cid;
+          }
+
+          Routes.pushRightLeftConsumerFul(
+            context,
+            ScreenChooseTable(
+              branchId: branchId ?? 0,
+              userId: user.id ?? 0,
+              companyId: companyId ?? 0,
+            ),
+          );
+          // if (user.role == 1) {
+          //   Routes.pushRightLeftConsumerFul(context, AdminHomeScreen());
+          // } else if (user.role == 2) {
+          //   Routes.pushRightLeftConsumerFul(context, ManagerHomeScreen());
+          // } else if (user.role == 3) {
+          //   Routes.pushRightLeftConsumerFul(context, StaffHomeScreen());
+          // } else if (user.role == 4) {
+          //   Routes.pushRightLeftConsumerFul(context, ChefHomeScreen());
+          // } else if (user.role == 5) {
+          //   Routes.pushRightLeftConsumerFul(context, OwnerHomeScreen());
+          // }
+        } else {
+          Constrats.showThongBao(context, 'Trạng thái tài khoản không hợp lệ.');
+        }
       } else {
-        Constrats.showThongBao(context, 'Trạng thái tài khoản không hợp lệ.');
+        Constrats.showThongBao(
+          context,
+          'Đăng nhập không thành công. Vui lòng kiểm tra lại email và mật khẩu.',
+        );
       }
-    } else {
-      Constrats.showThongBao(
-        context,
-        'Đăng nhập không thành công. Vui lòng kiểm tra lại email và mật khẩu.',
-      );
+      ref.read(isLoadingNotifierProvider.notifier).toggle(false);
     }
-    ref.read(isLoadingNotifierProvider.notifier).toggle(false);
   }
 
   //Hàm dispose

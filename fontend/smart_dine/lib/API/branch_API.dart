@@ -32,6 +32,19 @@ class BranchAPI {
     }
     return null;
   }
+
+  // Lấy thông tin branch theo id
+  Future<Branch?> getBranchById(int id) async {
+    final response = await http.get(
+      Uri.parse('$uri2/id/$id'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      return Branch.fromMap(data);
+    }
+    return null;
+  }
 }
 
 //userApiProvider

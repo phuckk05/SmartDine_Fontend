@@ -54,6 +54,21 @@ class BranchNotifier extends StateNotifier<Branch?> {
       return null;
     }
   }
+
+  // Lấy companyId theo branchId
+  Future<int?> getCompanyIdByBranchId(int branchId) async {
+    try {
+      final branch = await branchAPI.getBranchById(branchId);
+      if (branch != null) {
+        return branch.companyId;
+      }
+      print('Không tìm thấy branch với id: $branchId');
+      return null;
+    } catch (e) {
+      print('Lỗi lấy companyId từ branchId: $e');
+      return null;
+    }
+  }
 }
 
 final branchNotifierProvider = StateNotifierProvider<BranchNotifier, Branch?>((

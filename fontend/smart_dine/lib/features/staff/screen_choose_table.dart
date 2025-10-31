@@ -15,7 +15,14 @@ import 'package:mart_dine/routes.dart';
 
 class ScreenChooseTable extends ConsumerStatefulWidget {
   final int? branchId;
-  const ScreenChooseTable({super.key, this.branchId});
+  final int? userId;
+  final int? companyId;
+  const ScreenChooseTable({
+    super.key,
+    this.branchId,
+    this.userId,
+    this.companyId,
+  });
 
   @override
   ConsumerState<ScreenChooseTable> createState() => _ScreenChooseTableState();
@@ -117,8 +124,8 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
         tableId: table.id,
         tableName: table.name,
         branchId: widget.branchId ?? 1,
-        companyId: 1,
-        userId: 1,
+        companyId: widget.companyId ?? 1,
+        userId: widget.userId ?? 1,
         initialOrder: initialOrder,
         initialOrderItems: initialItems,
       ),
@@ -144,6 +151,7 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
       appBar: AppBar(
         title: Text('Chọn bàn', style: Style.fontTitle),
         centerTitle: false,
+        automaticallyImplyLeading: false,
         elevation: 0,
         iconTheme: Theme.of(context).iconTheme,
         actions: [
