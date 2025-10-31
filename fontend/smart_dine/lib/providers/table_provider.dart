@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/API/order_API.dart';
+import 'package:mart_dine/API/reservation_API.dart';
 import 'package:mart_dine/API/table_API.dart';
 import 'package:mart_dine/models/table.dart';
 
@@ -33,7 +34,21 @@ final tableNotifierProvider =
     StateNotifierProvider<TableNotifier, List<DiningTable>>((ref) {
       return TableNotifier(ref.read(tableApiProvider));
     });
-final getUnpaidTableIdsToday = FutureProvider<List<int>>((ref) async {
+final unpaidTablesByBranchProvider = FutureProvider.family<Set<int>, int>((
+  ref,
+  branchId,
+) async {
   final orderApi = ref.watch(orderApiProvider);
-  return orderApi.fetchUnpaidTableIdsToday();
+  final orders = await orderApi.fetchOrdersByBranchIdToday(branchId);
+  final activeTableIds =
+      orders
+          .where((order) => order.statusId == 2 || order.statusId == 4)
+          .map((order) => order.tableId)
+          .toSet();
+  return activeTableIds;
 });
+final reservedTablesByBranchProvider =
+    FutureProvider.family<Map<String, dynamic>, int>((ref, branchId) async {
+      final reservationApi = ref.watch(reservationApiProvider);
+      return await reservationApi.getReservedTablesByBranch(branchId);
+    });

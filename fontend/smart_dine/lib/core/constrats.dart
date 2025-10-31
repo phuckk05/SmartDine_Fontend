@@ -19,7 +19,7 @@ class Constrats {
         showCloseIcon: true,
         closeIconColor: Colors.black,
         backgroundColor: Colors.white,
-        content: Container(
+        content: SizedBox(
           height: 60,
           child: Center(
             child: Text(
@@ -63,7 +63,7 @@ class ShadowCus extends StatelessWidget {
   final Offset offset;
 
   const ShadowCus({
-    Key? key,
+    super.key,
     this.child,
     this.borderRadius = 20.0,
     this.padding = const EdgeInsets.all(16.0),
@@ -72,7 +72,7 @@ class ShadowCus extends StatelessWidget {
     this.blurRadius = 2.0,
     this.spreadRadius = 1.0,
     this.offset = const Offset(4, 4),
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

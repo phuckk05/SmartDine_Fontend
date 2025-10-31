@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:mart_dine/features/bottom_Navigation/bottom_navigation.dart';
-import 'package:mart_dine/features/signin/screen_signin.dart';
+import 'package:mart_dine/features/staff/screen_choose_table.dart';
 import 'package:mart_dine/providers/mode_provider.dart';
 
 Future<void> main() async {
@@ -30,8 +29,7 @@ class SmartDineApp extends ConsumerWidget {
               ref.watch(modeProvider) ? Brightness.dark : Brightness.light,
         ),
       ),
-
-      home: ScreenSignIn(),
+      home: const ScreenChooseTable(),
     );
   }
 }

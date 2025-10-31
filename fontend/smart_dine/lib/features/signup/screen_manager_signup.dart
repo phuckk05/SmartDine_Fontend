@@ -79,7 +79,7 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
     final result = await cloudinaryAPI.getURL(file);
     if (result != "0") {
       ref.read(_imageUrlProvider.notifier).state = result.toString();
-      print("anh day :${result}");
+      print("anh day :$result");
       print(ref.watch(_imageUrlProvider));
     } else {
       Constrats.showThongBao(context, "Lỗi chọn ảnh");
@@ -113,13 +113,13 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
     if (!ref.watch(internetProvider)) {
       Constrats.showThongBao(context, "Không có internet !");
     } else {
-      final _imageUrl = ref.watch(_imageUrlProvider);
-      print("url image : $_imageUrl");
+      final imageUrl = ref.watch(_imageUrlProvider);
+      print("url image : $imageUrl");
       if (_nameController.text.isNotEmpty &&
           _addressController.text.isNotEmpty &&
           _codeController.text.isNotEmpty &&
           _codeRestaurantController.text.isNotEmpty &&
-          _imageUrl.isNotEmpty) {
+          imageUrl.isNotEmpty) {
         //Chuyển hướng đăng kí qua role khác
         ref.read(isLoadingNotifierProvider.notifier).toggle(true);
         await siginUpBranch(branch, context);
@@ -291,7 +291,7 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
 
   //Phần Lấy CCCD
   Widget _getCCCD() {
-    final _Image = ref.watch(_imageProvider);
+    final image = ref.watch(_imageProvider);
     return Container(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 0),
@@ -316,7 +316,7 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
                     height: 100,
                     alignment: Alignment.center,
                     child:
-                        _Image == null
+                        image == null
                             ? Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -329,12 +329,12 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
                             )
                             : ClipRRect(
                               borderRadius: BorderRadius.circular(6.0),
-                              child: Image.file(_Image, fit: BoxFit.fill),
+                              child: Image.file(image, fit: BoxFit.fill),
                             ),
                   ),
                 ),
               ),
-              _Image == null
+              image == null
                   ? SizedBox()
                   : Positioned(
                     top: 0,

@@ -52,7 +52,7 @@ class _ScreenKitchenState extends ConsumerState<ScreenKitchen>
     ref.read(isLoadingNotifierProvider.notifier).toggle(true);
     final success = await ref
         .read(kitchenOrderNotifierProvider.notifier)
-        .updateOrderItemStatus(item.id, newStatus);
+        .updateOrderItemStatus(item.id!, newStatus);
     if (success) {
       Constrats.showThongBao(context, 'Đã cập nhật trạng thái sang "$label"');
     } else {

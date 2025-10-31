@@ -88,6 +88,18 @@ class Order {
     };
   }
 
+  Map<String, dynamic> toCreatePayload() {
+    return {
+      'tableId': tableId,
+      'companyId': companyId,
+      'branchId': branchId,
+      'userId': userId,
+      if (promotionId != null) 'promotionId': promotionId,
+      if (note != null && note!.isNotEmpty) 'note': note,
+      'statusId': statusId,
+    };
+  }
+
   factory Order.fromJson(String source) => Order.fromMap(json.decode(source));
 
   String toJson() => json.encode(toMap());

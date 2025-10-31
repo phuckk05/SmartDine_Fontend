@@ -299,7 +299,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
 
   //Phần mật khẩu
   Widget _textFiledPass() {
-    final _isObscureText = ref.watch(_obscureText);
+    final isObscureText = ref.watch(_obscureText);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 0),
       child: ShadowCus(
@@ -308,7 +308,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
         child: TextField(
           controller: _passwordController,
-          obscureText: _isObscureText, // Toggle visibility
+          obscureText: isObscureText, // Toggle visibility
           decoration: InputDecoration(
             prefixIcon: Icon(Icons.lock, color: Colors.grey[600]),
             hintText: 'Mật khẩu', // Use hintText
@@ -322,11 +322,11 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
             ), // Adjust padding
             suffixIcon: IconButton(
               icon: Icon(
-                _isObscureText ? Icons.visibility_off : Icons.visibility,
+                isObscureText ? Icons.visibility_off : Icons.visibility,
                 color: Colors.grey[600],
               ),
               onPressed: () {
-                ref.read(_obscureText.notifier).state = !_isObscureText;
+                ref.read(_obscureText.notifier).state = !isObscureText;
               },
             ),
           ),

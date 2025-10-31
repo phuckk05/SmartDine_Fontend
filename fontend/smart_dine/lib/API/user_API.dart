@@ -10,7 +10,7 @@ class UserAPI {
   //Tạo user
   Future<User?> createUser(User user) async {
     final response = await http.post(
-      Uri.parse('${uri2}'),
+      Uri.parse(uri2),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(user.toMap()),
     );

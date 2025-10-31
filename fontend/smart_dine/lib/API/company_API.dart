@@ -25,7 +25,7 @@ class CompanyAPI {
   //Kiểm tra companyCode
   Future<Company?> exitsCompanyCode(String companyCode) async {
     final response = await http.get(
-      Uri.parse('${uri2}/${companyCode}'),
+      Uri.parse('$uri2/$companyCode'),
       headers: {'Content-Type': 'application/json'},
     );
     if (response.statusCode == 200 || response.statusCode == 201) {

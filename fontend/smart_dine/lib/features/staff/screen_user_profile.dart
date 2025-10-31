@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ScreenUserProfile extends StatelessWidget {
-  const ScreenUserProfile({Key? key}) : super(key: key);
+  const ScreenUserProfile({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -58,13 +58,13 @@ class ScreenUserProfile extends StatelessWidget {
                 onPressed: () {
                   // TODO: Thêm logic lưu thay đổi
                 },
-                child: const Text('Lưu thay đổi'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
+                child: const Text('Lưu thay đổi'),
               ),
             ),
           ],

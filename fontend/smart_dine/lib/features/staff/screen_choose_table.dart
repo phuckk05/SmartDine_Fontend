@@ -1,35 +1,145 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:mart_dine/API/order_API.dart';
+import 'package:mart_dine/API/order_item_API.dart';
 import 'package:mart_dine/core/style.dart';
+import 'package:mart_dine/features/revervation/screen_reservation.dart';
 import 'package:mart_dine/features/staff/screen_menu.dart';
 import 'package:mart_dine/features/staff/screen_settings.dart';
+import 'package:mart_dine/models/order.dart';
+import 'package:mart_dine/models/order_item.dart';
+import 'package:mart_dine/models/table.dart';
 import 'package:mart_dine/providers/table_provider.dart';
-import 'package:mart_dine/providers/order_provider.dart';
 import 'package:mart_dine/routes.dart';
 
 class ScreenChooseTable extends ConsumerStatefulWidget {
-  const ScreenChooseTable({Key? key}) : super(key: key);
+  final int? branchId;
+  const ScreenChooseTable({super.key, this.branchId});
 
   @override
   ConsumerState<ScreenChooseTable> createState() => _ScreenChooseTableState();
 }
 
 class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
+  // Search
+  final TextEditingController _searchController = TextEditingController();
+  String _searchKeyword = '';
+
+  // Loại bỏ dấu tiếng Việt cho tìm kiếm
+  String _removeVietnameseDiacritics(String str) {
+    const vietnamese =
+        'àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ';
+    const english =
+        'aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd';
+    String result = str.toLowerCase();
+    for (int i = 0; i < vietnamese.length; i++) {
+      result = result.replaceAll(vietnamese[i], english[i]);
+    }
+    return result;
+  }
   //Table provider
 
   @override
   void initState() {
     super.initState();
-    loadTableData();
+    Future.microtask(_loadTables);
   }
 
-  void loadTableData() {
-    final tableNotifier = ref.read(tableNotifierProvider.notifier);
+  //Load tables
+  Future<void> _loadTables() async {
+    final branchId = widget.branchId ?? 1;
+    await ref.read(tableNotifierProvider.notifier).loadTables(branchId);
+    ref.invalidate(unpaidTablesByBranchProvider(branchId));
+  }
+
+  Future<void> _openTable(DiningTable table, bool hasUnpaidOrders) async {
+    Order? initialOrder;
+    List<OrderItem> initialItems = const <OrderItem>[];
+
+    if (hasUnpaidOrders) {
+      bool dialogOpened = false;
+      if (mounted) {
+        dialogOpened = true;
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => const Center(child: CircularProgressIndicator()),
+        );
+      }
+
+      try {
+        final orderApi = ref.read(orderApiProvider);
+        final orders = await orderApi.fetchOrdersByTableIdToday(table.id);
+
+        if (orders.isNotEmpty) {
+          orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+          // Find the most recent active order for this table.
+          // Active means statusId == 2 (being served) or statusId == 4 (requested payment).
+          Order? current;
+          for (final order in orders) {
+            if (order.statusId == 2 || order.statusId == 4) {
+              current = order;
+              break;
+            }
+          }
+
+          if (current != null) {
+            final orderItemApi = ref.read(orderItemApiProvider);
+            final items = await orderItemApi.getOrderItemsByOrderId(current.id);
+            initialOrder = current;
+            initialItems = List<OrderItem>.from(items);
+          } else {
+            // No active orders (e.g., all orders are paid - statusId == 3).
+            initialOrder = null;
+            initialItems = const <OrderItem>[];
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Không tải được order hiện tại: $e')),
+          );
+        }
+      } finally {
+        if (mounted && dialogOpened) {
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+      }
+    }
+
+    if (!mounted) return;
+
+    Routes.pushRightLeftConsumerFul(
+      context,
+      ScreenMenu(
+        tableId: table.id,
+        tableName: table.name,
+        branchId: widget.branchId ?? 1,
+        companyId: 1,
+        userId: 1,
+        initialOrder: initialOrder,
+        initialOrderItems: initialItems,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final branchId = widget.branchId ?? 1;
+    final unpaidTableIds = ref.watch(unpaidTablesByBranchProvider(branchId));
+    final allTables = ref.watch(tableNotifierProvider);
+    // Lọc bàn theo tên (không dấu, không phân biệt hoa thường)
+    final List<DiningTable> tables =
+        _searchKeyword.isEmpty
+            ? allTables
+            : allTables.where((table) {
+              final tableName = _removeVietnameseDiacritics(table.name);
+              final keyword = _removeVietnameseDiacritics(_searchKeyword);
+              return tableName.contains(keyword);
+            }).toList();
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Chọn bàn', style: Style.fontTitle),
@@ -38,7 +148,9 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
         iconTheme: Theme.of(context).iconTheme,
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              Routes.pushRightLeftConsumerFul(context, ScreenReservation());
+            },
             icon: const Icon(Icons.table_restaurant),
             tooltip: 'Đặt bàn',
           ),
@@ -57,17 +169,17 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
           const SizedBox(width: 8),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
+      body: RefreshIndicator(
+        onRefresh: _loadTables,
+        child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: Style.paddingPhone),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _search(context),
-              const SizedBox(height: 16),
-              _listTable(),
-            ],
-          ),
+          children: [
+            const SizedBox(height: 8),
+            _search(context),
+            const SizedBox(height: 16),
+            _buildTableGrid(context, tables, unpaidTableIds),
+            const SizedBox(height: 24),
+          ],
         ),
       ),
     );
@@ -81,8 +193,9 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
             height: 40,
             width: double.infinity,
             child: TextField(
+              controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Tìm kiếm...',
+                hintText: 'Tìm kiếm bàn...',
                 prefixIcon: Icon(
                   LucideIcons.search,
                   size: 24,
@@ -98,6 +211,11 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 0),
               ),
+              onChanged: (value) {
+                setState(() {
+                  _searchKeyword = value;
+                });
+              },
             ),
           ),
         ),
@@ -111,9 +229,11 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
     );
   }
 
-  Widget _listTable() {
-    final unpaidTableIds = ref.watch(getUnpaidTableIdsToday);
-
+  Widget _buildTableGrid(
+    BuildContext context,
+    List<DiningTable> tables,
+    AsyncValue<Set<int>> unpaidTableIds,
+  ) {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -124,12 +244,10 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
-      // itemCount: ref.watch(tableNotifierProvider).length,
-      itemCount: 20,
+      itemCount: tables.length,
       itemBuilder: (context, index) {
-        final table = ref.watch(tableNotifierProvider)[index];
+        final table = tables[index];
 
-        // Check if table has unpaid orders
         final bool hasUnpaidOrders = unpaidTableIds.when(
           data: (ids) => ids.contains(table.id),
           loading: () => false,
@@ -137,12 +255,7 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
         );
 
         return InkWell(
-          onTap: () {
-            Routes.pushRightLeftConsumerFul(
-              context,
-              ScreenMenu(tableName: table.name ?? 'Bàn - ${table.id}'),
-            );
-          },
+          onTap: () => _openTable(table, hasUnpaidOrders),
           child: Stack(
             children: [
               Container(
@@ -150,11 +263,11 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
                   color:
                       hasUnpaidOrders
                           ? (Theme.of(context).brightness == Brightness.light
-                              ? Colors.blue.shade500
-                              : Colors.blue.shade500)
+                              ? Colors.green.shade400
+                              : Colors.green.shade500)
                           : (Theme.of(context).brightness == Brightness.light
                               ? Colors.grey.shade300
-                              : Colors.grey.shade300),
+                              : Colors.grey.shade700),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Padding(
@@ -166,25 +279,21 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
                       Align(
                         alignment: Alignment.center,
                         child: Text(
-                          'Bàn - ${table.id}',
+                          table.name,
                           style: TextStyle(
                             color:
                                 hasUnpaidOrders
-                                    ? (Theme.of(context).brightness ==
-                                            Brightness.light
-                                        ? Colors.white
-                                        : Colors.white)
+                                    ? Colors.white
                                     : (Theme.of(context).brightness ==
                                             Brightness.light
                                         ? Colors.black
                                         : Colors.black),
-
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                      Spacer(),
+                      const Spacer(),
                       Row(
                         children: [
                           Expanded(
@@ -205,7 +314,7 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
                               ),
                               child: Center(
                                 child: Text(
-                                  hasUnpaidOrders ? 'Có' : 'Trống',
+                                  hasUnpaidOrders ? 'Có Khách' : 'Trống',
                                   style: TextStyle(
                                     color:
                                         Theme.of(context).brightness ==
@@ -218,16 +327,13 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
                               ),
                             ),
                           ),
-                          SizedBox(width: 6),
+                          const SizedBox(width: 6),
                           Icon(
                             Icons.person,
                             size: 14,
                             color:
                                 hasUnpaidOrders
-                                    ? (Theme.of(context).brightness ==
-                                            Brightness.light
-                                        ? Colors.white
-                                        : Colors.white)
+                                    ? Colors.white
                                     : (Theme.of(context).brightness ==
                                             Brightness.light
                                         ? Colors.black
@@ -239,15 +345,11 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
                             style: TextStyle(
                               color:
                                   hasUnpaidOrders
-                                      ? (Theme.of(context).brightness ==
-                                              Brightness.light
-                                          ? Colors.white
-                                          : Colors.white)
+                                      ? Colors.white
                                       : (Theme.of(context).brightness ==
                                               Brightness.light
                                           ? Colors.black
                                           : Colors.black),
-
                               fontSize: 12,
                             ),
                           ),
@@ -264,3 +366,104 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
     );
   }
 }
+
+// *** WIDGET DIALOG MỚI ***
+
+// // 1. Provider mới để tải tóm tắt order cho Dialog
+// final _dialogOrderSummaryProvider =
+//     FutureProvider.family<List<OrderItem>, int>((ref, tableId) async {
+//   final orderApi = ref.watch(orderApiProvider);
+
+//   // Lấy order (chỉ lấy order đầu tiên của bàn trong ngày)
+//   final orders = await orderApi.fetchOrdersByTableIdToday(tableId);
+//   if (orders.isEmpty) {
+//     return []; // Không có order, trả về list rỗng
+//   }
+//   final order = orders.first;
+
+//   // Lấy danh sách items của order đó
+//   // final items = await orderApi.fetchOrderItems(order.id.toString());
+//   // return items;
+// });
+
+// // 2. Widget AlertDialog
+// class _ExistingOrderDialog extends ConsumerWidget {
+//   final int tableId;
+//   final String tableName;
+
+//   const _ExistingOrderDialog({
+//     required this.tableId,
+//     required this.tableName,
+//   });
+
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     // Watch provider mới
+//     final orderItemsAsync = ref.watch(_dialogOrderSummaryProvider(tableId));
+
+//     return AlertDialog(
+//       title: Text('Order của $tableName'),
+//       content: Container(
+//         // Đặt chiều cao cố định để dialog không bị nhảy size khi loading
+//         height: 70,
+//         child: orderItemsAsync.when(
+//           data: (items) {
+//             if (items.isEmpty) {
+//               return const Center(child: Text('Bàn này chưa chọn món.'));
+//             }
+//             // Đếm tổng số lượng món
+//             final totalQuantity =
+//                 items.fold(0, (sum, item) => sum + item.quantity);
+//             // Đếm số loại món
+//             final totalItemTypes = items.length;
+
+//             return Center(
+//               child: Text(
+//                 'Đã order $totalItemTypes loại món.\n(Tổng số lượng: $totalQuantity)',
+//                 textAlign: TextAlign.center,
+//                 style: Style.fontNormal,
+//               ),
+//             );
+//           },
+//           loading: () => const Center(child: CircularProgressIndicator()),
+//           error: (err, stack) => const Center(
+//             child: Text('Lỗi tải chi tiết order.'),
+//           ),
+//         ),
+//       ),
+//       actionsAlignment: MainAxisAlignment.spaceBetween,
+//       actions: [
+//         // Nút Thanh Toán
+//         TextButton(
+//           onPressed: () {
+//             // TODO: Thêm logic gọi API thanh toán ở đây
+//             Navigator.of(context).pop(); // Đóng dialog
+//             print('Yêu cầu thanh toán cho bàn $tableId');
+//             ScaffoldMessenger.of(context).showSnackBar(
+//               SnackBar(content: Text('Đã gửi yêu cầu thanh toán cho $tableName')),
+//             );
+//           },
+//           child: Text(
+//             'Thanh Toán',
+//             style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold),
+//           ),
+//         ),
+//         // Nút Thêm Món
+//         ElevatedButton(
+//           onPressed: () {
+//             // Đóng dialog VÀ chuyển sang màn hình Menu
+//             Navigator.of(context).pop();
+//             Routes.pushRightLeftConsumerFul(
+//               context,
+//               ScreenMenu(
+//                 tableId: tableId,
+//                 tableName: tableName,
+//               ),
+//             );
+//           },
+//           child: const Text('Thêm Món'),
+//         ),
+//       ],
+//     );
+//   }
+// }
