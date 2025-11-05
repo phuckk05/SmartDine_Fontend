@@ -171,7 +171,7 @@ class _TodayActivitiesScreenState extends ConsumerState<TodayActivitiesScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Món ăn bán
+            // Món ăn bán (dữ liệu động)
             Text(
               'Món ăn bán',
               style: Style.fontTitleMini.copyWith(color: textColor),
@@ -190,23 +190,24 @@ class _TodayActivitiesScreenState extends ConsumerState<TodayActivitiesScreen> {
                   ),
                 ],
               ),
-              child: Column(
-                children: [
-                  _buildDishRow('Phở bò', '28 phần', textColor),
-                  const Divider(height: 24),
-                  _buildDishRow('Cà phê sữa', '35 ly', textColor),
-                  const Divider(height: 24),
-                  _buildDishRow('Bánh mì thịt', '22 ổ', textColor),
-                  const Divider(height: 24),
-                  _buildDishRow('Bún chả', '18 suất', textColor),
-                  const Divider(height: 24),
-                  _buildDishRow('Trà sữa', '15 ly', textColor),
-                ],
-              ),
+              child: data.soldDishes.isEmpty
+                  ? Text('Không có dữ liệu', style: Style.fontCaption.copyWith(color: Style.textColorGray))
+                  : Column(
+                      children: [
+                        for (int i = 0; i < data.soldDishes.length; i++) ...[
+                          _buildDishRow(
+                            data.soldDishes[i]['name'] ?? '',
+                            data.soldDishes[i]['quantity']?.toString() ?? '',
+                            textColor,
+                          ),
+                          if (i < data.soldDishes.length - 1) const Divider(height: 24),
+                        ],
+                      ],
+                    ),
             ),
             const SizedBox(height: 24),
 
-            // Món đặt thêm & Món bán
+            // Món đặt thêm & Món hủy (dữ liệu động)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -232,13 +233,20 @@ class _TodayActivitiesScreenState extends ConsumerState<TodayActivitiesScreen> {
                             ),
                           ],
                         ),
-                        child: Column(
-                          children: [
-                            _buildSimpleRow('Cà phê đá', '5', textColor),
-                            const Divider(height: 16),
-                            _buildSimpleRow('Nước chanh', '3', textColor),
-                          ],
-                        ),
+                        child: data.extraDishes.isEmpty
+                            ? Text('Không có dữ liệu', style: Style.fontCaption.copyWith(color: Style.textColorGray))
+                            : Column(
+                                children: [
+                                  for (int i = 0; i < data.extraDishes.length; i++) ...[
+                                    _buildSimpleRow(
+                                      data.extraDishes[i]['name'] ?? '',
+                                      data.extraDishes[i]['quantity']?.toString() ?? '',
+                                      textColor,
+                                    ),
+                                    if (i < data.extraDishes.length - 1) const Divider(height: 16),
+                                  ],
+                                ],
+                              ),
                       ),
                     ],
                   ),
@@ -266,13 +274,20 @@ class _TodayActivitiesScreenState extends ConsumerState<TodayActivitiesScreen> {
                             ),
                           ],
                         ),
-                        child: Column(
-                          children: [
-                            _buildSimpleRow('Phở bò', '2', textColor),
-                            const Divider(height: 16),
-                            _buildSimpleRow('Gỏi cuốn', '1', textColor),
-                          ],
-                        ),
+                        child: data.cancelledDishes.isEmpty
+                            ? Text('Không có dữ liệu', style: Style.fontCaption.copyWith(color: Style.textColorGray))
+                            : Column(
+                                children: [
+                                  for (int i = 0; i < data.cancelledDishes.length; i++) ...[
+                                    _buildSimpleRow(
+                                      data.cancelledDishes[i]['name'] ?? '',
+                                      data.cancelledDishes[i]['quantity']?.toString() ?? '',
+                                      textColor,
+                                    ),
+                                    if (i < data.cancelledDishes.length - 1) const Divider(height: 16),
+                                  ],
+                                ],
+                              ),
                       ),
                     ],
                   ),
@@ -281,7 +296,7 @@ class _TodayActivitiesScreenState extends ConsumerState<TodayActivitiesScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Bottom stats
+            // Bottom stats: Supplies & Documents (dữ liệu động từ API)
             Row(
               children: [
                 Expanded(
@@ -308,9 +323,16 @@ class _TodayActivitiesScreenState extends ConsumerState<TodayActivitiesScreen> {
                         ),
                         child: Column(
                           children: [
-                            _buildSimpleRow('Giấy sáy', '15', textColor),
-                            const SizedBox(height: 8),
-                            _buildSimpleRow('Mồm rợp', '100', textColor),
+                            if (data.extraSupplies.isEmpty)
+                              Text('Không có dữ liệu', style: Style.fontCaption.copyWith(color: Style.textColorGray)),
+                            for (int i = 0; i < data.extraSupplies.length; i++) ...[
+                              _buildSimpleRow(
+                                data.extraSupplies[i]['name'] ?? '',
+                                data.extraSupplies[i]['quantity']?.toString() ?? '',
+                                textColor,
+                              ),
+                              if (i < data.extraSupplies.length - 1) const Divider(height: 8),
+                            ],
                           ],
                         ),
                       ),
@@ -342,11 +364,16 @@ class _TodayActivitiesScreenState extends ConsumerState<TodayActivitiesScreen> {
                         ),
                         child: Column(
                           children: [
-                            _buildSimpleRow('Món ăn', '3543', textColor),
-                            const SizedBox(height: 8),
-                            _buildSimpleRow('Người phải', '900', textColor),
-                            const SizedBox(height: 8),
-                            _buildSimpleRow('Só đợp', '40', textColor),
+                            if (data.extraDocuments.isEmpty)
+                              Text('Không có dữ liệu', style: Style.fontCaption.copyWith(color: Style.textColorGray)),
+                            for (int i = 0; i < data.extraDocuments.length; i++) ...[
+                              _buildSimpleRow(
+                                data.extraDocuments[i]['name'] ?? '',
+                                data.extraDocuments[i]['quantity']?.toString() ?? '',
+                                textColor,
+                              ),
+                              if (i < data.extraDocuments.length - 1) const Divider(height: 8),
+                            ],
                           ],
                         ),
                       ),

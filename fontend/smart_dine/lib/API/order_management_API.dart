@@ -19,7 +19,7 @@ class OrderManagementAPI {
       
       if (data is List) {
         print('📊 Parsed data count: ${data.length}');
-        List<Order> orders = data.map((json) => Order.fromJson(json)).toList();
+        List<Order> orders = data.map((json) => Order.fromMap(json)).toList();
         print('✅ Successfully parsed ${orders.length} orders');
         return orders;
       }
@@ -38,17 +38,17 @@ class OrderManagementAPI {
       print('🔄 Calling API: $baseUrl/orders/branch/$branchId');
       final response = await _httpService.get('$baseUrl/orders/branch/$branchId');
       final data = _httpService.handleResponse(response);
-      
       print('📡 API Response status: ${response.statusCode}');
       print('📝 API Response data type: ${data.runtimeType}');
-      
+      print('🟢 API Response data: $data');
       if (data is List) {
         print('📊 Parsed data count: ${data.length}');
-        List<Order> orders = data.map((json) => Order.fromJson(json)).toList();
+        List<Order> orders = data.map((json) => Order.fromMap(json)).toList();
         print('✅ Successfully parsed ${orders.length} orders for branch $branchId');
         return orders;
       } else if (data is Map<String, dynamic> && data['data'] is List) {
-        List<Order> orders = (data['data'] as List).map((json) => Order.fromJson(json)).toList();
+        print('🟢 API Response data["data"]: ${data['data']}');
+        List<Order> orders = (data['data'] as List).map((json) => Order.fromMap(json)).toList();
         return orders;
       }
       print('❌ API returned unexpected data format, returning empty list');
@@ -65,7 +65,7 @@ class OrderManagementAPI {
     try {
       final response = await _httpService.get('$baseUrl/orders/$orderId');
       final data = _httpService.handleResponse(response);
-      
+      print('🟢 API Response for getOrderById($orderId): $data');
       if (data is Map<String, dynamic>) {
         return Order.fromMap(data);
       }
@@ -99,7 +99,7 @@ class OrderManagementAPI {
       final data = _httpService.handleResponse(response);
       
       if (data is List) {
-        return data.map((json) => Order.fromJson(json)).toList();
+        return data.map((json) => Order.fromMap(json)).toList();
       }
       return null;
     } catch (e) {

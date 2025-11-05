@@ -41,6 +41,18 @@ class TableManagementScreen extends ConsumerStatefulWidget {
 }
 
 class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
+  // Hàm load lại dữ liệu bàn (invalidate provider)
+  Future<void> _loadTables() async {
+    final branchId = _getBranchId();
+    if (branchId != null) {
+      ref.invalidate(tableManagementProvider(branchId));
+    }
+  }
+
+  // Hàm refresh (gọi lại loadTables)
+  Future<void> _refreshTables() async {
+    await _loadTables();
+  }
   final TextEditingController _searchController = TextEditingController();
   
   // Track which table card is expanded
@@ -195,78 +207,78 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
         statusName: status.name,
       );
     }).toList();
-    return Column(
-      children: [
-        // Search bar and summary
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              // Summary cards
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildSummaryCard(
-                      'Tổng số bàn',
-                      tables.length.toString(),
-                      Icons.table_restaurant,
-                      Colors.blue,
-                      isDark,
-                      cardColor,
+    return RefreshIndicator(
+      onRefresh: _refreshTables,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          // Search bar and summary
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                // Summary cards
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildSummaryCard(
+                        'Tổng số bàn',
+                        tables.length.toString(),
+                        Icons.table_restaurant,
+                        Colors.blue,
+                        isDark,
+                        cardColor,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildSummaryCard(
-                      'Bàn hoạt động',
-                      tables.where((t) => t.statusId == 1).length.toString(),
-                      Icons.check_circle,
-                      Colors.green,
-                      isDark,
-                      cardColor,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildSummaryCard(
+                        'Bàn hoạt động',
+                        tables.where((t) => t.statusId == 1).length.toString(),
+                        Icons.check_circle,
+                        Colors.green,
+                        isDark,
+                        cardColor,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildSummaryCard(
-                      'Bàn bảo trì',
-                      tables.where((t) => t.statusId == 2).length.toString(),
-                      Icons.build,
-                      Colors.orange,
-                      isDark,
-                      cardColor,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildSummaryCard(
+                        'Bàn bảo trì',
+                        tables.where((t) => t.statusId == 2).length.toString(),
+                        Icons.build,
+                        Colors.orange,
+                        isDark,
+                        cardColor,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              
-              // Search bar
-              TextField(
-                controller: _searchController,
-                onChanged: (value) {
-                  setState(() {}); // Rebuild để apply search filter
-                },
-                style: Style.fontNormal.copyWith(color: textColor),
-                decoration: InputDecoration(
-                  hintText: 'Tìm kiếm bàn theo tên',
-                  hintStyle: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey),
-                  prefixIcon: Icon(Icons.search, color: textColor),
-                  filled: true,
-                  fillColor: cardColor,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Search bar
+                TextField(
+                  controller: _searchController,
+                  onChanged: (value) {
+                    setState(() {}); // Rebuild để apply search filter
+                  },
+                  style: Style.fontNormal.copyWith(color: textColor),
+                  decoration: InputDecoration(
+                    hintText: 'Tìm kiếm bàn theo tên',
+                    hintStyle: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey),
+                    prefixIcon: Icon(Icons.search, color: textColor),
+                    filled: true,
+                    fillColor: cardColor,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        
-        // Table list
-        Expanded(
-          child: Builder(
+          // Table list
+          Builder(
             builder: (context) {
               // Filter by search query
               List<table_model.Table> filteredTables = mappedTables.where((table) {
@@ -276,7 +288,6 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
                     (table.description?.toLowerCase().contains(searchQuery) ?? false) ||
                     (table.typeName?.toLowerCase().contains(searchQuery) ?? false);
               }).toList();
-              
               if (filteredTables.isEmpty) {
                 return Center(
                   child: Column(
@@ -298,14 +309,14 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
                   ),
                 );
               }
-              
               return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: filteredTables.length,
                 itemBuilder: (context, index) {
                   final table = filteredTables[index];
                   final isExpanded = _expandedIndex == index;
-                  
                   return _buildTableCard(
                     table,
                     index,
@@ -318,8 +329,8 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
               );
             },
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

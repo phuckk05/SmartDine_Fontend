@@ -249,12 +249,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
             context,
             MaterialPageRoute(
               builder: (context) => OrderDetailScreen(
-                orderId: order.id?.toString() ?? '',
-                tableName: order.getTableDisplayName(),
-                date: order.getFormattedDate(),
-                amount: _formatCurrency(order.getTotalAmount()),
-                status: order.getStatusName(),
-                statusColor: _getStatusColor(order.status?.code ?? 'UNKNOWN'),
+                orderId: order.id ?? 0,
               ),
             ),
           );

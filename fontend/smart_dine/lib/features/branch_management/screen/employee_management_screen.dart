@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
+import 'package:bcrypt/bcrypt.dart';
 import '../../../models/user.dart';
 import '../../../providers/employee_management_provider.dart';
 
@@ -40,6 +41,18 @@ class EmployeeManagementScreen extends ConsumerStatefulWidget {
 }
 
 class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScreen> {
+  // Hàm load lại dữ liệu nhân viên (invalidate provider)
+  Future<void> _loadEmployees() async {
+    final branchId = _getBranchId();
+    if (branchId != null) {
+      ref.invalidate(employeeManagementProvider(branchId));
+    }
+  }
+
+  // Hàm refresh (gọi lại loadEmployees)
+  Future<void> _refreshEmployees() async {
+    await _loadEmployees();
+  }
   final TextEditingController _searchController = TextEditingController();
   
   // Track which employee card is expanded
@@ -158,83 +171,73 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
 
   // Màn hình danh sách nhân viên
   Widget _buildEmployeeListView(List<User> employees, bool isDark, Color textColor, Color cardColor) {
-    return Column(
-      children: [
-        // Search bar
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: TextField(
-            controller: _searchController,
-            onChanged: (value) {
-              setState(() {}); // Rebuild để apply search filter
-            },
-            style: Style.fontNormal.copyWith(color: textColor),
-            decoration: InputDecoration(
-              hintText: 'Tìm kiếm nhân viên',
-              hintStyle: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey),
-              prefixIcon: Icon(Icons.search, color: textColor),
-              filled: true,
-              fillColor: cardColor,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+    return RefreshIndicator(
+      onRefresh: _refreshEmployees,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          // Search bar
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                setState(() {}); // Rebuild để apply search filter
+              },
+              style: Style.fontNormal.copyWith(color: textColor),
+              decoration: InputDecoration(
+                hintText: 'Tìm kiếm nhân viên',
+                hintStyle: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey),
+                prefixIcon: Icon(Icons.search, color: textColor),
+                filled: true,
+                fillColor: cardColor,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
           ),
-        ),
-        
-        // Employee list
-        Builder(
-          builder: (context) {
-            // Map roleId, statusId, companyId sang tên nếu thiếu
-            List<User> mappedEmployees = employees.map((employee) {
-              String? statusName = employee.statusName;
-              if (statusName == null && employee.statusId != null) {
-                final found = _userStatuses.firstWhere(
-                  (s) => s.id == employee.statusId,
-                  orElse: () => UserStatus(id: 0, name: 'Không xác định', code: 'UNKNOWN'),
-                );
-                statusName = found.name;
-              }
-              String? roleName = employee.roleName;
-              if (roleName == null && employee.role != null) {
-                final found = _roles.firstWhere(
-                  (r) => r.id == employee.role,
-                  orElse: () => Role(id: 0, name: 'Chưa có', code: 'NONE'),
-                );
-                roleName = found.name;
-              }
-              String? companyName = employee.companyName;
-              if (companyName == null && employee.companyId != null) {
-                companyName = 'ID: [${employee.companyId}]';
-              }
-              return employee.copyWith(
-                statusName: statusName,
-                roleName: roleName,
-                companyName: companyName,
+          // Employee list
+          ...employees.map((employee) {
+            String? statusName = employee.statusName;
+            if (statusName == null && employee.statusId != null) {
+              final found = _userStatuses.firstWhere(
+                (s) => s.id == employee.statusId,
+                orElse: () => UserStatus(id: 0, name: 'Không xác định', code: 'UNKNOWN'),
               );
-            }).toList();
-            return Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: mappedEmployees.length,
-                itemBuilder: (context, index) {
-                  final employee = mappedEmployees[index];
-                  final isExpanded = _expandedIndex == index;
-                  return _buildEmployeeCard(
-                    employee,
-                    index,
-                    isExpanded,
-                    isDark,
-                    textColor,
-                    cardColor,
-                  );
-                },
-              ),
+              statusName = found.name;
+            }
+            String? roleName = employee.roleName;
+            if (roleName == null && employee.role != null) {
+              final found = _roles.firstWhere(
+                (r) => r.id == employee.role,
+                orElse: () => Role(id: 0, name: 'Chưa có', code: 'NONE'),
+              );
+              roleName = found.name;
+            }
+            String? companyName = employee.companyName;
+            if (companyName == null && employee.companyId != null) {
+              companyName = 'ID: ${employee.companyId}';
+            }
+            final mappedEmployee = employee.copyWith(
+              statusName: statusName,
+              roleName: roleName,
+              companyName: companyName,
             );
-          },
-        ),
-      ],
+            final index = employees.indexOf(employee);
+            final isExpanded = _expandedIndex == index;
+            return _buildEmployeeCard(
+              mappedEmployee,
+              index,
+              isExpanded,
+              isDark,
+              textColor,
+              cardColor,
+            );
+          }).toList(),
+        ],
+      ),
     );
   }
 
@@ -596,16 +599,18 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
                                   final branchId = _getBranchId();
                                   if (branchId != null) {
                                     try {
-                                      final newUser = User(
+                                      // Use User.create() factory to properly hash password
+                                      final newUser = User.create(
                                         fullName: _fullNameController.text,
                                         email: _emailController.text,
                                         phone: _phoneController.text,
-                                        passworkHash: _passwordController.text, // This will be hashed by backend
-                                        statusId: _selectedStatusId,
+                                        password: _passwordController.text, // Raw password - will be hashed by User.create()
+                                        statusId: _selectedStatusId!,
+                                        fontImage: null,
+                                        backImage: null,
+                                      ).copyWith(
                                         role: _selectedRoleId,
                                         companyId: 1, // Mock company ID
-                                        createdAt: DateTime.now(),
-                                        updatedAt: DateTime.now(),
                                         roleName: _roles.firstWhere((r) => r.id == _selectedRoleId).name,
                                         statusName: _userStatuses.firstWhere((s) => s.id == _selectedStatusId).name,
                                         branchIds: [branchId],
@@ -777,11 +782,20 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
                                   final branchId = _getBranchId();
                                   if (branchId != null && employee.id != null) {
                                     try {
+                                      // Hash password if updated, otherwise keep existing
+                                      String hashedPassword;
+                                      if (_passwordController.text.isEmpty) {
+                                        hashedPassword = employee.passworkHash; // Keep existing password
+                                      } else {
+                                        // Import required for BCrypt
+                                        hashedPassword = BCrypt.hashpw(_passwordController.text, BCrypt.gensalt());
+                                      }
+                                      
                                       final updatedUser = employee.copyWith(
                                         fullName: _fullNameController.text,
                                         phone: _phoneController.text,
                                         email: _emailController.text,
-                                        passworkHash: _passwordController.text.isEmpty ? employee.passworkHash : _passwordController.text,
+                                        passworkHash: hashedPassword,
                                         statusId: _selectedStatusId!,
                                         role: _selectedRoleId!,
                                         updatedAt: DateTime.now(),
