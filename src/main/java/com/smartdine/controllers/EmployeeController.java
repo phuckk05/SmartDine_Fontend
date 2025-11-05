@@ -84,7 +84,8 @@ public class EmployeeController {
             employee.setFullName((String) request.get("fullName"));
             employee.setEmail((String) request.get("email"));
             employee.setPhone((String) request.get("phone"));
-            employee.setPassworkHash((String) request.get("password"));
+            // Nhận password đã được hash từ frontend
+            employee.setPassworkHash((String) request.get("passworkHash"));
             employee.setRole((Integer) request.get("role"));
             employee.setCompanyId((Integer) request.get("companyId"));
             employee.setStatusId(1); // Active by default
