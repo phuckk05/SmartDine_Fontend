@@ -82,4 +82,9 @@ public class UserService {
 
         return userRepository.save(user);
     }
+    public List<User> getPendingUsers() {
+    // ví dụ statusId = 0 là "chờ xác nhận"
+    return userRepository.findByStatusId(0);
+    }
+
 }

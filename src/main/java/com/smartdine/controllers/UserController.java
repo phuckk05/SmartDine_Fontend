@@ -73,4 +73,10 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
     }
+    // Lấy danh sách user đang chờ xác nhận
+    @GetMapping("/pending")
+    public List<User> getPendingUsers() {
+        return userService.getPendingUsers();
+    }
+
 }
