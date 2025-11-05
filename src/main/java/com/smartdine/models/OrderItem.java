@@ -18,7 +18,6 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "order_items")
-@Data
 public class OrderItem {
 
     @Id
