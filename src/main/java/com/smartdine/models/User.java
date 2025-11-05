@@ -39,6 +39,7 @@ public class User {
 
     @Column(name = "company_id")
     private Integer companyId;
+
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     @Column(name = "created_at")
     private LocalDateTime createdAt;
