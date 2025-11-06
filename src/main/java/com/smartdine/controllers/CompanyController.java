@@ -50,4 +50,56 @@ public class CompanyController {
             return ResponseEntity.badRequest().body(null);
         }
     }
+    
+     /// Lấy danh sách công ty chờ xác nhận (statusId = 3)
+    @GetMapping("/pending")
+    public ResponseEntity<?> getPendingCompanies() {
+        try {
+            List<Company> pending = companyServices.getPendingCompanies();
+            return ResponseEntity.ok(pending);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Lỗi khi lấy danh sách pending");
+        }
+    }
+
+    /// Duyệt công ty
+    @PutMapping("/approve/{id}")
+    public ResponseEntity<?> approveCompany(@PathVariable Integer id) {
+        try {
+            Company approved = companyServices.approveCompany(id);
+            return ResponseEntity.ok(approved);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Lỗi khi duyệt công ty: " + e.getMessage());
+        }
+    }
+
+    /// Từ chối công ty
+    @PutMapping("/reject/{id}")
+    public ResponseEntity<?> rejectCompany(@PathVariable Integer id) {
+        try {
+            Company rejected = companyServices.rejectCompany(id);
+            return ResponseEntity.ok(rejected);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Lỗi khi từ chối công ty: " + e.getMessage());
+        }
+    }
+
+    /// Xóa công ty
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> deleteCompany(@PathVariable Integer id) {
+        try {
+            boolean result = companyServices.deleteCompany(id);
+            if (result) {
+                return ResponseEntity.ok("Đã xóa thành công công ty có ID = " + id);
+            } else {
+                return ResponseEntity.badRequest().body("Không tìm thấy công ty ID = " + id);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Lỗi khi xóa công ty");
+        }
+    }
 }
