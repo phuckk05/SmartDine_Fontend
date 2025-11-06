@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.smartdine.models.Order;
+import com.smartdine.services.OrderItemService;
 import com.smartdine.services.OrderServices;
 
 @RestController
@@ -25,8 +26,11 @@ public class OrderController {
     @Autowired
     private OrderServices orderServices;
 
+    @Autowired
+    private OrderItemService orderItemService;
+
     // save order
-    
+
     @PostMapping("/save")
     public ResponseEntity<?> saveOrder(@RequestBody Order order) {
         try {
@@ -94,28 +98,32 @@ public class OrderController {
             LocalDateTime startOfDay = now.withHour(0).withMinute(0).withSecond(0).withNano(0);
             LocalDateTime endOfDay = now.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
 
-            long totalOrdersToday = allOrders.stream()
+            List<Order> todayOrders = allOrders.stream()
+                    .filter(order -> order.getBranchId() != null && order.getBranchId().equals(branchId))
                     .filter(order -> order.getCreatedAt().isAfter(startOfDay)
                             && order.getCreatedAt().isBefore(endOfDay))
-                    .count();
+                    .toList();
 
-            long completedOrdersToday = allOrders.stream()
-                    .filter(order -> order.getCreatedAt().isAfter(startOfDay)
-                            && order.getCreatedAt().isBefore(endOfDay))
+            long totalOrdersToday = todayOrders.size();
+
+            long completedOrdersToday = todayOrders.stream()
                     .filter(order -> order.getStatusId() == 3) // Assuming 3 = COMPLETED
                     .count();
 
-<<<<<<< HEAD
-            long pendingOrdersToday = allOrders.stream()
-                    .filter(order -> order.getCreatedAt().isAfter(startOfDay)
-                            && order.getCreatedAt().isBefore(endOfDay))
+            long pendingOrdersToday = todayOrders.stream()
                     .filter(order -> order.getStatusId() == 1 || order.getStatusId() == 2) // PENDING or SERVING
                     .count();
-=======
+
+            List<Integer> todayOrderIds = todayOrders.stream()
+                    .map(Order::getId)
+                    .toList();
+
+            List<com.smartdine.models.OrderItem> todayOrderItems = orderItemService
+                    .getOrderItemsByOrderIds(todayOrderIds);
             // Mock item names để tránh lỗi ApplicationContext null khi deploy
             java.util.Map<Integer, String> itemIdToName = new java.util.HashMap<>();
             itemIdToName.put(1, "Phở Bò");
-            itemIdToName.put(2, "Bún Chả");  
+            itemIdToName.put(2, "Bún Chả");
             itemIdToName.put(3, "Trà Đá");
             itemIdToName.put(4, "Cơm Tấm");
             itemIdToName.put(5, "Bánh Mì");
@@ -123,48 +131,45 @@ public class OrderController {
 
             // Sold dishes: group by itemId, sum quantity, statusId != 5 (not cancelled)
             List<Map<String, Object>> soldDishes = todayOrderItems.stream()
-                .filter(oi -> oi.getStatusId() == null || oi.getStatusId() != 5)
-                .collect(java.util.stream.Collectors.groupingBy(
-                    com.smartdine.models.OrderItem::getItemId,
-                    java.util.stream.Collectors.summingInt(com.smartdine.models.OrderItem::getQuantity)
-                ))
-                .entrySet().stream().map(e -> {
-                    Map<String, Object> m = new HashMap<>();
-                    m.put("itemId", e.getKey());
-                    m.put("name", itemIdToName.getOrDefault(e.getKey(), ""));
-                    m.put("quantity", e.getValue());
-                    return m;
-                }).toList();
+                    .filter(oi -> oi.getStatusId() == null || oi.getStatusId() != 5)
+                    .collect(java.util.stream.Collectors.groupingBy(
+                            com.smartdine.models.OrderItem::getItemId,
+                            java.util.stream.Collectors.summingInt(com.smartdine.models.OrderItem::getQuantity)))
+                    .entrySet().stream().map(e -> {
+                        Map<String, Object> m = new HashMap<>();
+                        m.put("itemId", e.getKey());
+                        m.put("name", itemIdToName.getOrDefault(e.getKey(), ""));
+                        m.put("quantity", e.getValue());
+                        return m;
+                    }).toList();
 
             // Cancelled dishes: statusId == 5 (giả định 5 là cancelled)
             List<Map<String, Object>> cancelledDishes = todayOrderItems.stream()
-                .filter(oi -> oi.getStatusId() != null && oi.getStatusId() == 5)
-                .collect(java.util.stream.Collectors.groupingBy(
-                    com.smartdine.models.OrderItem::getItemId,
-                    java.util.stream.Collectors.summingInt(com.smartdine.models.OrderItem::getQuantity)
-                ))
-                .entrySet().stream().map(e -> {
-                    Map<String, Object> m = new HashMap<>();
-                    m.put("itemId", e.getKey());
-                    m.put("name", itemIdToName.getOrDefault(e.getKey(), ""));
-                    m.put("quantity", e.getValue());
-                    return m;
-                }).toList();
+                    .filter(oi -> oi.getStatusId() != null && oi.getStatusId() == 5)
+                    .collect(java.util.stream.Collectors.groupingBy(
+                            com.smartdine.models.OrderItem::getItemId,
+                            java.util.stream.Collectors.summingInt(com.smartdine.models.OrderItem::getQuantity)))
+                    .entrySet().stream().map(e -> {
+                        Map<String, Object> m = new HashMap<>();
+                        m.put("itemId", e.getKey());
+                        m.put("name", itemIdToName.getOrDefault(e.getKey(), ""));
+                        m.put("quantity", e.getValue());
+                        return m;
+                    }).toList();
 
             // Extra dishes: statusId == 6 (giả định 6 là extra/added)
             List<Map<String, Object>> extraDishes = todayOrderItems.stream()
-                .filter(oi -> oi.getStatusId() != null && oi.getStatusId() == 6)
-                .collect(java.util.stream.Collectors.groupingBy(
-                    com.smartdine.models.OrderItem::getItemId,
-                    java.util.stream.Collectors.summingInt(com.smartdine.models.OrderItem::getQuantity)
-                ))
-                .entrySet().stream().map(e -> {
-                    Map<String, Object> m = new HashMap<>();
-                    m.put("itemId", e.getKey());
-                    m.put("name", itemIdToName.getOrDefault(e.getKey(), ""));
-                    m.put("quantity", e.getValue());
-                    return m;
-                }).toList();
+                    .filter(oi -> oi.getStatusId() != null && oi.getStatusId() == 6)
+                    .collect(java.util.stream.Collectors.groupingBy(
+                            com.smartdine.models.OrderItem::getItemId,
+                            java.util.stream.Collectors.summingInt(com.smartdine.models.OrderItem::getQuantity)))
+                    .entrySet().stream().map(e -> {
+                        Map<String, Object> m = new HashMap<>();
+                        m.put("itemId", e.getKey());
+                        m.put("name", itemIdToName.getOrDefault(e.getKey(), ""));
+                        m.put("quantity", e.getValue());
+                        return m;
+                    }).toList();
 
             // Mock data cho supplies và documents để test
             List<Map<String, Object>> extraSupplies = new java.util.ArrayList<>();
@@ -173,26 +178,25 @@ public class OrderController {
                 supply1.put("name", "Bún tươi");
                 supply1.put("quantity", 10);
                 extraSupplies.add(supply1);
-                
+
                 Map<String, Object> supply2 = new HashMap<>();
                 supply2.put("name", "Thịt bò");
                 supply2.put("quantity", 5);
                 extraSupplies.add(supply2);
             }
-            
+
             List<Map<String, Object>> extraDocuments = new java.util.ArrayList<>();
             if (!todayOrders.isEmpty()) {
                 Map<String, Object> doc1 = new HashMap<>();
                 doc1.put("name", "Hóa đơn bán hàng");
                 doc1.put("quantity", todayOrders.size());
                 extraDocuments.add(doc1);
-                
+
                 Map<String, Object> doc2 = new HashMap<>();
                 doc2.put("name", "Phiếu nhập kho");
                 doc2.put("quantity", 2);
                 extraDocuments.add(doc2);
             }
->>>>>>> origin/branch-management-api-v1.2
 
             Map<String, Object> statistics = new HashMap<>();
             statistics.put("branchId", branchId);
@@ -221,6 +225,7 @@ public class OrderController {
 
             // Filter orders hôm nay
             List<Order> todayOrders = allOrders.stream()
+                    .filter(order -> order.getBranchId() != null && order.getBranchId().equals(branchId))
                     .filter(order -> order.getCreatedAt().isAfter(startOfDay)
                             && order.getCreatedAt().isBefore(endOfDay))
                     .toList();
@@ -242,19 +247,15 @@ public class OrderController {
                 hourlyOrders.put(hour, count);
             }
 
-<<<<<<< HEAD
-=======
             // Tổng hợp OrderItem hôm nay
             List<Integer> todayOrderIds = todayOrders.stream().map(Order::getId).toList();
-            List<com.smartdine.models.OrderItem> todayOrderItems = new java.util.ArrayList<>();
-            for (Integer oid : todayOrderIds) {
-                todayOrderItems.addAll(orderServices.getOrderItemsByOrderId(oid));
-            }
+            List<com.smartdine.models.OrderItem> todayOrderItems = orderItemService
+                    .getOrderItemsByOrderIds(todayOrderIds);
 
             // Mock item names để tránh lỗi ApplicationContext null khi deploy
             java.util.Map<Integer, String> itemIdToName = new java.util.HashMap<>();
             itemIdToName.put(1, "Phở Bò");
-            itemIdToName.put(2, "Bún Chả");  
+            itemIdToName.put(2, "Bún Chả");
             itemIdToName.put(3, "Trà Đá");
             itemIdToName.put(4, "Cơm Tấm");
             itemIdToName.put(5, "Bánh Mì");
@@ -262,48 +263,45 @@ public class OrderController {
 
             // Sold dishes: group by itemId, sum quantity, statusId != 5 (not cancelled)
             List<Map<String, Object>> soldDishes = todayOrderItems.stream()
-                .filter(oi -> oi.getStatusId() == null || oi.getStatusId() != 5)
-                .collect(java.util.stream.Collectors.groupingBy(
-                    com.smartdine.models.OrderItem::getItemId,
-                    java.util.stream.Collectors.summingInt(com.smartdine.models.OrderItem::getQuantity)
-                ))
-                .entrySet().stream().map(e -> {
-                    Map<String, Object> m = new HashMap<>();
-                    m.put("itemId", e.getKey());
-                    m.put("name", itemIdToName.getOrDefault(e.getKey(), ""));
-                    m.put("quantity", e.getValue());
-                    return m;
-                }).toList();
+                    .filter(oi -> oi.getStatusId() == null || oi.getStatusId() != 5)
+                    .collect(java.util.stream.Collectors.groupingBy(
+                            com.smartdine.models.OrderItem::getItemId,
+                            java.util.stream.Collectors.summingInt(com.smartdine.models.OrderItem::getQuantity)))
+                    .entrySet().stream().map(e -> {
+                        Map<String, Object> m = new HashMap<>();
+                        m.put("itemId", e.getKey());
+                        m.put("name", itemIdToName.getOrDefault(e.getKey(), ""));
+                        m.put("quantity", e.getValue());
+                        return m;
+                    }).toList();
 
             // Cancelled dishes: statusId == 5 (giả định 5 là cancelled)
             List<Map<String, Object>> cancelledDishes = todayOrderItems.stream()
-                .filter(oi -> oi.getStatusId() != null && oi.getStatusId() == 5)
-                .collect(java.util.stream.Collectors.groupingBy(
-                    com.smartdine.models.OrderItem::getItemId,
-                    java.util.stream.Collectors.summingInt(com.smartdine.models.OrderItem::getQuantity)
-                ))
-                .entrySet().stream().map(e -> {
-                    Map<String, Object> m = new HashMap<>();
-                    m.put("itemId", e.getKey());
-                    m.put("name", itemIdToName.getOrDefault(e.getKey(), ""));
-                    m.put("quantity", e.getValue());
-                    return m;
-                }).toList();
+                    .filter(oi -> oi.getStatusId() != null && oi.getStatusId() == 5)
+                    .collect(java.util.stream.Collectors.groupingBy(
+                            com.smartdine.models.OrderItem::getItemId,
+                            java.util.stream.Collectors.summingInt(com.smartdine.models.OrderItem::getQuantity)))
+                    .entrySet().stream().map(e -> {
+                        Map<String, Object> m = new HashMap<>();
+                        m.put("itemId", e.getKey());
+                        m.put("name", itemIdToName.getOrDefault(e.getKey(), ""));
+                        m.put("quantity", e.getValue());
+                        return m;
+                    }).toList();
 
             // Extra dishes: statusId == 6 (giả định 6 là extra/added)
             List<Map<String, Object>> extraDishes = todayOrderItems.stream()
-                .filter(oi -> oi.getStatusId() != null && oi.getStatusId() == 6)
-                .collect(java.util.stream.Collectors.groupingBy(
-                    com.smartdine.models.OrderItem::getItemId,
-                    java.util.stream.Collectors.summingInt(com.smartdine.models.OrderItem::getQuantity)
-                ))
-                .entrySet().stream().map(e -> {
-                    Map<String, Object> m = new HashMap<>();
-                    m.put("itemId", e.getKey());
-                    m.put("name", itemIdToName.getOrDefault(e.getKey(), ""));
-                    m.put("quantity", e.getValue());
-                    return m;
-                }).toList();
+                    .filter(oi -> oi.getStatusId() != null && oi.getStatusId() == 6)
+                    .collect(java.util.stream.Collectors.groupingBy(
+                            com.smartdine.models.OrderItem::getItemId,
+                            java.util.stream.Collectors.summingInt(com.smartdine.models.OrderItem::getQuantity)))
+                    .entrySet().stream().map(e -> {
+                        Map<String, Object> m = new HashMap<>();
+                        m.put("itemId", e.getKey());
+                        m.put("name", itemIdToName.getOrDefault(e.getKey(), ""));
+                        m.put("quantity", e.getValue());
+                        return m;
+                    }).toList();
 
             // Mock data cho supplies và documents để test
             List<Map<String, Object>> extraSupplies = new java.util.ArrayList<>();
@@ -312,27 +310,26 @@ public class OrderController {
                 supply1.put("name", "Bún tươi");
                 supply1.put("quantity", 10);
                 extraSupplies.add(supply1);
-                
+
                 Map<String, Object> supply2 = new HashMap<>();
                 supply2.put("name", "Thịt bò");
                 supply2.put("quantity", 5);
                 extraSupplies.add(supply2);
             }
-            
+
             List<Map<String, Object>> extraDocuments = new java.util.ArrayList<>();
             if (!todayOrders.isEmpty()) {
                 Map<String, Object> doc1 = new HashMap<>();
                 doc1.put("name", "Hóa đơn bán hàng");
                 doc1.put("quantity", todayOrders.size());
                 extraDocuments.add(doc1);
-                
+
                 Map<String, Object> doc2 = new HashMap<>();
                 doc2.put("name", "Phiếu nhập kho");
                 doc2.put("quantity", 2);
                 extraDocuments.add(doc2);
             }
 
->>>>>>> origin/branch-management-api-v1.2
             Map<String, Object> summary = new HashMap<>();
             summary.put("branchId", branchId);
             summary.put("date", now.toLocalDate().toString());
