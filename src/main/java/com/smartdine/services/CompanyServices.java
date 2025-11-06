@@ -13,6 +13,10 @@ public class CompanyServices {
     @Autowired
     CompanyRepository companyRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+
     // Lấy tất cà company
     public List<Company> getAll() {
         return companyRepository.findAll();
@@ -34,17 +38,48 @@ public class CompanyServices {
     }
 
     /// Duyệt công ty
-    public Company approveCompany(Integer id) {
-        Company company = companyRepository.findById(id).orElseThrow();
-        company.setStatusId(1); // đã duyệt
-        return companyRepository.save(company);
+    public Company approveCompany(Integer companyId) {
+        // Lấy company cần duyệt
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy công ty có id = " + companyId));
+
+        // Cập nhật status company thành 1 (đã duyệt)
+        company.setStatusId(1);
+        company.setUpdatedAt(LocalDateTime.now());
+        companyRepository.save(company);
+
+        // ✅ Cập nhật luôn user (chủ công ty) tương ứng
+        List<User> owners = userRepository.findByCompanyIdAndRole(companyId, 1); // role=1 => Owner
+        for (User owner : owners) {
+            owner.setStatusId(1); // Duyệt luôn user
+            owner.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(owner);
+        }
+
+        return company;
     }
 
     /// Từ chối công ty
-    public Company rejectCompany(Integer id) {
-        Company company = companyRepository.findById(id).orElseThrow();
-        company.setStatusId(2); // bị từ chối
-        return companyRepository.save(company);
+    @Transactional
+    public Company rejectCompany(Integer companyId) {
+        // 1️⃣ Lấy thông tin công ty
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy công ty có id = " + companyId));
+
+        // 2️⃣ Cập nhật trạng thái công ty => 2 (bị từ chối)
+        company.setStatusId(2);
+        company.setUpdatedAt(LocalDateTime.now());
+        companyRepository.save(company);
+
+        // 3️⃣ Cập nhật luôn user là chủ công ty (role = 1)
+        List<User> owners = userRepository.findByCompanyIdAndRole(companyId, 1);
+        for (User owner : owners) {
+            owner.setStatusId(2); // Từ chối user luôn
+            owner.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(owner);
+        }
+
+        return company;
     }
 
     /// Xóa company
