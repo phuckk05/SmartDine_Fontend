@@ -96,7 +96,7 @@ class _ScreenHistoryState extends ConsumerState<ScreenHistory> {
         title: Row(
           children: [
             Text(
-              'Lịch sử',
+              'Hoạt động món ăn',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -141,7 +141,9 @@ class _ScreenHistoryState extends ConsumerState<ScreenHistory> {
         children: const [
           Padding(
             padding: EdgeInsets.all(24),
-            child: Center(child: Text('Chưa có dữ liệu lịch sử.')),
+            child: Center(
+              child: Text('Chưa có dữ liệu hoạt động lịch sử món ăn.'),
+            ),
           ),
         ],
       );

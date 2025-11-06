@@ -52,7 +52,7 @@ class SettingNotifier extends StateNotifier<SettingState> {
 
       final userRes = await http.get(
         Uri.parse(
-          'https://smartdine-backend-oq2x.onrender.com/api/users/email/$email',
+          'https://smartdine-backend-oq2x.onrender.com/api/users/email/$email', //https://smartdine-backend-oq2x.onrender.com/api/users/email/hadl@gmail.com
         ),
       );
       final userData = json.decode(userRes.body);
@@ -105,7 +105,7 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
           .read(settingProvider.notifier)
-          .fetchUserData('phuckk2101@gmail.com'); // Gọi API
+          .fetchUserData('hadl@gmail.com'); // Gọi API
     });
   }
 

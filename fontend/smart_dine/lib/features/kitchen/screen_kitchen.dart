@@ -165,15 +165,6 @@ class _ScreenKitchenState extends ConsumerState<ScreenKitchen>
             ),
           ],
         ),
-        centerTitle: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: const [
-          Icon(Icons.notifications),
-          SizedBox(width: 16),
-          Icon(Icons.settings),
-          SizedBox(width: 16),
-        ],
       ),
       body: SafeArea(
         child: Stack(

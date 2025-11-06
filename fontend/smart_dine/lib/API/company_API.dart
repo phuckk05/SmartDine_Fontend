@@ -34,6 +34,40 @@ class CompanyAPI {
     }
     return null;
   }
+
+  // Lấy danh sách công ty chờ xác nhận
+  Future<List<Company>> getPendingCompanies() async {
+    final response = await http.get(Uri.parse('$uri2/pending'));
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((e) => Company.fromMap(e)).toList();
+    }
+    throw Exception('Lỗi khi lấy danh sách công ty chờ duyệt');
+  }
+
+  // Duyệt công ty
+  Future<void> approveCompany(int id) async {
+    final response = await http.put(Uri.parse('$uri2/approve/$id'));
+    if (response.statusCode != 200) {
+      throw Exception('Không thể duyệt công ty');
+    }
+  }
+
+  // Từ chối công ty
+  Future<void> rejectCompany(int id) async {
+    final response = await http.put(Uri.parse('$uri2/reject/$id'));
+    if (response.statusCode != 200) {
+      throw Exception('Không thể từ chối công ty');
+    }
+  }
+
+  // Xóa công ty
+  Future<void> deleteCompany(int id) async {
+    final response = await http.delete(Uri.parse('$uri2/delete/$id'));
+    if (response.statusCode != 200) {
+      throw Exception('Không thể xóa công ty');
+    }
+  }
 }
 
 final companyApiProvider = StateProvider<CompanyAPI>((ref) => CompanyAPI());

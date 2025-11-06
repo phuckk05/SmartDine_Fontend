@@ -30,9 +30,9 @@ class _BottomNavigationState extends ConsumerState<ScreenBottomNavigation> {
 
   // Danh sách các màn hình cho Admin (index = 2)
   final List<Widget> _adminScreens = [
-    const DashboardScreen(),
-    const ConfirmManagementScreen(), // screen_qlxacnhan.dart
-    const StoreManagementScreen(), // screen_qlcuahang.dart
+    const ScreenDashboard(),
+    const ScreenQlXacNhan(),
+    const ScreenQlcuahang(),
   ];
 
   @override
@@ -65,7 +65,7 @@ class _BottomNavigationState extends ConsumerState<ScreenBottomNavigation> {
                   BottomNavigationBarItem(
                     icon: Icon(Icons.history_outlined),
                     activeIcon: Icon(Icons.history),
-                    label: 'Lịch sử',
+                    label: 'Hoạt động món ăn',
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(Icons.settings_outlined),
