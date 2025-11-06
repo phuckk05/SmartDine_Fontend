@@ -1,5 +1,6 @@
 package com.smartdine.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,5 +9,6 @@ import com.smartdine.models.Company;
 
 public interface CompanyRepository extends JpaRepository<Company, Integer> {
     Optional<Company> findByCompanyCode(String companyCode);
+
     List<Company> findByStatusId(Integer statusId);
 }
