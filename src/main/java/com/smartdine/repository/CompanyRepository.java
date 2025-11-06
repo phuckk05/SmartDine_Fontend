@@ -8,4 +8,5 @@ import com.smartdine.models.Company;
 
 public interface CompanyRepository extends JpaRepository<Company, Integer> {
     Optional<Company> findByCompanyCode(String companyCode);
+    List<Company> findByStatusId(Integer statusId);
 }

@@ -28,4 +28,32 @@ public class CompanyServices {
         return companyRepository.findByCompanyCode(companyCode).orElse(null);
     }
 
+    /// Danh sách công ty chờ duyệt
+    public List<Company> getPendingCompanies() {
+        return companyRepository.findByStatusId(3);
+    }
+
+    /// Duyệt công ty
+    public Company approveCompany(Integer id) {
+        Company company = companyRepository.findById(id).orElseThrow();
+        company.setStatusId(1); // đã duyệt
+        return companyRepository.save(company);
+    }
+
+    /// Từ chối công ty
+    public Company rejectCompany(Integer id) {
+        Company company = companyRepository.findById(id).orElseThrow();
+        company.setStatusId(2); // bị từ chối
+        return companyRepository.save(company);
+    }
+
+    /// Xóa company
+    public boolean deleteCompany(Integer id) {
+        if (companyRepository.existsById(id)) {
+            companyRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
 }
