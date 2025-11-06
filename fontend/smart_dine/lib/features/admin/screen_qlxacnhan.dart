@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/providers/qlxacnhan_provider.dart';
 import 'package:mart_dine/models/company_item.dart';
+import 'package:mart_dine/models/company.dart';
 
 class ScreenQlXacNhan extends ConsumerWidget {
   const ScreenQlXacNhan({super.key});
@@ -11,80 +12,149 @@ class ScreenQlXacNhan extends ConsumerWidget {
     final companiesAsync = ref.watch(qlXacNhanProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Quản lý xác nhận'), centerTitle: true),
+      backgroundColor: const Color(0xFFF8F9FB),
+      appBar: AppBar(
+        title: const Text(
+          'Quản lý xác nhận',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.blueAccent,
+        elevation: 0,
+      ),
       body: companiesAsync.when(
         data: (companies) {
           if (companies.isEmpty) {
-            return const Center(child: Text('Không có công ty chờ duyệt.'));
+            return RefreshIndicator(
+              onRefresh: () async {
+                await ref
+                    .read(qlXacNhanProvider.notifier)
+                    .loadPendingCompanies();
+              },
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const [
+                  SizedBox(height: 200),
+                  Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.business, size: 80, color: Colors.grey),
+                        SizedBox(height: 16),
+                        Text(
+                          'Không có công ty chờ duyệt.',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
           }
 
           return RefreshIndicator(
             onRefresh: () async {
-              // Kéo xuống để tải lại dữ liệu
               await ref.read(qlXacNhanProvider.notifier).loadPendingCompanies();
             },
-            child: ListView.builder(
+            child: ListView.separated(
+              padding: const EdgeInsets.all(16),
               itemCount: companies.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final company = companies[index];
-                return CompanyItem(
-                  company: company,
-                  onApprove: () async {
-                    await ref
-                        .read(qlXacNhanProvider.notifier)
-                        .approveCompany(company.id!);
-
-                    // Sau khi duyệt, load lại dữ liệu
-                    await ref
-                        .read(qlXacNhanProvider.notifier)
-                        .loadPendingCompanies();
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('✅ Đã duyệt công ty ${company.name}'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  },
-                  onReject: () async {
-                    await ref
-                        .read(qlXacNhanProvider.notifier)
-                        .rejectCompany(company.id!);
-
-                    await ref
-                        .read(qlXacNhanProvider.notifier)
-                        .loadPendingCompanies();
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('❌ Đã từ chối công ty ${company.name}'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  },
-                  onDelete: () async {
-                    await ref
-                        .read(qlXacNhanProvider.notifier)
-                        .deleteCompany(company.id!);
-
-                    await ref
-                        .read(qlXacNhanProvider.notifier)
-                        .loadPendingCompanies();
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('🗑️ Đã xóa công ty ${company.name}'),
-                        backgroundColor: Colors.grey[700],
-                      ),
-                    );
-                  },
+                return AnimatedOpacity(
+                  opacity: 1,
+                  duration: const Duration(milliseconds: 400),
+                  child: CompanyItem(
+                    company: company,
+                    onApprove: () async {
+                      await ref
+                          .read(qlXacNhanProvider.notifier)
+                          .approveCompany(company.id!);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            '✅ Đã duyệt công ty ${company.name}',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          backgroundColor: Colors.green,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    onReject: () async {
+                      await ref
+                          .read(qlXacNhanProvider.notifier)
+                          .rejectCompany(company.id!);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            '❌ Đã từ chối công ty ${company.name}',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          backgroundColor: Colors.redAccent,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                  ),
                 );
               },
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Lỗi: $err')),
+        loading:
+            () => const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(color: Colors.blueAccent),
+                  SizedBox(height: 16),
+                  Text(
+                    'Đang tải dữ liệu...',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+        error:
+            (err, stack) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 60,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Lỗi khi tải dữ liệu:\n$err',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.red, fontSize: 15),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.refresh),
+                      onPressed:
+                          () =>
+                              ref
+                                  .read(qlXacNhanProvider.notifier)
+                                  .loadPendingCompanies(),
+                      label: const Text('Thử lại'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
       ),
     );
   }

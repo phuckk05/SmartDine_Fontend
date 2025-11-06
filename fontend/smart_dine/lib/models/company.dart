@@ -85,16 +85,12 @@ class Company {
           map['statusId'] is int
               ? map['statusId']
               : int.tryParse(map['statusId'].toString()) ?? 0,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(
-        map['createdAt'] is int
-            ? map['createdAt']
-            : int.tryParse(map['createdAt'].toString()) ?? 0,
-      ),
-      updatedAt: DateTime.fromMillisecondsSinceEpoch(
-        map['updatedAt'] is int
-            ? map['updatedAt']
-            : int.tryParse(map['updatedAt'].toString()) ?? 0,
-      ),
+      createdAt:
+          DateTime.tryParse(map['created_at'] ?? map['createdAt'] ?? '') ??
+          DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(map['updated_at'] ?? map['updatedAt'] ?? '') ??
+          DateTime.now(),
     );
   }
 
