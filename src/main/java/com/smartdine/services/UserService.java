@@ -82,5 +82,18 @@ public class UserService {
 
         return userRepository.save(user);
     }
-    
+
+    // Cập nhật mã công ty
+    public User updateCompanyId(Integer id, Integer companyId) {
+        User user = userRepository.findById(id).orElse(null);
+        if (user == null) {
+            throw new IllegalArgumentException("User not found with id: " + id);
+        }
+
+        user.setCompanyId(companyId);
+        user.setUpdatedAt(LocalDateTime.now());
+
+        return userRepository.save(user);
+    }
+
 }

@@ -73,5 +73,21 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
     }
-    
+
+    // Cập nhật companyId cho user
+    @PutMapping("/{id}/company/{companyId}")
+    public ResponseEntity<?> updateUserCompanyId(@PathVariable Integer id, @PathVariable Integer companyId) {
+        try {
+            User user = userService.getUserById(id);
+            if (user == null) {
+                return ResponseEntity.notFound().build();
+            }
+            user.setCompanyId(companyId);
+            User updatedUser = userService.updateUser(id, user);
+            return ResponseEntity.ok(updatedUser);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 }
