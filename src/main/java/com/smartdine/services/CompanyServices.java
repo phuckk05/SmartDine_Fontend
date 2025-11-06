@@ -1,12 +1,16 @@
 package com.smartdine.services;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.smartdine.models.Company;
+import com.smartdine.models.User;
 import com.smartdine.repository.CompanyRepository;
+import com.smartdine.repository.UserRepository;
+import jakarta.transaction.Transactional;
 
 @Service
 public class CompanyServices {
@@ -15,7 +19,6 @@ public class CompanyServices {
 
     @Autowired
     private UserRepository userRepository;
-
 
     // Lấy tất cà company
     public List<Company> getAll() {
