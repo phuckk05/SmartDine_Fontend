@@ -117,4 +117,32 @@ public class CompanyController {
             return ResponseEntity.internalServerError().body("Lỗi khi lấy thống kê công ty: " + e.getMessage());
         }
     }
+
+    //Quản lý cửa hàng
+    /// Lấy danh sách công ty đã duyệt (statusId = 1)
+    @GetMapping("/active")
+    public ResponseEntity<?> getActiveCompanies() {
+    try {
+        List<Company> active = companyServices.getActiveCompanies();
+        return ResponseEntity.ok(active);
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.internalServerError().body("Lỗi khi lấy danh sách công ty đã duyệt");
+    }
+    }
+
+    /// Kích hoạt hoặc vô hiệu hóa công ty
+    @PutMapping("/toggle/{id}/{active}")
+    public ResponseEntity<?> toggleCompanyStatus(@PathVariable Integer id, @PathVariable boolean active) {
+    try {
+        Company updated = companyServices.toggleCompanyStatus(id, active);
+        return ResponseEntity.ok(updated);
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.badRequest().body("Lỗi khi cập nhật trạng thái công ty: " + e.getMessage());
+    }
+    }
+
+    
+
 }
