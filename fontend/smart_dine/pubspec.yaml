@@ -37,6 +37,9 @@ dependencies:
   crypto: ^3.0.3
   bcrypt: ^1.1.3
 
+  #lưu trữ local
+  shared_preferences: ^2.3.2
+
   #thư viện wbsocket để làm realtieme
   stomp_dart_client: ^1.0.0
 

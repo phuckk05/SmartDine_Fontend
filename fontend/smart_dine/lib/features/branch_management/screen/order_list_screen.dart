@@ -4,6 +4,7 @@ import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/branch_management/screen/order_detail_screen.dart';
 import '../../../models/order.dart';
 import '../../../providers/order_management_provider.dart';
+import '../../../providers/user_session_provider.dart';
 
 class OrderListScreen extends ConsumerStatefulWidget {
   final bool showBackButton;
@@ -19,24 +20,34 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
   
   String? _selectedStatusFilter;
 
-  String? _getBranchId() {
-    // TODO: Get branchId từ user context thông qua UserBranch
-    // For now, return mock branchId
-    return '1'; // Mock branch ID as String
-  }
-
   @override
   Widget build(BuildContext context) {
-    // Lấy branchId từ route giống như các screen khác
-    final branchId = _getBranchId();
-    if (branchId == null) {
+    // Lấy branchId từ user session
+    final currentBranchId = ref.watch(currentBranchIdProvider);
+    final isAuthenticated = ref.watch(isAuthenticatedProvider);
+    
+    // Nếu chưa có session, tự động tạo mock session
+    if (!isAuthenticated || currentBranchId == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(userSessionProvider.notifier).mockLogin(branchId: 1);
+      });
+      
       return Scaffold(
         appBar: AppBar(title: const Text('Danh sách đơn hàng')),
-        body: const Center(child: Text('Không tìm thấy thông tin chi nhánh')),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Đang khởi tạo phiên làm việc...'),
+            ],
+          ),
+        ),
       );
     }
     
-    final branchIdInt = int.tryParse(branchId) ?? 1;
+    final branchIdInt = currentBranchId;
     final ordersAsyncValue = ref.watch(ordersByBranchProvider(branchIdInt));
     final statusesAsyncValue = ref.watch(orderStatusProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -74,9 +85,9 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
-                        final branchIdInt = int.tryParse(_getBranchId() ?? '1') ?? 1;
+                        final sessionBranchId = ref.read(currentBranchIdProvider) ?? 1;
                         // ignore: unused_result
-                        ref.refresh(ordersByBranchProvider(branchIdInt));
+                        ref.refresh(ordersByBranchProvider(sessionBranchId));
                       },
                       child: const Text('Thử lại'),
                     ),
@@ -211,8 +222,8 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
 
     return RefreshIndicator(
       onRefresh: () async {
-        final branchIdInt = int.tryParse(_getBranchId() ?? '1') ?? 1;
-        return ref.refresh(ordersByBranchProvider(branchIdInt));
+        final sessionBranchId = ref.read(currentBranchIdProvider) ?? 1;
+        return ref.refresh(ordersByBranchProvider(sessionBranchId));
       },
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -412,24 +423,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
     )}đ';
   }
 
-  Color _getStatusColor(String statusCode) {
-    switch (statusCode) {
-      case 'PENDING':
-        return Colors.orange;
-      case 'COOKING':
-        return Colors.blue;
-      case 'READY':
-        return Colors.purple;
-      case 'SERVED':
-        return Colors.green;
-      case 'PAID':
-        return Colors.grey;
-      case 'CANCELLED':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
+
 
   @override
   void dispose() {

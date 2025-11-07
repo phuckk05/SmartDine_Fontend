@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
 import '../../../providers/branch_statistics_provider.dart';
+import '../../../providers/user_session_provider.dart';
 import '../../../models/statistics.dart';
 
 class BranchReportsScreen extends ConsumerStatefulWidget {
@@ -16,23 +17,33 @@ class BranchReportsScreen extends ConsumerStatefulWidget {
 class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
   String _selectedPeriod = 'Tháng này';
 
-  String? _getBranchId() {
-    // TODO: Get branchId từ user context thông qua UserBranch
-    // For now, return mock branchId
-    return '1'; // Mock branch ID as String
-  }
-
   @override
   Widget build(BuildContext context) {
-    final branchId = _getBranchId();
-    if (branchId == null) {
+    // Lấy branchId từ user session
+    final currentBranchId = ref.watch(currentBranchIdProvider);
+    final isAuthenticated = ref.watch(isAuthenticatedProvider);
+    
+    // Nếu chưa có session, tự động tạo mock session
+    if (!isAuthenticated || currentBranchId == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(userSessionProvider.notifier).mockLogin(branchId: 1);
+      });
+      
       return const Scaffold(
-        body: Center(child: Text('Không tìm thấy thông tin chi nhánh')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Đang khởi tạo phiên làm việc...'),
+            ],
+          ),
+        ),
       );
     }
 
-    // Convert String to int for API call
-    final branchIdInt = int.tryParse(branchId) ?? 1;
+    final branchIdInt = currentBranchId;
     final statisticsAsyncValue = ref.watch(branchStatisticsProvider(branchIdInt));
     final isDark = Theme.of(context).brightness == Brightness.dark;
 

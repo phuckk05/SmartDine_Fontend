@@ -1,28 +1,117 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/widgets/appbar.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../../../providers/branch_statistics_provider.dart';
+import '../../../providers/user_session_provider.dart';
 
 
-class BranchPerformanceScreen extends StatelessWidget {
+class BranchPerformanceScreen extends ConsumerStatefulWidget {
   const BranchPerformanceScreen({super.key});
+
+  @override
+  ConsumerState<BranchPerformanceScreen> createState() => _BranchPerformanceScreenState();
+}
+
+class _BranchPerformanceScreenState extends ConsumerState<BranchPerformanceScreen> {
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Style.colorLight : Style.colorDark;
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
+    
+    // Lấy branchId từ user session
+    final currentBranchId = ref.watch(currentBranchIdProvider);
+    final isAuthenticated = ref.watch(isAuthenticatedProvider);
+    
+    // Nếu chưa có session, hiển thị loading
+    if (!isAuthenticated || currentBranchId == null) {
+      return Scaffold(
+        backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
+        appBar: AppBarCus(title: 'Hiệu xuất chi nhánh'),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Đang khởi tạo phiên làm việc...'),
+            ],
+          ),
+        ),
+      );
+    }
+    
+    // Lấy dữ liệu thống kê từ API
+    final statisticsAsyncValue = ref.watch(branchStatisticsProvider(currentBranchId));
+    
+    // Lấy branchId từ user session
+    final currentBranchId = ref.watch(currentBranchIdProvider);
+    final isAuthenticated = ref.watch(isAuthenticatedProvider);
+    
+    // Nếu chưa có session, tự động tạo mock session
+    if (!isAuthenticated || currentBranchId == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(userSessionProvider.notifier).mockLogin(branchId: 1);
+      });
+      
+      return Scaffold(
+        backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
+        appBar: AppBarCus(title: 'Hiệu xuất chi nhánh'),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Đang khởi tạo phiên làm việc...'),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final statisticsAsyncValue = ref.watch(branchStatisticsProvider(currentBranchId));
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
       appBar: AppBarCus(
         title: 'Hiệu xuất chi nhánh',
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: statisticsAsyncValue.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+              const SizedBox(height: 16),
+              Text('Có lỗi xảy ra khi tải dữ liệu', 
+                style: TextStyle(color: textColor)),
+              const SizedBox(height: 8),
+              Text(error.toString(), 
+                style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => ref.refresh(branchStatisticsProvider(currentBranchId)),
+                child: const Text('Thử lại'),
+              ),
+            ],
+          ),
+        ),
+        data: (statistics) => _buildContent(context, statistics, textColor, cardColor, isDark),
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context, dynamic statistics, Color textColor, Color cardColor, bool isDark) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
             // Tổng quan
             Text(
               'Tổng quan chi nhánh',
@@ -34,7 +123,7 @@ class BranchPerformanceScreen extends StatelessWidget {
                 Expanded(
                   child: _buildStatCard(
                     'Tổng đơn hàng',
-                    '1,845',
+                    '${statistics?['todayOrders'] ?? 0}',
                     Icons.shopping_cart,
                     Colors.blue,
                     isDark,
@@ -46,7 +135,7 @@ class BranchPerformanceScreen extends StatelessWidget {
                 Expanded(
                   child: _buildStatCard(
                     'Doanh thu',
-                    '165 triệu',
+                    '${((statistics?['todayRevenue'] ?? 0) / 1000000).toStringAsFixed(1)} triệu',
                     Icons.attach_money,
                     Colors.green,
                     isDark,
@@ -61,8 +150,8 @@ class BranchPerformanceScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: _buildStatCard(
-                    'Khách hàng',
-                    '1,520',
+                    'Nhân viên',
+                    '${statistics?['totalEmployees'] ?? 0}',
                     Icons.people,
                     Colors.orange,
                     isDark,
@@ -73,8 +162,8 @@ class BranchPerformanceScreen extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatCard(
-                    'Đánh giá TB',
-                    '4.8★',
+                    'Tỷ lệ bàn',
+                    '${(statistics?['occupancyRate'] ?? 0).toStringAsFixed(1)}%',
                     Icons.star,
                     Colors.amber,
                     isDark,

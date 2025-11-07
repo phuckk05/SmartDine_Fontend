@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/widgets/appbar.dart';
 import '../../../providers/today_activities_provider.dart';
+import '../../../providers/user_session_provider.dart';
+import '../../../widgets/account_switcher.dart';
+import '../../../config/app_config.dart';
 
 class TodayActivitiesScreen extends ConsumerStatefulWidget {
   const TodayActivitiesScreen({super.key});
@@ -19,9 +22,34 @@ class _TodayActivitiesScreenState extends ConsumerState<TodayActivitiesScreen> {
     final textColor = isDark ? Style.colorLight : Style.colorDark;
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
     
-    // Giả sử branchId = 1, trong thực tế nên lấy từ user state
-    const branchId = 1;
-    final todayActivitiesAsync = ref.watch(todayActivitiesProvider(branchId));
+    // Lấy branchId từ user session
+    final currentBranchId = ref.watch(currentBranchIdProvider);
+    final isAuthenticated = ref.watch(isAuthenticatedProvider);
+    
+    // Nếu chưa có session, tự động tạo mock session
+    if (!isAuthenticated || currentBranchId == null) {
+      // Tự động mock login với branch mặc định
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(userSessionProvider.notifier).mockLogin(branchId: 1);
+      });
+      
+      return Scaffold(
+        backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
+        appBar: AppBarCus(title: 'Hoạt động hôm nay'),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Đang khởi tạo phiên làm việc...'),
+            ],
+          ),
+        ),
+      );
+    }
+    
+    final todayActivitiesAsync = ref.watch(todayActivitiesProvider(currentBranchId));
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
@@ -61,7 +89,7 @@ class _TodayActivitiesScreenState extends ConsumerState<TodayActivitiesScreen> {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
-                  ref.read(todayActivitiesProvider(branchId).notifier).refresh();
+                  ref.read(todayActivitiesProvider(currentBranchId).notifier).refresh();
                 },
                 child: const Text('Thử lại'),
               ),
@@ -79,6 +107,8 @@ class _TodayActivitiesScreenState extends ConsumerState<TodayActivitiesScreen> {
       child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 🔧 Development Mode - Account Switcher
+            if (AppConfig.isDevelopment) const AccountSwitcher(),
             // Doanh thu card
             Container(
               padding: const EdgeInsets.all(20),

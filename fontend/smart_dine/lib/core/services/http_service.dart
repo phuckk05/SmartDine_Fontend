@@ -12,9 +12,9 @@ class HttpService {
   final Duration _timeout = const Duration(seconds: 30);
   final int _maxRetries = 3;
   
-  // Proxy configuration for CORS bypass in web development
-  static const bool _useProxy = false; // Set to true to use proxy
-  static const String _proxyUrl = 'http://localhost:8080';
+  // 🟢 Configuration - Có thể tắt proxy cho mobile
+  static const bool _useProxy = false; // MOBILE: Luôn để false
+  static const String _proxyUrl = 'http://localhost:8080'; // Chỉ cho web dev
 
   // Headers mặc định
   Map<String, String> get _headers => {
@@ -23,15 +23,16 @@ class HttpService {
     'User-Agent': 'SmartDine-Flutter-App',
   };
 
-  // Transform URL for proxy if needed
+  // Transform URL for proxy if needed (MOBILE: Always returns original URL)
   String _transformUrl(String url) {
     if (kIsWeb && _useProxy) {
-      // Replace the original domain with proxy
+      // Replace the original domain with proxy (Web only)
       return url.replaceFirst(
         'https://smartdine-backend-oq2x.onrender.com',
         _proxyUrl
       );
     }
+    // 🟢 MOBILE: Luôn trả về URL gốc
     return url;
   }
 
