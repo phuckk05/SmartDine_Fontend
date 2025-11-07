@@ -57,6 +57,26 @@ public class OrderController {
         return orderServices.getById(id);
     }
 
+    // Cập nhật trạng thái order
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateOrderStatus(@PathVariable Integer id, @RequestBody Map<String, Object> request) {
+        try {
+            Integer statusId = Integer.valueOf(request.get("statusId").toString());
+            Order order = orderServices.getById(id);
+            if (order == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            order.setStatusId(statusId);
+            Order updatedOrder = orderServices.saveOrder(order);
+
+            return ResponseEntity.ok(updatedOrder);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     // Lấy danh sách món trong đơn hàng
     @GetMapping("/{orderId}/items")
     public ResponseEntity<List<OrderItem>> getItemsByOrder(@PathVariable Integer orderId) {
