@@ -35,6 +35,7 @@ class CompanyAPI {
     return null;
   }
 
+  //Quản lý xác nhận
   // Lấy danh sách công ty chờ xác nhận
   Future<List<Company>> getPendingCompanies() async {
     final response = await http.get(Uri.parse('$uri2/pending'));
@@ -66,6 +67,25 @@ class CompanyAPI {
     final response = await http.delete(Uri.parse('$uri2/delete/$id'));
     if (response.statusCode != 200) {
       throw Exception('Không thể xóa công ty');
+    }
+  }
+
+  // Quản lý cửa hàng
+  // Lấy danh sách công ty đã duyệt (statusId = 1)
+  Future<List<Company>> getActiveCompanies() async {
+    final response = await http.get(Uri.parse('$uri2/active'));
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((e) => Company.fromMap(e)).toList();
+    }
+    throw Exception('Lỗi khi lấy danh sách công ty đã kích hoạt');
+  }
+
+  // Đổi trạng thái công ty (kích hoạt / vô hiệu hóa)
+  Future<void> toggleCompanyStatus(int id, bool isActive) async {
+    final response = await http.put(Uri.parse('$uri2/toggle/$id/$isActive'));
+    if (response.statusCode != 200) {
+      throw Exception('Không thể cập nhật trạng thái công ty');
     }
   }
 }
