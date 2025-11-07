@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mart_dine/features/start/screen/screen_start.dart';
+import 'package:mart_dine/features/staff/screen_start.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {

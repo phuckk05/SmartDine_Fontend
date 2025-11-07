@@ -7,11 +7,9 @@ class User {
   final String email;
   final String phone;
   final String passworkHash;
-  final String? fontImage;
-  final String? backImage;
-  final int? statusId;
-  final int? role; // Thêm role field theo backend
-  final int? companyId; // Thêm companyId field theo backend
+  final String fontImage;
+  final String backImage;
+  final int statusId;
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? deletedAt;
@@ -28,11 +26,9 @@ class User {
     required this.email,
     required this.phone,
     required this.passworkHash,
-    this.fontImage,
-    this.backImage,
-    this.statusId,
-    this.role,
-    this.companyId,
+    required this.fontImage,
+    required this.backImage,
+    required this.statusId,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
@@ -49,6 +45,8 @@ class User {
     required String phone,
     required String password, // nhận mật khẩu gốc
     required int statusId,
+    required int? role,
+    required int? companyId,
     required String? fontImage,
     required String? backImage,
   }) {
@@ -61,6 +59,8 @@ class User {
       phone: phone,
       passworkHash: hashed,
       statusId: statusId,
+      role: role,
+      companyId: companyId,
       fontImage: fontImage ?? "Chưa có",
       backImage: backImage ?? "Chưa có",
       createdAt: now,
@@ -121,10 +121,6 @@ class User {
       'passwordHash': passworkHash,
       'password_hash': passworkHash,
       'statusId': statusId,
-      'status_id': statusId,
-      'role': role,
-      'companyId': companyId,
-      'company_id': companyId,
       'fontImage': fontImage,
       'font_image': fontImage,
       'backImage': backImage,
@@ -132,18 +128,14 @@ class User {
       'createdAt': createdAt.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
-      'deletedAt': deletedAt?.toIso8601String(),
-      'deleted_at': deletedAt?.toIso8601String(),
-      if (roleName != null) 'roleName': roleName,
-      if (roleName != null) 'role_name': roleName,
-      if (statusName != null) 'statusName': statusName,
-      if (statusName != null) 'status_name': statusName,
-      if (companyName != null) 'companyName': companyName,
-      if (companyName != null) 'company_name': companyName,
-      if (branchIds != null) 'branchIds': branchIds,
-      if (branchIds != null) 'branch_ids': branchIds,
+      'deletedAt': deletedAt != null ? deletedAt!.toIso8601String() : null,
     };
+  }
+
+  int? parseInt(dynamic v) {
+    if (v == null) return null;
+    if (v is int) return v;
+    return int.tryParse(v.toString());
   }
 
   factory User.fromMap(Map<String, dynamic> map) {
@@ -176,28 +168,17 @@ class User {
     }
 
     return User(
-      id: _parseInt(map['id']),
-      fullName: map['fullName']?.toString() ?? map['full_name']?.toString() ?? '',
-      email: map['email']?.toString() ?? '',
-      phone: map['phone']?.toString() ?? '',
-      passworkHash: map['passworkHash']?.toString() ?? 
-                   map['passwork_hash']?.toString() ?? 
-                   map['passwordHash']?.toString() ?? 
-                   map['password_hash']?.toString() ?? '',
-      statusId: _parseInt(map['statusId']) ?? _parseInt(map['status_id']),
-      role: _parseInt(map['role']),
-      companyId: _parseInt(map['companyId']) ?? _parseInt(map['company_id']),
-      fontImage: map['fontImage']?.toString() ?? map['font_image']?.toString(),
-      backImage: map['backImage']?.toString() ?? map['back_image']?.toString(),
-      createdAt: _parseDate(map['createdAt'] ?? map['created_at']),
-      updatedAt: _parseDate(map['updatedAt'] ?? map['updated_at']),
-      deletedAt: map['deletedAt'] != null ? _parseDate(map['deletedAt']) :
-                 map['deleted_at'] != null ? _parseDate(map['deleted_at']) : null,
-      roleName: map['roleName']?.toString() ?? map['role_name']?.toString(),
-      statusName: map['statusName']?.toString() ?? map['status_name']?.toString(),
-      companyName: map['companyName']?.toString() ?? map['company_name']?.toString(),
-      branchIds: map['branchIds'] != null ? List<int>.from(map['branchIds']) :
-                 map['branch_ids'] != null ? List<int>.from(map['branch_ids']) : null,
+      id: int.tryParse(map['id']?.toString() ?? '') ?? 0,
+      fullName: map['fullName'] ?? '',
+      email: map['email'] ?? '',
+      phone: map['phone'] ?? '',
+      passworkHash: map['passworkHash'] ?? '',
+      statusId: _parseInt(map['statusId']) ?? 0,
+      fontImage: map['fontImage'] ?? '',
+      backImage: map['backImage'] ?? '',
+      createdAt: _parseDate(map['createdAt']),
+      updatedAt: _parseDate(map['updatedAt']),
+      deletedAt: _parseDate(map['deletedAt']),
     );
   }
 
@@ -221,6 +202,8 @@ class User {
         other.phone == phone &&
         other.passworkHash == passworkHash &&
         other.statusId == statusId &&
+        other.role == role &&
+        other.companyId == companyId &&
         other.fontImage == fontImage &&
         other.backImage == backImage &&
         other.createdAt == createdAt &&
@@ -239,6 +222,7 @@ class User {
         backImage.hashCode ^
         createdAt.hashCode ^
         updatedAt.hashCode ^
-        deletedAt.hashCode;
+        deletedAt.hashCode ^
+        companyId.hashCode;
   }
 }

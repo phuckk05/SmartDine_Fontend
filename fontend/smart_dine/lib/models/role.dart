@@ -1,15 +1,17 @@
 class Role {
-  final String id;
-  final String code; // ADMIN, MANAGER, WAITER, CASHIER
-  final String name;
-
+  final String id; // UUID hoặc ID do Firestore tạo
+  final String
+  code; //Max vai trò: "admin", "manager", "cashier", "staff", "chef"
+  final String
+  name; // Tên vai trò: "Admin", "Manager", "Cashier", "Staff", "Chef"
+  final String description; // Mô tả chi tiết vai trò
   Role({
     required this.id,
     required this.code,
     required this.name,
   });
 
-  factory Role.fromJson(Map<String, dynamic> json) {
+  Role copyWith({String? id, String? code, String? name, String? description}) {
     return Role(
       id: json['id'],
       code: json['code'],
@@ -28,7 +30,7 @@ class Role {
   // Legacy support for old fromMap
   factory Role.fromMap(Map<String, dynamic> map) {
     return Role(
-      id: map['id'] ?? '',
+      id: map['id']?.toInt() ?? 0,
       code: map['code'] ?? '',
       name: map['name'] ?? '',
     );

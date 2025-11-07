@@ -1,43 +1,16 @@
 import 'dart:convert';
 
-class BranchStatus {
-  final int id;
-  final String code; // ACTIVE, INACTIVE
-  final String name;
-
-  BranchStatus({
-    required this.id,
-    required this.code,
-    required this.name,
-  });
-
-  factory BranchStatus.fromJson(Map<String, dynamic> json) {
-    return BranchStatus(
-      id: json['id'] ?? 0,
-      code: json['code'] ?? '',
-      name: json['name'] ?? '',
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'code': code,
-      'name': name,
-    };
-  }
-}
-
 class Branch {
-  //Properties - phù hợp với backend model
-  final int? id;
-  final int? companyId;
+  //Properties
+  final int id;
+  final int companyId;
   final String name;
   final String branchCode;
   final String address;
-  final String? image;
-  final int? statusId;
-  final int? managerId;
+  final String image;
+  final String phone;
+  final int statusId;
+  final int managerId;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -50,14 +23,15 @@ class Branch {
 
   //Constructor
   Branch({
-    this.id,
-    this.companyId,
+    required this.id,
+    required this.companyId,
     required this.name,
     required this.branchCode,
     required this.address,
-    this.image,
-    this.statusId,
-    this.managerId,
+    required this.image,
+    required this.phone,
+    required this.statusId,
+    required this.managerId,
     required this.createdAt,
     required this.updatedAt,
     this.status,
@@ -66,7 +40,27 @@ class Branch {
     this.managerPhone,
     this.companyName,
   });
-
+  factory Branch.create({
+    required int companyId,
+    required String name,
+    required String branchCode,
+    required String address,
+    required String image,
+    required int managerId,
+  }) {
+    final now = DateTime.now();
+    return Branch(
+      companyId: companyId,
+      name: name,
+      branchCode: branchCode,
+      address: address,
+      image: image,
+      statusId: 3,
+      managerId: managerId,
+      createdAt: now,
+      updatedAt: now,
+    );
+  }
   Branch copyWith({
     int? id,
     int? companyId,
@@ -116,51 +110,24 @@ class Branch {
       'statusId': statusId,
       'status_id': statusId, // snake_case cho backend
       'managerId': managerId,
-      'manager_id': managerId, // snake_case cho backend
-      'createdAt': createdAt.toIso8601String(),
-      'created_at': createdAt.toIso8601String(), // snake_case cho backend
-      'updatedAt': updatedAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(), // snake_case cho backend
-      if (status != null) 'status': status!.toJson(),
-      if (managerName != null) 'managerName': managerName,
-      if (managerName != null) 'manager_name': managerName,
-      if (managerEmail != null) 'managerEmail': managerEmail,
-      if (managerEmail != null) 'manager_email': managerEmail,
-      if (managerPhone != null) 'managerPhone': managerPhone,
-      if (managerPhone != null) 'manager_phone': managerPhone,
-      if (companyName != null) 'companyName': companyName,
-      if (companyName != null) 'company_name': companyName,
+      'createdAt': createdAt.millisecondsSinceEpoch,
+      'updatedAt': updatedAt.millisecondsSinceEpoch,
     };
   }
 
   factory Branch.fromMap(Map<String, dynamic> map) {
     return Branch(
-      id: map['id'] != null ? int.tryParse(map['id'].toString()) : null,
-      companyId: map['companyId'] != null ? int.tryParse(map['companyId'].toString()) : 
-                 map['company_id'] != null ? int.tryParse(map['company_id'].toString()) : null,
-      name: map['name']?.toString() ?? '',
-      branchCode: map['branchCode']?.toString() ?? map['branch_code']?.toString() ?? '',
-      address: map['address']?.toString() ?? '',
-      image: map['image']?.toString(),
-      statusId: map['statusId'] != null ? int.tryParse(map['statusId'].toString()) :
-                map['status_id'] != null ? int.tryParse(map['status_id'].toString()) : null,
-      managerId: map['managerId'] != null ? int.tryParse(map['managerId'].toString()) :
-                 map['manager_id'] != null ? int.tryParse(map['manager_id'].toString()) : null,
-      createdAt: map['createdAt'] != null 
-          ? DateTime.parse(map['createdAt'].toString()) 
-          : (map['created_at'] != null 
-              ? DateTime.parse(map['created_at'].toString()) 
-              : DateTime.now()),
-      updatedAt: map['updatedAt'] != null 
-          ? DateTime.parse(map['updatedAt'].toString()) 
-          : (map['updated_at'] != null 
-              ? DateTime.parse(map['updated_at'].toString()) 
-              : DateTime.now()),
-      status: map['status'] != null ? BranchStatus.fromJson(map['status']) : null,
-      managerName: map['managerName']?.toString() ?? map['manager_name']?.toString(),
-      managerEmail: map['managerEmail']?.toString() ?? map['manager_email']?.toString(),
-      managerPhone: map['managerPhone']?.toString() ?? map['manager_phone']?.toString(),
-      companyName: map['companyName']?.toString() ?? map['company_name']?.toString(),
+      id: int.tryParse(map['id'].toString()) ?? 0,
+      companyId: int.tryParse(map['companyId'].toString()) ?? 0,
+      name: map['name'] ?? '',
+      branchCode: map['branchCode'] ?? '',
+      address: map['address'] ?? '',
+      image: map['image'] ?? '',
+      phone: map['phone'] ?? '',
+      statusId: int.tryParse(map['statusId'].toString()) ?? 0,
+      managerId: int.tryParse(map['managerId'].toString()) ?? 0,
+      createdAt: DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(map['updatedAt'] ?? '') ?? DateTime.now(),
     );
   }
 
@@ -176,7 +143,7 @@ class Branch {
 
   @override
   String toString() {
-    return 'Branch(id: $id, companyId: $companyId, name: $name, branchCode: $branchCode, address: $address, image: $image, statusId: $statusId, managerId: $managerId, createdAt: $createdAt, updatedAt: $updatedAt, managerName: $managerName)';
+    return 'Branch(id: $id, companyId: $companyId, name: $name, branchCode: $branchCode, address: $address, image: $image, phone: $phone, statusId: $statusId, managerId: $managerId, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override

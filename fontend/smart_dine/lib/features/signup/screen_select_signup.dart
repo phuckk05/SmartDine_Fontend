@@ -11,7 +11,11 @@ class ScreenSelectSiginup extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBarCus(title: 'Chọn loại tài khoản'),
+      appBar: AppBarCus(
+        title: 'Chọn loại tài khoản',
+        isCanpop: true,
+        isButtonEnabled: true,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(

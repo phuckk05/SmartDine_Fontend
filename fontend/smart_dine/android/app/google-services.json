@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "1069229068834",
-    "project_id": "metalk-a52fb",
-    "storage_bucket": "metalk-a52fb.firebasestorage.app"
+    "project_number": "226173351869",
+    "project_id": "smartdine-eb271",
+    "storage_bucket": "smartdine-eb271.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1069229068834:android:d9340812fd9c52ec71b07b",
+        "mobilesdk_app_id": "1:226173351869:android:8c79d918b71da552b144d4",
         "android_client_info": {
           "package_name": "com.example.me_talk"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBTV8cQVy2iror-V3a72Q3UFu5_is9ZGRM"
+          "current_key": "AIzaSyBfnOHEKDDXfsSP0tHAcmayLdV6xqq17wU"
         }
       ],
       "services": {

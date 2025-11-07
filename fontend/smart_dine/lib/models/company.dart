@@ -1,38 +1,58 @@
 import 'dart:convert';
 
 class Company {
-  final int id;
-  final String companyName;
-  final String comapyAddress;
-  final String copanyImagUrl;
-  final int companyCode;
+  final int? id;
+  final String name;
+  final String address;
+  final String image;
+  final String companyCode;
+  final int statusId;
   final DateTime createdAt;
   final DateTime updatedAt;
   Company({
-    required this.id,
-    required this.companyName,
-    required this.comapyAddress,
-    required this.copanyImagUrl,
+    this.id,
+    required this.name,
+    required this.address,
+    required this.image,
     required this.companyCode,
+    required this.statusId,
     required this.createdAt,
     required this.updatedAt,
   });
-
+  factory Company.create({
+    required String name,
+    required String address,
+    required String image,
+    required String companyCode,
+  }) {
+    final now = DateTime.now();
+    return Company(
+      name: name,
+      address: address,
+      image: image,
+      companyCode: companyCode,
+      statusId: 3,
+      createdAt: now,
+      updatedAt: now,
+    );
+  }
   Company copyWith({
     int? id,
-    String? companyName,
-    String? comapyAddress,
-    String? copanyImagUrl,
-    int? companyCode,
+    String? name,
+    String? address,
+    String? image,
+    String? companyCode,
+    int? statusId,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
     return Company(
       id: id ?? this.id,
-      companyName: companyName ?? this.companyName,
-      comapyAddress: comapyAddress ?? this.comapyAddress,
-      copanyImagUrl: copanyImagUrl ?? this.copanyImagUrl,
+      name: name ?? this.name,
+      address: address ?? this.address,
+      image: image ?? this.image,
       companyCode: companyCode ?? this.companyCode,
+      statusId: statusId ?? this.statusId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -41,24 +61,40 @@ class Company {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'companyName': companyName,
-      'comapyAddress': comapyAddress,
-      'copanyImagUrl': copanyImagUrl,
+      'name': name,
       'companyCode': companyCode,
-      'createdAt': createdAt.millisecondsSinceEpoch,
-      'updatedAt': updatedAt.millisecondsSinceEpoch,
+      'address': address,
+      'image': image,
+      'statusId': statusId,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
     };
   }
 
   factory Company.fromMap(Map<String, dynamic> map) {
     return Company(
-      id: map['id']?.toInt() ?? 0,
-      companyName: map['companyName'] ?? '',
-      comapyAddress: map['comapyAddress'] ?? '',
-      copanyImagUrl: map['copanyImagUrl'] ?? '',
-      companyCode: map['companyCode']?.toInt() ?? 0,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt']),
-      updatedAt: DateTime.fromMillisecondsSinceEpoch(map['updatedAt']),
+      id:
+          map['id'] is int
+              ? map['id']
+              : int.tryParse(map['id'].toString()) ?? 0,
+      name: map['name'] ?? '',
+      address: map['address'] ?? '',
+      image: map['image'] ?? '',
+      companyCode: map['companyCode'] ?? '',
+      statusId:
+          map['statusId'] is int
+              ? map['statusId']
+              : int.tryParse(map['statusId'].toString()) ?? 0,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(
+        map['createdAt'] is int
+            ? map['createdAt']
+            : int.tryParse(map['createdAt'].toString()) ?? 0,
+      ),
+      updatedAt: DateTime.fromMillisecondsSinceEpoch(
+        map['updatedAt'] is int
+            ? map['updatedAt']
+            : int.tryParse(map['updatedAt'].toString()) ?? 0,
+      ),
     );
   }
 
@@ -69,7 +105,7 @@ class Company {
 
   @override
   String toString() {
-    return 'Company(id: $id, companyName: $companyName, comapyAddress: $comapyAddress, copanyImagUrl: $copanyImagUrl, companyCode: $companyCode, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'Company(id: $id, name: $name, address: $address, image: $image, companyCode: $companyCode, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -78,10 +114,11 @@ class Company {
 
     return other is Company &&
         other.id == id &&
-        other.companyName == companyName &&
-        other.comapyAddress == comapyAddress &&
-        other.copanyImagUrl == copanyImagUrl &&
+        other.name == name &&
+        other.address == address &&
+        other.image == image &&
         other.companyCode == companyCode &&
+        other.statusId == statusId &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt;
   }
@@ -89,10 +126,11 @@ class Company {
   @override
   int get hashCode {
     return id.hashCode ^
-        companyName.hashCode ^
-        comapyAddress.hashCode ^
-        copanyImagUrl.hashCode ^
+        name.hashCode ^
+        address.hashCode ^
+        image.hashCode ^
         companyCode.hashCode ^
+        statusId.hashCode ^
         createdAt.hashCode ^
         updatedAt.hashCode;
   }

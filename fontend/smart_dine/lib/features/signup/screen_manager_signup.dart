@@ -4,26 +4,45 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mart_dine/API/cloudinary_API.dart';
 import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
+import 'package:mart_dine/features/signin/screen_signin.dart';
+import 'package:mart_dine/models/branch.dart';
+import 'package:mart_dine/models/company.dart';
+import 'package:mart_dine/providers/branch_provider.dart';
+import 'package:mart_dine/providers/company_provider.dart';
+import 'package:mart_dine/providers/companys_provider.dart';
+import 'package:mart_dine/providers/internet_provider.dart';
+import 'package:mart_dine/providers/loading_provider.dart';
+import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets/appbar.dart';
 import 'package:mart_dine/widgets/loading.dart';
 
 //Các state provider
+
+final _isCanPop = StateProvider.autoDispose<bool>((ref) => false);
 final _isLoadingProvider = StateProvider<bool>((ref) => false);
+
 final _imageProvider = StateProvider<File?>((ref) => null);
+final _imageUrlProvider = StateProvider<String>((ref) => "");
+final _selectedCompanyProvider = StateProvider<Company?>((ref) => null);
 
 //Giao diện đăng kí chủ nhà hàng
 class ScreenManagerSignup extends ConsumerStatefulWidget {
   final String? title;
+  final int userId;
+
   // final User user;
-  const ScreenManagerSignup({super.key, this.title});
+  const ScreenManagerSignup({super.key, this.title, required this.userId});
   @override
   ConsumerState<ConsumerStatefulWidget> createState() =>
       _ScreenManagerSignupState();
 }
 
 class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
+  //cloudinaryAPI
+  CloudinaryAPI cloudinaryAPI = CloudinaryAPI();
   //Controllers
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
@@ -31,18 +50,113 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
   final TextEditingController _codeRestaurantController =
       TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    _fetchCompanys();
+  }
+
+  //Lấy tất cả companys
+  Future<void> _fetchCompanys() async {
+    await ref.read(companysNotifierProvider.notifier).fetchCompanys();
+  }
+
   //Hàm lấy ảnh
-  Future<void> _getImage(StateProvider<File?> _image) async {
-    //Khia báo
-    final ImagePicker picker = ImagePicker();
-    //Lấy ảnh
-    final XFile? pickedFile = await picker.pickImage(
-      source: ImageSource.gallery,
-    );
-    if (pickedFile != null) {
-      //Cập nhật state
-      ref.read(_image.notifier).state = File(pickedFile.path);
+  Future<void> _getCCCDImage(
+    StateProvider<File?> image,
+    StateProvider<String?> imageUrl,
+    BuildContext context,
+  ) async {
+    if (!ref.watch(internetProvider)) {
+      Constrats.showThongBao(context, "Không có internet !");
+    } else {
+      //Khia báo
+      final ImagePicker picker = ImagePicker();
+      //Lấy ảnh
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        //Cập nhật state
+        final changeImage = File(pickedFile.path);
+        ref.read(image.notifier).state = File(pickedFile.path);
+        ref.read(isLoadingNotifierProvider.notifier).toggle(true);
+        await _changeUrl(changeImage, context);
+        if (!mounted) {
+          return;
+        }
+        ref.read(_isCanPop.notifier).state = false;
+        ref.read(isLoadingNotifierProvider.notifier).toggle(false);
+      }
     }
+  }
+
+  //Chuyển đổi ành
+  Future<void> _changeUrl(File? file, BuildContext context) async {
+    final result = await cloudinaryAPI.getURL(file);
+    if (result != "0") {
+      ref.read(_imageUrlProvider.notifier).state = result.toString();
+      print("anh day :$result");
+      print(ref.watch(_imageUrlProvider));
+    } else {
+      Constrats.showThongBao(context, "Lỗi chọn ảnh");
+    }
+  }
+
+  //hàm signup staff
+  Future<void> siginUpBranch(Branch branch, BuildContext context) async {
+    final register = await ref
+        .read(branchNotifierProvider.notifier)
+        .signUpBranch(branch, widget.userId, _codeRestaurantController.text);
+    if (register == 0) {
+      Constrats.showThongBao(context, 'Đăng kí chi nhánh thất bại !');
+    } else if (register == 2) {
+      Constrats.showThongBao(context, 'Mã nhà hàng không đúng !');
+    } else {
+      Constrats.showThongBao(
+        context,
+        'Đăng kí thành công ,đợi chủ nhà hàng duyệt !',
+      );
+      await Future.delayed(Duration(seconds: 4));
+      if (!mounted) {
+        return;
+      }
+      Routes.pushAndRemoveUntil(context, ScreenSignIn());
+    }
+  }
+
+  //Hàm check value trước khi đăng kí
+  Future<void> checkControllers(BuildContext context, Branch branch) async {
+    if (!ref.watch(internetProvider)) {
+      Constrats.showThongBao(context, "Không có internet !");
+    } else {
+      final imageUrl = ref.watch(_imageUrlProvider);
+      print("url image : $imageUrl");
+      if (_nameController.text.isNotEmpty &&
+          _addressController.text.isNotEmpty &&
+          _codeController.text.isNotEmpty &&
+          _codeRestaurantController.text.isNotEmpty &&
+          imageUrl.isNotEmpty) {
+        //Chuyển hướng đăng kí qua role khác
+        ref.read(isLoadingNotifierProvider.notifier).toggle(true);
+        await siginUpBranch(branch, context);
+        if (!mounted) {
+          return;
+        }
+        ref.read(isLoadingNotifierProvider.notifier).toggle(false);
+      } else {
+        Constrats.showThongBao(context, "Vui lòng nhập đủ thông tin !");
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _addressController.dispose();
+    _codeController.dispose();
+    _codeRestaurantController.dispose();
+    // reset lại state khi thoát
+    ref.read(isLoadingNotifierProvider.notifier).toggle(false);
+    super.dispose();
   }
 
   @override
@@ -53,64 +167,74 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
 
     //Build giao diện
     return Scaffold(
-      appBar: AppBarCus(title: widget.title ?? ''),
+      appBar: AppBarCus(
+        title: widget.title ?? '',
+        isCanpop: false,
+        isButtonEnabled: false,
+      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Style.paddingPhone),
-            child: Column(
-              children: [
-                _label("Vui lòng nhập code nhà hàng*"),
-                _textFiled(
-                  1,
-                  null,
-                  Icon(Icons.code, color: Colors.grey[600]),
-                  null,
-                  _codeRestaurantController,
-                  null,
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Style.paddingPhone,
                 ),
-                SizedBox(height: 10),
-                _label("Tên chi nhánh nhà hàng*"),
-                _textFiled(
-                  2,
-                  null,
-                  Icon(Icons.location_city, color: Colors.grey[600]),
-                  null,
-                  _nameController,
-                  null,
+                child: Column(
+                  children: [
+                    _label("Chọn nhà hàng*"),
+                    _companyDropdown(
+                      context,
+                      ref,
+                      ref.watch(companysNotifierProvider),
+                    ),
+                    SizedBox(height: 10),
+                    _label("Tên chi nhánh nhà hàng*"),
+                    _textFiled(
+                      2,
+                      null,
+                      Icon(Icons.location_city, color: Colors.grey[600]),
+                      null,
+                      _nameController,
+                      null,
+                    ),
+                    SizedBox(height: 10),
+                    _label("Địa chị*"),
+                    _textFiled(
+                      3,
+                      null,
+                      Icon(Icons.local_attraction, color: Colors.grey[600]),
+                      null,
+                      _addressController,
+                      null,
+                    ),
+                    SizedBox(height: 10),
+                    _label("Mã code chi nhánh*"),
+                    _textFiled(
+                      4,
+                      null,
+                      Icon(Icons.code, color: Colors.grey[600]),
+                      null,
+                      _codeController,
+                      null,
+                    ),
+                    SizedBox(height: 10),
+                    _label("Giấy phép kinh doanh*"),
+                    SizedBox(height: 10),
+                    _getCCCD(),
+                    SizedBox(height: 30),
+                    _note(),
+                    SizedBox(height: 30),
+                    _signinButton(context),
+                    SizedBox(height: 20),
+                  ],
                 ),
-                SizedBox(height: 10),
-                _label("Địa chị*"),
-                _textFiled(
-                  3,
-                  null,
-                  Icon(Icons.local_attraction, color: Colors.grey[600]),
-                  null,
-                  _addressController,
-                  null,
-                ),
-                SizedBox(height: 10),
-                _label("Mã code chi nhánh*"),
-                _textFiled(
-                  4,
-                  null,
-                  Icon(Icons.code, color: Colors.grey[600]),
-                  null,
-                  _codeController,
-                  null,
-                ),
-                SizedBox(height: 10),
-                _label("Giấy phép kinh doanh*"),
-                SizedBox(height: 10),
-                _getCCCD(),
-                SizedBox(height: 30),
-                _note(),
-                SizedBox(height: 30),
-                _signinButton(context),
-                SizedBox(height: 20),
-              ],
+              ),
             ),
-          ),
+            ref.watch(isLoadingNotifierProvider)
+                ? Positioned.fill(child: Loading(index: 1))
+                : SizedBox(),
+          ],
         ),
       ),
     );
@@ -179,13 +303,13 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
 
   //Phần Lấy CCCD
   Widget _getCCCD() {
-    final _Image = ref.watch(_imageProvider);
+    final image = ref.watch(_imageProvider);
     return Container(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 0),
         child: InkWell(
           onTap: () {
-            _getImage(_imageProvider);
+            _getCCCDImage(_imageProvider, _imageUrlProvider, context);
           },
           child: Stack(
             children: [
@@ -204,7 +328,7 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
                     height: 100,
                     alignment: Alignment.center,
                     child:
-                        _Image == null
+                        image == null
                             ? Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -217,12 +341,12 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
                             )
                             : ClipRRect(
                               borderRadius: BorderRadius.circular(6.0),
-                              child: Image.file(_Image, fit: BoxFit.fill),
+                              child: Image.file(image, fit: BoxFit.fill),
                             ),
                   ),
                 ),
               ),
-              _Image == null
+              image == null
                   ? SizedBox()
                   : Positioned(
                     top: 0,
@@ -243,6 +367,31 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
     );
   }
 
+  //Dropdown button company
+  Widget _companyDropdown(
+    BuildContext context,
+    WidgetRef ref,
+    List<Company> companies,
+  ) {
+    final selectedCompany = ref.watch(_selectedCompanyProvider);
+    return DropdownButton<Company>(
+      hint: Text('Chọn công ty'),
+      value: selectedCompany,
+      isExpanded: true,
+      items:
+          companies.map((Company company) {
+            return DropdownMenuItem<Company>(
+              value: company,
+              child: Text(company.name),
+            );
+          }).toList(),
+      onChanged: (Company? newValue) {
+        ref.read(_selectedCompanyProvider.notifier).state = newValue;
+        _codeRestaurantController.text = newValue?.companyCode ?? '';
+      },
+    );
+  }
+
   //Phần button tiếp tục
   Widget _signinButton(BuildContext context) {
     final isLoading = ref.watch(_isLoadingProvider);
@@ -254,11 +403,15 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
         padding: EdgeInsets.zero, // Padding handled by MaterialButton
         child: MaterialButton(
           onPressed: () async {
-            ref.read(_isLoadingProvider.notifier).state = true;
-            await Future.delayed(
-              Duration(seconds: 5),
-              () => ref.read(_isLoadingProvider.notifier).state = false,
+            Branch branch = Branch.create(
+              companyId: widget.userId,
+              name: _nameController.text,
+              branchCode: _codeController.text,
+              address: _addressController.text,
+              image: ref.watch(_imageUrlProvider),
+              managerId: widget.userId,
             );
+            checkControllers(context, branch);
           },
           // Set button color to transparent so NeumorphicContainer's color shows
           color: Colors.transparent,
@@ -273,7 +426,9 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
 
           // child: Text('Đăng nhập', style: Style.TextButton),
           child:
-              isLoading ? Loading() : Text('Đăng kí', style: Style.TextButton),
+              isLoading
+                  ? Loading(index: 1)
+                  : Text('Đăng kí', style: Style.TextButton),
         ),
       ),
     );
