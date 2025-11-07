@@ -52,7 +52,7 @@ public class CompanyServices {
         companyRepository.save(company);
 
         // ✅ Cập nhật luôn user (chủ công ty) tương ứng
-        List<User> owners = userRepository.findByCompanyIdAndRole(companyId, 1); // role=1 => Owner
+        List<User> owners = userRepository.findByCompanyIdAndRole(companyId, 5); // role=1 => Owner
         for (User owner : owners) {
             owner.setStatusId(1); // Duyệt luôn user
             owner.setUpdatedAt(LocalDateTime.now());
@@ -75,7 +75,7 @@ public class CompanyServices {
         companyRepository.save(company);
 
         // 3️⃣ Cập nhật luôn user là chủ công ty (role = 1)
-        List<User> owners = userRepository.findByCompanyIdAndRole(companyId, 1);
+        List<User> owners = userRepository.findByCompanyIdAndRole(companyId, 5);
         for (User owner : owners) {
             owner.setStatusId(2); // Từ chối user luôn
             owner.setUpdatedAt(LocalDateTime.now());
