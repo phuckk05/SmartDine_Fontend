@@ -1,7 +1,10 @@
 package com.smartdine.services;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.temporal.IsoFields;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +28,7 @@ public class OrderServices {
     }
 
     // Lấy tất cả order
-    public List<Order> getAll() {//  public java.util.List<Order> getAll() {
+    public List<Order> getAll() {// public java.util.List<Order> getAll() {
         return orderRepository.findAll();
     }
 
@@ -66,6 +69,11 @@ public class OrderServices {
     // Lấy danh sách orders theo branchId
     public List<Order> getOrdersByBranchId(Integer branchId) {
         return orderRepository.findByBranchId(branchId);
+    }
+
+    // Lấy danh sách orders theo companyId
+    public List<Order> getOrdersByCompanyId(Integer companyId) {
+        return orderRepository.findByCompanyId(companyId);
     }
 
     // Lấy xu hướng doanh thu theo branch trong 7 ngày gần đây
@@ -118,5 +126,95 @@ public class OrderServices {
                     return hourData;
                 })
                 .collect(Collectors.toList());
+    }
+
+    // Đếm số lượng đơn hàng theo period và chi nhánh/công ty
+    public List<Map<String, Object>> getOrderCounts(String period, Integer branchId, Integer companyId, int units) {
+        if (branchId == null && companyId == null) {
+            throw new IllegalArgumentException("Cần truyền branchId hoặc companyId");
+        }
+        if (units <= 0) {
+            throw new IllegalArgumentException("Giá trị days phải lớn hơn 0");
+        }
+
+        ZoneId zoneId = ZoneId.of("Asia/Ho_Chi_Minh");
+        LocalDate today = LocalDate.now(zoneId);
+
+        return switch (period.toLowerCase()) {
+            case "day", "daily" -> buildDailyCounts(branchId, companyId, units, zoneId, today);
+            case "week", "weekly" -> buildWeeklyCounts(branchId, companyId, units, zoneId, today);
+            case "month", "monthly" -> buildMonthlyCounts(branchId, companyId, units, zoneId, today);
+            default -> throw new IllegalArgumentException("Period không hợp lệ. Sử dụng: day, week, month");
+        };
+    }
+
+    private List<Map<String, Object>> buildDailyCounts(Integer branchId, Integer companyId, int days, ZoneId zoneId,
+            LocalDate today) {
+        return java.util.stream.IntStream.range(0, days)
+                .mapToObj(offset -> today.minusDays(days - 1L - offset))
+                .map(date -> {
+                    LocalDateTime start = date.atStartOfDay();
+                    LocalDateTime end = date.atTime(LocalTime.MAX);
+                    long count = findOrdersBetween(start, end, branchId, companyId).size();
+                    Map<String, Object> row = new HashMap<>();
+                    row.put("date", date.toString());
+                    row.put("orders", count);
+                    return row;
+                })
+                .toList();
+    }
+
+    private List<Map<String, Object>> buildWeeklyCounts(Integer branchId, Integer companyId, int weeks, ZoneId zoneId,
+            LocalDate today) {
+        return java.util.stream.IntStream.range(0, weeks)
+                .mapToObj(offset -> today.minusWeeks(weeks - 1L - offset))
+                .map(weekStart -> {
+                    LocalDate startDate = weekStart.with(java.time.DayOfWeek.MONDAY);
+                    LocalDate endDate = startDate.plusDays(6);
+                    LocalDateTime start = startDate.atStartOfDay();
+                    LocalDateTime end = endDate.atTime(LocalTime.MAX);
+                    long count = findOrdersBetween(start, end, branchId, companyId).size();
+                    Map<String, Object> row = new HashMap<>();
+                    row.put("week", startDate.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR));
+                    row.put("year", startDate.getYear());
+                    row.put("startDate", startDate.toString());
+                    row.put("endDate", endDate.toString());
+                    row.put("orders", count);
+                    return row;
+                })
+                .toList();
+    }
+
+    private List<Map<String, Object>> buildMonthlyCounts(Integer branchId, Integer companyId, int months, ZoneId zoneId,
+            LocalDate today) {
+        return java.util.stream.IntStream.range(0, months)
+                .mapToObj(offset -> today.minusMonths(months - 1L - offset).withDayOfMonth(1))
+                .map(firstDay -> {
+                    LocalDate lastDay = firstDay.withDayOfMonth(firstDay.lengthOfMonth());
+                    LocalDateTime start = firstDay.atStartOfDay();
+                    LocalDateTime end = lastDay.atTime(LocalTime.MAX);
+                    long count = findOrdersBetween(start, end, branchId, companyId).size();
+                    Map<String, Object> row = new HashMap<>();
+                    row.put("month", firstDay.getMonthValue());
+                    row.put("year", firstDay.getYear());
+                    row.put("orders", count);
+                    row.put("label", firstDay.getMonth().toString());
+                    return row;
+                })
+                .toList();
+    }
+
+    private List<Order> findOrdersBetween(LocalDateTime start, LocalDateTime end, Integer branchId, Integer companyId) {
+        if (branchId != null) {
+            return orderRepository.findByBranchIdAndCreatedAtBetween(branchId, start, end);
+        }
+        if (companyId != null) {
+            return orderRepository.findByCompanyIdAndCreatedAtBetween(companyId, start, end);
+        }
+        return orderRepository.findAll().stream()
+                .filter(order -> order.getCreatedAt() != null
+                        && !order.getCreatedAt().isBefore(start)
+                        && !order.getCreatedAt().isAfter(end))
+                .toList();
     }
 }

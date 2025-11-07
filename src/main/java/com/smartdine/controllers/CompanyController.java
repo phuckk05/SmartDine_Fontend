@@ -11,13 +11,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.smartdine.models.Company;
 import com.smartdine.services.CompanyServices;
 
 @RestController
-@RequestMapping("/api/companys")
+@RequestMapping({ "/api/companys", "/api/company" })
 public class CompanyController {
     @Autowired
     CompanyServices companyServices;
@@ -103,6 +104,17 @@ public class CompanyController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body("Lỗi khi xóa công ty");
+        }
+    }
+
+    /// Thống kê công ty
+    @GetMapping("/stats")
+    public ResponseEntity<?> getCompanyStats(@RequestParam("companyId") Integer companyId) {
+        try {
+            return ResponseEntity.ok(companyServices.getCompanyStats(companyId));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Lỗi khi lấy thống kê công ty: " + e.getMessage());
         }
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -43,6 +44,21 @@ public class BranchController {
         }
     }
 
+    // Cập nhật branch
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateBranch(@PathVariable Integer id, @RequestBody Branch branch) {
+        try {
+            Branch updated = branchServices.updateBranch(id, branch);
+            if (updated == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+
     // Lấy thông tin branch theo mã code
     @GetMapping("/{branchCode}")
     public ResponseEntity<Branch> getBranchByCode(@PathVariable String branchCode) {
@@ -63,6 +79,18 @@ public class BranchController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(branch);
+    }
+
+    // Lấy các chi nhánh theo companyId
+    @GetMapping("/company/{companyId}")
+    public ResponseEntity<?> getBranchesByCompany(@PathVariable Integer companyId) {
+        try {
+            List<Branch> branches = branchServices.getByCompanyId(companyId);
+            return ResponseEntity.ok(branches);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
     }
 
     // Lấy thống kê chi nhánh

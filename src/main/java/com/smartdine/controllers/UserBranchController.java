@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -59,6 +60,21 @@ public class UserBranchController {
         try {
             List<UserBranch> userBranches = userBranchServices.getByBranchId(branchId);
             return ResponseEntity.ok(userBranches);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+
+    // Xóa user khỏi chi nhánh
+    @DeleteMapping("/user/{userId}")
+    public ResponseEntity<?> removeUserFromBranch(@PathVariable Integer userId) {
+        try {
+            boolean removed = userBranchServices.deleteByUserId(userId);
+            if (!removed) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.noContent().build();
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body(e.getMessage());

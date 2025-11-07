@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.smartdine.models.Order;
+import com.smartdine.models.OrderItem;
 import com.smartdine.services.OrderItemService;
 import com.smartdine.services.OrderServices;
 
@@ -54,6 +56,18 @@ public class OrderController {
         return orderServices.getById(id);
     }
 
+    // Lấy danh sách món trong đơn hàng
+    @GetMapping("/{orderId}/items")
+    public ResponseEntity<List<OrderItem>> getItemsByOrder(@PathVariable Integer orderId) {
+        try {
+            List<OrderItem> orderItems = orderItemService.getOrderItemsByOrderId(orderId);
+            return ResponseEntity.ok(orderItems);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     // Lấy danh sách tableId đã có order chưa thanh toán ngay hôm nay
     @GetMapping("/unpaid-tables/today")
     public List<Integer> getUnpaidOrderTableIdsToday() {
@@ -81,6 +95,24 @@ public class OrderController {
     @GetMapping("/branch/{branchId}")
     public List<Order> getOrdersByBranchId(@PathVariable Integer branchId) {
         return orderServices.getOrdersByBranchId(branchId);
+    }
+
+    // Thống kê số lượng đơn hàng theo period
+    @GetMapping("/count")
+    public ResponseEntity<?> getOrderCount(
+            @RequestParam("period") String period,
+            @RequestParam(value = "branchId", required = false) Integer branchId,
+            @RequestParam(value = "companyId", required = false) Integer companyId,
+            @RequestParam(value = "days", defaultValue = "7") int days) {
+        try {
+            List<Map<String, Object>> data = orderServices.getOrderCounts(period, branchId, companyId, days);
+            return ResponseEntity.ok(data);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+        }
     }
 
     // Thống kê đơn hàng theo chi nhánh

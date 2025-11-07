@@ -1,7 +1,16 @@
-// package com.smartdine.repository;
+package com.smartdine.repository;
 
-// import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
 
-// public interface MenuItemRepository extends JpaRepository<MenuItem,Integer> {
-    
-// }
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.smartdine.models.MenuItem;
+import com.smartdine.models.idclass.MenuItemId;
+
+public interface MenuItemRepository extends JpaRepository<MenuItem, MenuItemId> {
+    boolean existsByCategoryIdAndItemId(Integer categoryId, Integer itemId);
+
+    void deleteByCategoryIdAndItemId(Integer categoryId, Integer itemId);
+
+    List<MenuItem> findByCategoryId(Integer categoryId);
+}

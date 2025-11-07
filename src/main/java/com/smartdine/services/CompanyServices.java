@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.smartdine.models.Company;
 import com.smartdine.models.User;
+import com.smartdine.repository.BranchRepository;
 import com.smartdine.repository.CompanyRepository;
 import com.smartdine.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -19,6 +20,9 @@ public class CompanyServices {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private BranchRepository branchRepository;
 
     // Lấy tất cà company
     public List<Company> getAll() {
@@ -92,6 +96,25 @@ public class CompanyServices {
             return true;
         }
         return false;
+    }
+
+    public java.util.Map<String, Object> getCompanyStats(Integer companyId) {
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy công ty"));
+
+        long branchCount = branchRepository.countByCompanyId(companyId);
+        long employeeCount = userRepository.findByCompanyId(companyId).size();
+        long activeEmployeeCount = userRepository.findByCompanyIdAndRole(companyId, 2).size();
+
+        java.util.Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("companyId", company.getId());
+        stats.put("companyName", company.getName());
+        stats.put("totalBranches", branchCount);
+        stats.put("totalEmployees", employeeCount);
+        stats.put("activeStaff", activeEmployeeCount);
+        stats.put("createdAt", company.getCreatedAt());
+        stats.put("statusId", company.getStatusId());
+        return stats;
     }
 
 }

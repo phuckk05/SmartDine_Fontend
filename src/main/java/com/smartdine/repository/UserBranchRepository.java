@@ -12,5 +12,5 @@ public interface UserBranchRepository extends JpaRepository<UserBranch, Integer>
     List<UserBranch> findByBranchId(Integer branchId);
 
     // Xóa userId
-    boolean deleteByUserId(Integer userId);
+    long deleteByUserId(Integer userId);
 }

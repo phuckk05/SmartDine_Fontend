@@ -34,6 +34,6 @@ public class UserBranchSevices {
 
     // Xóa UserBranch
     public boolean deleteByUserId(Integer userId) {
-        return userBranchRepository.deleteByUserId(userId);
+        return userBranchRepository.deleteByUserId(userId) > 0;
     }
 }

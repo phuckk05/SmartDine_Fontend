@@ -14,6 +14,8 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
     private UserBranchSevices userBranchSevices;
 
     public List<User> getAllUsers() {
@@ -75,9 +77,27 @@ public class UserService {
             throw new IllegalArgumentException("User not found with id: " + id);
         }
 
-        user.setFullName(userDetails.getFullName());
-        user.setEmail(userDetails.getEmail());
-        user.setPhone(userDetails.getPhone());
+        if (userDetails.getFullName() != null) {
+            user.setFullName(userDetails.getFullName());
+        }
+        if (userDetails.getEmail() != null && !userDetails.getEmail().equals(user.getEmail())) {
+            if (userRepository.existsByEmail(userDetails.getEmail())) {
+                throw new IllegalArgumentException("Email đã tồn tại");
+            }
+            user.setEmail(userDetails.getEmail());
+        }
+        if (userDetails.getPhone() != null && !userDetails.getPhone().equals(user.getPhone())) {
+            if (userRepository.existsByPhone(userDetails.getPhone())) {
+                throw new IllegalArgumentException("Số điện thoại đã tồn tại");
+            }
+            user.setPhone(userDetails.getPhone());
+        }
+        if (userDetails.getStatusId() != null) {
+            user.setStatusId(userDetails.getStatusId());
+        }
+        if (userDetails.getRole() != null) {
+            user.setRole(userDetails.getRole());
+        }
         user.setUpdatedAt(LocalDateTime.now());
 
         return userRepository.save(user);
@@ -94,6 +114,10 @@ public class UserService {
         user.setUpdatedAt(LocalDateTime.now());
 
         return userRepository.save(user);
+    }
+
+    public User getCurrentUser(Integer id) {
+        return userRepository.findById(id).orElse(null);
     }
 
 }

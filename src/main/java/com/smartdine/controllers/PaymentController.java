@@ -29,7 +29,6 @@ public class PaymentController {
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
     }
-    
 
     // Lấy doanh thu theo tuần theo chi nhánh/công ty (tùy chọn)
     @GetMapping("/revenue/week")
@@ -88,7 +87,7 @@ public class PaymentController {
             List<Map<String, Object>> trends = new ArrayList<>();
             LocalDate endDate = LocalDate.now();
             LocalDate startDate;
-            
+
             switch (period.toLowerCase()) {
                 case "day":
                 case "daily":
@@ -104,7 +103,7 @@ public class PaymentController {
                         currentDay = currentDay.plusDays(1);
                     }
                     break;
-                    
+
                 case "week":
                 case "weekly":
                     startDate = endDate.minusWeeks(days);
@@ -121,13 +120,14 @@ public class PaymentController {
                         currentWeek = currentWeek.plusWeeks(1);
                     }
                     break;
-                    
+
                 case "month":
                 case "monthly":
                     startDate = endDate.minusMonths(days);
                     LocalDate currentMonth = startDate.withDayOfMonth(1);
                     while (!currentMonth.isAfter(endDate)) {
-                        BigDecimal revenue = paymentService.getRevenueByMonth(currentMonth.getYear(), currentMonth.getMonthValue(), branchId, null);
+                        BigDecimal revenue = paymentService.getRevenueByMonth(currentMonth.getYear(),
+                                currentMonth.getMonthValue(), branchId, null);
                         Map<String, Object> monthData = new HashMap<>();
                         monthData.put("date", currentMonth.toString());
                         monthData.put("revenue", revenue != null ? revenue.doubleValue() : 0.0);
@@ -136,7 +136,7 @@ public class PaymentController {
                         currentMonth = currentMonth.plusMonths(1);
                     }
                     break;
-                    
+
                 case "year":
                 case "yearly":
                     startDate = endDate.minusYears(days);
@@ -151,11 +151,11 @@ public class PaymentController {
                         currentYear = currentYear.plusYears(1);
                     }
                     break;
-                    
+
                 default:
                     return ResponseEntity.badRequest().body("Period không hợp lệ. Sử dụng: day, week, month, year");
             }
-            
+
             return ResponseEntity.ok(trends);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
@@ -173,7 +173,7 @@ public class PaymentController {
 
         try {
             List<Map<String, Object>> trends = new ArrayList<>();
-            
+
             switch (period.toLowerCase()) {
                 case "daily":
                     // Xu hướng theo ngày
@@ -187,7 +187,7 @@ public class PaymentController {
                         current = current.plusDays(1);
                     }
                     break;
-                    
+
                 case "weekly":
                     // Xu hướng theo tuần
                     LocalDate weekStart = startDate;
@@ -204,12 +204,13 @@ public class PaymentController {
                         weekStart = weekStart.plusWeeks(1);
                     }
                     break;
-                    
+
                 case "monthly":
                     // Xu hướng theo tháng
                     LocalDate monthStart = startDate.withDayOfMonth(1);
                     while (!monthStart.isAfter(endDate)) {
-                        BigDecimal revenue = paymentService.getRevenueByMonth(monthStart.getYear(), monthStart.getMonthValue(), branchId, companyId);
+                        BigDecimal revenue = paymentService.getRevenueByMonth(monthStart.getYear(),
+                                monthStart.getMonthValue(), branchId, companyId);
                         Map<String, Object> trendData = new HashMap<>();
                         trendData.put("month", monthStart.getMonthValue());
                         trendData.put("year", monthStart.getYear());
@@ -219,11 +220,11 @@ public class PaymentController {
                         monthStart = monthStart.plusMonths(1);
                     }
                     break;
-                    
+
                 default:
                     return ResponseEntity.badRequest().body("Period không hợp lệ. Sử dụng: daily, weekly, monthly");
             }
-            
+
             return ResponseEntity.ok(trends);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
@@ -243,7 +244,7 @@ public class PaymentController {
             BigDecimal previousRevenue = BigDecimal.ZERO;
             String currentPeriodName = "";
             String previousPeriodName = "";
-            
+
             switch (period.toLowerCase()) {
                 case "day":
                     currentRevenue = paymentService.getRevenueByDay(currentDate, branchId, companyId);
@@ -251,42 +252,44 @@ public class PaymentController {
                     currentPeriodName = currentDate.toString();
                     previousPeriodName = currentDate.minusDays(1).toString();
                     break;
-                    
+
                 case "week":
                     int currentWeek = currentDate.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR);
                     int currentYear = currentDate.getYear();
                     currentRevenue = paymentService.getRevenueByWeek(currentWeek, currentYear, branchId, companyId);
-                    
+
                     LocalDate previousWeekDate = currentDate.minusWeeks(1);
                     int previousWeek = previousWeekDate.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR);
                     int previousYear = previousWeekDate.getYear();
                     previousRevenue = paymentService.getRevenueByWeek(previousWeek, previousYear, branchId, companyId);
-                    
+
                     currentPeriodName = "Tuần " + currentWeek + "/" + currentYear;
                     previousPeriodName = "Tuần " + previousWeek + "/" + previousYear;
                     break;
-                    
+
                 case "month":
-                    currentRevenue = paymentService.getRevenueByMonth(currentDate.getYear(), currentDate.getMonthValue(), branchId, companyId);
+                    currentRevenue = paymentService.getRevenueByMonth(currentDate.getYear(),
+                            currentDate.getMonthValue(), branchId, companyId);
                     LocalDate previousMonth = currentDate.minusMonths(1);
-                    previousRevenue = paymentService.getRevenueByMonth(previousMonth.getYear(), previousMonth.getMonthValue(), branchId, companyId);
-                    
+                    previousRevenue = paymentService.getRevenueByMonth(previousMonth.getYear(),
+                            previousMonth.getMonthValue(), branchId, companyId);
+
                     currentPeriodName = "Tháng " + currentDate.getMonthValue() + "/" + currentDate.getYear();
                     previousPeriodName = "Tháng " + previousMonth.getMonthValue() + "/" + previousMonth.getYear();
                     break;
-                    
+
                 default:
                     return ResponseEntity.badRequest().body("Period không hợp lệ. Sử dụng: day, week, month");
             }
-            
+
             // Tính phần trăm thay đổi
             BigDecimal changeAmount = currentRevenue.subtract(previousRevenue);
             BigDecimal changePercent = BigDecimal.ZERO;
             if (previousRevenue.compareTo(BigDecimal.ZERO) > 0) {
                 changePercent = changeAmount.divide(previousRevenue, 4, java.math.RoundingMode.HALF_UP)
-                                         .multiply(BigDecimal.valueOf(100));
+                        .multiply(BigDecimal.valueOf(100));
             }
-            
+
             Map<String, Object> comparison = new HashMap<>();
             comparison.put("currentPeriod", currentPeriodName);
             comparison.put("currentRevenue", currentRevenue);
@@ -295,7 +298,7 @@ public class PaymentController {
             comparison.put("changeAmount", changeAmount);
             comparison.put("changePercent", changePercent);
             comparison.put("isIncrease", changeAmount.compareTo(BigDecimal.ZERO) >= 0);
-            
+
             return ResponseEntity.ok(comparison);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
@@ -312,34 +315,34 @@ public class PaymentController {
 
         try {
             List<Map<String, Object>> branchComparison = new ArrayList<>();
-            
+
             for (Integer branchId : branchIds) {
                 BigDecimal totalRevenue = BigDecimal.ZERO;
                 LocalDate current = startDate;
-                
+
                 // Tính tổng doanh thu trong khoảng thời gian
                 while (!current.isAfter(endDate)) {
                     BigDecimal dailyRevenue = paymentService.getRevenueByDay(current, branchId, companyId);
                     totalRevenue = totalRevenue.add(dailyRevenue != null ? dailyRevenue : BigDecimal.ZERO);
                     current = current.plusDays(1);
                 }
-                
+
                 Map<String, Object> branchData = new HashMap<>();
                 branchData.put("branchId", branchId);
                 branchData.put("totalRevenue", totalRevenue);
                 branchData.put("startDate", startDate.toString());
                 branchData.put("endDate", endDate.toString());
-                
+
                 branchComparison.add(branchData);
             }
-            
+
             // Sắp xếp theo doanh thu giảm dần
             branchComparison.sort((a, b) -> {
                 BigDecimal revenueA = (BigDecimal) a.get("totalRevenue");
                 BigDecimal revenueB = (BigDecimal) b.get("totalRevenue");
                 return revenueB.compareTo(revenueA);
             });
-            
+
             return ResponseEntity.ok(branchComparison);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
@@ -347,7 +350,7 @@ public class PaymentController {
     }
 
     // Tạo payment mới
-    @PostMapping("/payments/create")
+    @PostMapping
     public ResponseEntity<?> createPayment(@RequestBody Payment payment) {
         try {
             Payment createdPayment = paymentService.createPayment(payment);
@@ -358,7 +361,7 @@ public class PaymentController {
     }
 
     // Lấy payments theo orderId
-    @GetMapping("/payments/order/{orderId}")
+    @GetMapping("/order/{orderId}")
     public ResponseEntity<?> getPaymentsByOrderId(@PathVariable Integer orderId) {
         try {
             List<Payment> payments = paymentService.getPaymentsByOrderId(orderId);
@@ -369,7 +372,7 @@ public class PaymentController {
     }
 
     // Lấy payments theo branchId hôm nay
-    @GetMapping("/payments/branch/{branchId}/today")
+    @GetMapping("/branch/{branchId}/today")
     public ResponseEntity<?> getPaymentsByBranchToday(@PathVariable Integer branchId) {
         try {
             List<Payment> payments = paymentService.getPaymentsByBranchToday(branchId);
