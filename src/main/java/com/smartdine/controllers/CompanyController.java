@@ -19,7 +19,6 @@ import com.smartdine.services.CompanyServices;
 
 @RestController
 @RequestMapping({ "/api/companys", "/api/company" })
-@CrossOrigin(origins = "*")
 public class CompanyController {
     @Autowired
     CompanyServices companyServices;
@@ -120,7 +119,7 @@ public class CompanyController {
     }
 
     //Quản lý cửa hàng
-     // Danh sách công ty đã duyệt (active)
+    // ✅ Danh sách công ty đã duyệt (active)
     @GetMapping("/active")
     public ResponseEntity<?> getActiveCompanies() {
         try {
@@ -130,7 +129,7 @@ public class CompanyController {
         }
     }
 
-    // Kích hoạt / vô hiệu hóa công ty
+    // ✅ Kích hoạt / vô hiệu hóa công ty
     @PutMapping("/toggle/{id}/{active}")
     public ResponseEntity<?> toggleCompanyStatus(@PathVariable Integer id, @PathVariable boolean active) {
         try {
