@@ -75,6 +75,20 @@ class UserAPI {
     }
     return null;
   }
+
+  //Cập nhật lại comapnyId cho user
+  Future<User?> updateCompanyId(int userId, int companyId) async {
+    final uri = Uri.parse('$uri2/$userId/company/$companyId');
+    final response = await http.put(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      return User.fromMap(data);
+    }
+    return null;
+  }
 }
 
 //userApiProvider

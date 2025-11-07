@@ -21,8 +21,14 @@ final _confirmSecondsProvider = StateProvider.autoDispose<int>((ref) => 60);
 
 class ScreenConfirm extends ConsumerStatefulWidget {
   final String email;
-  final int userId;
-  const ScreenConfirm({super.key, required this.email, required this.userId});
+  final int? userId;
+  final int? index;
+  const ScreenConfirm({
+    super.key,
+    required this.email,
+    required this.userId,
+    this.index,
+  });
 
   @override
   ConsumerState<ScreenConfirm> createState() => _ScreenConfirmState();
@@ -47,6 +53,7 @@ class _ScreenConfirmState extends ConsumerState<ScreenConfirm> {
         _focusNodes.first.requestFocus();
       }
     });
+    _handleSubmit();
     _startTimer();
   }
 
@@ -60,6 +67,47 @@ class _ScreenConfirmState extends ConsumerState<ScreenConfirm> {
     }
     _timer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _handleSubmit() async {
+    final email = widget.email;
+    try {
+      final code = generateVerificationCode();
+      final expiresAt = DateTime.now().add(const Duration(minutes: 5));
+      final verificationApi = ref.read(verificationCodeApiProvider);
+      final saved = await verificationApi.createCode(
+        email: email,
+        code: code,
+        expiresAt: expiresAt,
+      );
+      if (!mounted) return;
+
+      if (!saved) {
+        Constrats.showThongBao(
+          context,
+          'Không thể tạo mã xác minh, vui lòng thử lại.',
+        );
+        return;
+      }
+
+      final sender = ref.read(emailSenderProvider);
+      final sent = await sender.sendVerificationEmail(
+        recipient: email,
+        code: code,
+      );
+
+      if (!sent) {
+        Constrats.showThongBao(
+          context,
+          'Không thể gửi email xác minh. Vui lòng kiểm tra lại cấu hình hoặc thử lại sau.',
+        );
+      } else {
+        Constrats.showThongBao(
+          context,
+          'Đã gửi mã xác minh, vui lòng kiểm tra email.',
+        );
+      }
+    } finally {}
   }
 
   @override
@@ -271,10 +319,17 @@ class _ScreenConfirmState extends ConsumerState<ScreenConfirm> {
       }
       ref.read(_confirmCodeValidProvider.notifier).state = true;
       if (!mounted) return;
-      Routes.pushRightLeftConsumerFul(
-        context,
-        ScreenUpdatedpasswork(userId: widget.userId, email: widget.email),
-      );
+      if (widget.index != null && widget.index == 1) {
+        Navigator.pop(context, true);
+      } else {
+        Routes.pushRightLeftConsumerFul(
+          context,
+          ScreenUpdatedpasswork(
+            userId: widget.userId ?? 0,
+            email: widget.email,
+          ),
+        );
+      }
     } finally {
       loadingNotifier.state = false;
     }

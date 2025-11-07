@@ -9,7 +9,10 @@ import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/signin/screen_signin.dart';
 import 'package:mart_dine/models/branch.dart';
+import 'package:mart_dine/models/company.dart';
 import 'package:mart_dine/providers/branch_provider.dart';
+import 'package:mart_dine/providers/company_provider.dart';
+import 'package:mart_dine/providers/companys_provider.dart';
 import 'package:mart_dine/providers/internet_provider.dart';
 import 'package:mart_dine/providers/loading_provider.dart';
 import 'package:mart_dine/routes.dart';
@@ -21,8 +24,9 @@ import 'package:mart_dine/widgets/loading.dart';
 final _isCanPop = StateProvider.autoDispose<bool>((ref) => false);
 final _isLoadingProvider = StateProvider<bool>((ref) => false);
 
-final _imageProvider = StateProvider.autoDispose<File?>((ref) => null);
-final _imageUrlProvider = StateProvider.autoDispose<String>((ref) => "");
+final _imageProvider = StateProvider<File?>((ref) => null);
+final _imageUrlProvider = StateProvider<String>((ref) => "");
+final _selectedCompanyProvider = StateProvider<Company?>((ref) => null);
 
 //Giao diện đăng kí chủ nhà hàng
 class ScreenManagerSignup extends ConsumerStatefulWidget {
@@ -46,10 +50,21 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
   final TextEditingController _codeRestaurantController =
       TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    _fetchCompanys();
+  }
+
+  //Lấy tất cả companys
+  Future<void> _fetchCompanys() async {
+    await ref.read(companysNotifierProvider.notifier).fetchCompanys();
+  }
+
   //Hàm lấy ảnh
   Future<void> _getCCCDImage(
-    AutoDisposeStateProvider<File?> image,
-    AutoDisposeStateProvider<String?> imageUrl,
+    StateProvider<File?> image,
+    StateProvider<String?> imageUrl,
     BuildContext context,
   ) async {
     if (!ref.watch(internetProvider)) {
@@ -167,14 +182,11 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
                 ),
                 child: Column(
                   children: [
-                    _label("Vui lòng nhập code nhà hàng*"),
-                    _textFiled(
-                      1,
-                      null,
-                      Icon(Icons.code, color: Colors.grey[600]),
-                      null,
-                      _codeRestaurantController,
-                      null,
+                    _label("Chọn nhà hàng*"),
+                    _companyDropdown(
+                      context,
+                      ref,
+                      ref.watch(companysNotifierProvider),
                     ),
                     SizedBox(height: 10),
                     _label("Tên chi nhánh nhà hàng*"),
@@ -352,6 +364,31 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
           ),
         ),
       ),
+    );
+  }
+
+  //Dropdown button company
+  Widget _companyDropdown(
+    BuildContext context,
+    WidgetRef ref,
+    List<Company> companies,
+  ) {
+    final selectedCompany = ref.watch(_selectedCompanyProvider);
+    return DropdownButton<Company>(
+      hint: Text('Chọn công ty'),
+      value: selectedCompany,
+      isExpanded: true,
+      items:
+          companies.map((Company company) {
+            return DropdownMenuItem<Company>(
+              value: company,
+              child: Text(company.name),
+            );
+          }).toList(),
+      onChanged: (Company? newValue) {
+        ref.read(_selectedCompanyProvider.notifier).state = newValue;
+        _codeRestaurantController.text = newValue?.companyCode ?? '';
+      },
     );
   }
 

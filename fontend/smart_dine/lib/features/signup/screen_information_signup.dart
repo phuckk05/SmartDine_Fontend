@@ -5,13 +5,17 @@ import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mart_dine/API/branch_API.dart';
 import 'package:mart_dine/API/cloudinary_API.dart';
 import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
+import 'package:mart_dine/features/forgot_passwork/screens/screen_confirm.dart';
 import 'package:mart_dine/features/signin/screen_signin.dart';
 import 'package:mart_dine/features/signup/screen_manager_signup.dart';
 import 'package:mart_dine/features/signup/screen_owner_signup.dart';
+import 'package:mart_dine/models/branch.dart';
 import 'package:mart_dine/models/user.dart';
+import 'package:mart_dine/providers/branches_provider.dart';
 import 'package:mart_dine/providers/internet_provider.dart';
 import 'package:mart_dine/providers/loading_provider.dart';
 import 'package:mart_dine/providers/user_provider.dart';
@@ -29,6 +33,10 @@ final _fontImageProvider = StateProvider.autoDispose<File?>((ref) => null);
 final _backImageProvider = StateProvider.autoDispose<File?>((ref) => null);
 final _fontImageUrlProvider = StateProvider.autoDispose<String?>((ref) => null);
 final _backImageUrlProvider = StateProvider.autoDispose<String?>((ref) => null);
+//selected branch
+final _selectedBranchProvider = StateProvider.autoDispose<Branch?>(
+  (ref) => null,
+);
 
 //Giao diện đăng kí thông tin cá nhân
 // ignore: must_be_immutable
@@ -64,11 +72,22 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
     _emailController = TextEditingController();
     _phoneController = TextEditingController();
     _codeBranchController = TextEditingController();
+    loadBranches();
     super.initState();
+  }
+
+  //Load danh sách chi nhánh
+  Future<void> loadBranches() async {
+    await ref.read(BranchesNotifierProvider.notifier).fetchBranches();
   }
 
   //hàm signup staff
   Future<void> siginUpInfor(User user, BuildContext context) async {
+    final BranchAPI branchAPI = BranchAPI();
+    final branchFound = await branchAPI.findBranchByBranchCode(
+      _codeBranchController.text,
+    );
+    user = user.copyWith(companyId: branchFound?.companyId);
     final register = await ref
         .read(userNotifierProvider.notifier)
         .signUpInfor(user, _codeBranchController.text, widget.index!);
@@ -114,6 +133,9 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
     print("new User ${newUser!.id}");
   }
 
+  //Lấy company id từ chi nhánh
+  int? getCompanyIdFromBranch(String branchCode) {}
+
   //Hàm check email
   //Hàm check email
   bool isValidEmail(String email) {
@@ -145,79 +167,95 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
             if (_phoneController.text.length == 10) {
               if (isValidEmail(_emailController.text)) {
                 if (_nameController.text.length > 1) {
-                  if (widget.index == 1) {
-                    ref.read(isLoadingNotifierProvider.notifier).toggle(true);
-                    ref.read(_isCanPop.notifier).state = true;
-                    try {
-                      await siginUpInfor(user, context);
-                      if (!mounted) {
-                        return;
+                  final bool? resultCheckEmail = await Navigator.of(
+                    context,
+                  ).push<bool?>(
+                    MaterialPageRoute(
+                      builder:
+                          (_) => ScreenConfirm(
+                            email: _emailController.text,
+                            index: 1,
+                            userId: 0,
+                          ),
+                    ),
+                  );
+                  if (resultCheckEmail == true) {
+                    if (widget.index == 1) {
+                      ref.read(isLoadingNotifierProvider.notifier).toggle(true);
+                      ref.read(_isCanPop.notifier).state = true;
+                      try {
+                        await siginUpInfor(user, context);
+                        if (!mounted) {
+                          return;
+                        }
+                        newUser = ref.read(userNotifierProvider);
+                      } catch (e) {
+                        final msg = e.toString();
+                        Constrats.showThongBao(context, msg);
+                      } finally {
+                        if (mounted) {
+                          ref.read(_isCanPop.notifier).state = false;
+                        }
                       }
-                      newUser = ref.read(userNotifierProvider);
-                    } catch (e) {
-                      final msg = e.toString();
-                      Constrats.showThongBao(context, msg);
-                    } finally {
-                      if (mounted) {
-                        ref.read(_isCanPop.notifier).state = false;
+                      if (newUser != null) {
+                        if (!mounted) {
+                          return;
+                        }
+                        Routes.pushRightLeftConsumerFul(
+                          context,
+                          ScreenOwnerSignup(
+                            title: "Đăng kí nhà hàng",
+                            userId: newUser!.id ?? 0,
+                          ),
+                        );
                       }
-                    }
-                    if (newUser != null) {
-                      if (!mounted) {
-                        return;
+                    } else if (widget.index == 2) {
+                      ref.read(isLoadingNotifierProvider.notifier).toggle(true);
+                      ref.read(_isCanPop.notifier).state = true;
+                      try {
+                        await siginUpInfor(user, context);
+                        if (!mounted) {
+                          return;
+                        }
+                        newUser = ref.read(userNotifierProvider);
+                      } catch (e) {
+                        // Show server error message if any
+                        final msg = e.toString();
+                        Constrats.showThongBao(context, msg);
+                      } finally {
+                        if (mounted) {
+                          ref.read(_isCanPop.notifier).state = false;
+                        }
                       }
-                      Routes.pushRightLeftConsumerFul(
-                        context,
-                        ScreenOwnerSignup(
-                          title: "Đăng kí nhà hàng",
-                          userId: newUser!.id ?? 0,
-                        ),
-                      );
-                    }
-                  } else if (widget.index == 2) {
-                    ref.read(isLoadingNotifierProvider.notifier).toggle(true);
-                    ref.read(_isCanPop.notifier).state = true;
-                    try {
-                      await siginUpInfor(user, context);
-                      if (!mounted) {
-                        return;
+                      if (newUser != null) {
+                        if (!mounted) {
+                          return;
+                        }
+                        Routes.pushRightLeftConsumerFul(
+                          context,
+                          ScreenManagerSignup(
+                            title: "Đăng kí chi nhánh",
+                            userId: newUser!.id ?? 0,
+                          ),
+                        );
                       }
-                      newUser = ref.read(userNotifierProvider);
-                    } catch (e) {
-                      // Show server error message if any
-                      final msg = e.toString();
-                      Constrats.showThongBao(context, msg);
-                    } finally {
-                      if (mounted) {
-                        ref.read(_isCanPop.notifier).state = false;
+                    } else {
+                      ref.read(isLoadingNotifierProvider.notifier).toggle(true);
+                      ref.read(_isCanPop.notifier).state = true;
+                      try {
+                        await siginUpInfor(user, context);
+                      } catch (e) {
+                        // Show server error message if any
+                        final msg = e.toString();
+                        Constrats.showThongBao(context, msg);
+                      } finally {
+                        if (mounted) {
+                          ref.read(_isCanPop.notifier).state = false;
+                        }
                       }
-                    }
-                    if (newUser != null) {
-                      if (!mounted) {
-                        return;
-                      }
-                      Routes.pushRightLeftConsumerFul(
-                        context,
-                        ScreenManagerSignup(
-                          title: "Đăng kí chi nhánh",
-                          userId: newUser!.id ?? 0,
-                        ),
-                      );
                     }
                   } else {
-                    ref.read(isLoadingNotifierProvider.notifier).toggle(true);
-                    ref.read(_isCanPop.notifier).state = true;
-                    try {
-                      await siginUpInfor(user, context);
-                    } catch (e) {
-                      // Show server error message if any
-                      final msg = e.toString();
-                      Constrats.showThongBao(context, msg);
-                    } finally {
-                      if (mounted) {
-                        ref.read(_isCanPop.notifier).state = false;
-                      }
-                    }
+                    Constrats.showThongBao(context, "Xác minh thất bại !");
                   }
                 } else {
                   Constrats.showThongBao(context, "Tên quá ngắn !");
@@ -422,14 +460,11 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
                       widget.index == 3
                           ? Column(
                             children: [
-                              _label("Nhập mã code chi nhánh*"),
-                              _textFiled(
-                                5,
-                                null,
-                                Icon(Icons.code, color: Colors.grey[600]),
-                                null,
-                                _codeBranchController,
-                                null,
+                              _label("Chọn chi nhánh*"),
+                              _branchDropdown(
+                                context,
+                                ref,
+                                ref.watch(BranchesNotifierProvider),
                               ),
                               SizedBox(height: 10),
                             ],
@@ -677,6 +712,31 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
     );
   }
 
+  //Dropdown button branch
+  Widget _branchDropdown(
+    BuildContext context,
+    WidgetRef ref,
+    List<Branch> branches,
+  ) {
+    final selectedBranch = ref.watch(_selectedBranchProvider);
+    return DropdownButton<Branch>(
+      hint: Text('Chọn chi nhánh'),
+      value: selectedBranch,
+      isExpanded: true,
+      items:
+          branches.map((Branch branch) {
+            return DropdownMenuItem<Branch>(
+              value: branch,
+              child: Text(branch.name),
+            );
+          }).toList(),
+      onChanged: (Branch? newValue) {
+        ref.read(_selectedBranchProvider.notifier).state = newValue;
+        _codeBranchController.text = newValue?.branchCode ?? '';
+      },
+    );
+  }
+
   //Phần button tiếp tục
   Widget _signinButton(BuildContext context, WidgetRef ref) {
     // final userProvider = ref.watch(userNotifierProvider);
@@ -690,7 +750,9 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
         baseColor: Style.buttonBackgroundColor, // Button's distinct color
         padding: EdgeInsets.zero, // Padding handled by MaterialButton
         child: MaterialButton(
-          onPressed: () {
+          onPressed: () async {
+            //Lấy id company từ chi nhánh
+
             //User
             User user = User.create(
               fullName: _nameController.text,
@@ -704,6 +766,7 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
                       : widget.index == 2
                       ? 2
                       : 3,
+              companyId: null,
               fontImage: fontImageUrl ?? "Chưa có",
               backImage: backImageUrl ?? "Chưa có",
             );

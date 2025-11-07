@@ -37,6 +37,7 @@ class UserNotifier extends StateNotifier<User?> {
         if (registerSuccess != null) {
           // Cập nhật state sau khi đăng ký thành công
           state = registerSuccess;
+
           return 2;
         } else {
           return 3;

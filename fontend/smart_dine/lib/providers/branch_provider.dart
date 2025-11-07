@@ -1,15 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/API/branch_API.dart';
 import 'package:mart_dine/API/company_API.dart';
+import 'package:mart_dine/API/user_API.dart';
 import 'package:mart_dine/API/user_branch_API.dart';
 import 'package:mart_dine/models/branch.dart';
 
 class BranchNotifier extends StateNotifier<Branch?> {
   final BranchAPI branchAPI;
+  final UserAPI userAPI;
   final CompanyAPI companyAPI;
   final UserBranchAPI userBranchAPI;
-  BranchNotifier(this.branchAPI, this.companyAPI, this.userBranchAPI)
-    : super(null);
+  BranchNotifier(
+    this.branchAPI,
+    this.companyAPI,
+    this.userBranchAPI,
+    this.userAPI,
+  ) : super(null);
 
   Set<Branch> build() {
     return const {};
@@ -29,6 +35,9 @@ class BranchNotifier extends StateNotifier<Branch?> {
         if (response != null) {
           //Cập nhạt state
           state = response;
+          //Cập nhật bảng user_branch
+          // await userBranchAPI.create(userId, response.id!);
+          await userAPI.updateCompanyId(userId, responseCompany.id!);
           return 1;
         }
       } else {
@@ -78,5 +87,6 @@ final branchNotifierProvider = StateNotifierProvider<BranchNotifier, Branch?>((
     ref.watch(branchApiProvider),
     ref.watch(companyApiProvider),
     ref.watch(userBranchApiProvider),
+    ref.watch(userApiProvider),
   );
 });

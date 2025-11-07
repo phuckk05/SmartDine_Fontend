@@ -45,6 +45,18 @@ class BranchAPI {
     }
     return null;
   }
+
+  Future<List<Branch>> getAllBranches() async {
+    final response = await http.get(
+      Uri.parse(uri2),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((branch) => Branch.fromMap(branch)).toList();
+    }
+    return [];
+  }
 }
 
 //userApiProvider

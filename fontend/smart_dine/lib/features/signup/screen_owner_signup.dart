@@ -23,6 +23,8 @@ final _isLoadingProvider = StateProvider<bool>((ref) => false);
 final _imageProvider = StateProvider.autoDispose<File?>((ref) => null);
 final _imageUrlProvider = StateProvider.autoDispose<String>((ref) => "");
 
+final _selectedCompanyProvider = StateProvider<Company?>((ref) => null);
+
 //Giao diện đăng kí chủ nhà hàng
 class ScreenOwnerSignup extends ConsumerStatefulWidget {
   final String? title;
@@ -241,6 +243,31 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
           style: Style.fontCaption,
         ),
       ],
+    );
+  }
+
+  //Dropdown button company
+  Widget _companyDropdown(
+    BuildContext context,
+    WidgetRef ref,
+    List<Company> companies,
+  ) {
+    final selectedCompany = ref.watch(_selectedCompanyProvider);
+    return DropdownButton<Company>(
+      hint: Text('Chọn công ty'),
+      value: selectedCompany,
+      isExpanded: true,
+      items:
+          companies.map((Company company) {
+            return DropdownMenuItem<Company>(
+              value: company,
+              child: Text(company.name),
+            );
+          }).toList(),
+      onChanged: (Company? newValue) {
+        ref.read(_selectedCompanyProvider.notifier).state = newValue;
+        _codeController.text = newValue?.companyCode ?? '';
+      },
     );
   }
 

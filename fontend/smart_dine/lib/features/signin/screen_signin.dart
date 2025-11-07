@@ -156,8 +156,6 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
           // } else if (user.role == 5) {
           //   Routes.pushRightLeftConsumerFul(context, OwnerHomeScreen());
           // }
-        } else {
-          Constrats.showThongBao(context, 'Trạng thái tài khoản không hợp lệ.');
         }
       } else {
         Constrats.showThongBao(
