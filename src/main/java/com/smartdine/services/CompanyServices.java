@@ -39,7 +39,7 @@ public class CompanyServices {
         return companyRepository.findByCompanyCode(companyCode).orElse(null);
     }
 
-    /// Danh sách công ty chờ duyệt
+    /// Danh sách xác nhận chờ duyệt
     public List<Company> getPendingCompanies() {
         return companyRepository.findByStatusId(3);
     }
@@ -116,5 +116,34 @@ public class CompanyServices {
         stats.put("statusId", company.getStatusId());
         return stats;
     }
+
+    //Quản lý cửa hàng
+    // ✅ Danh sách công ty đã được duyệt (statusId = 1)
+    public List<Company> getActiveCompanies() {
+        return companyRepository.findByStatusId(1);
+    }
+
+    // ✅ Kích hoạt / vô hiệu hóa công ty
+    @Transactional
+    public Company toggleCompanyStatus(Integer companyId, boolean isActive) {
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy công ty có id = " + companyId));
+
+        company.setStatusId(isActive ? 1 : 2); // 1 = Active, 2 = Inactive
+        company.setUpdatedAt(LocalDateTime.now());
+        companyRepository.save(company);
+
+        // Cập nhật luôn user chủ công ty
+        List<User> owners = userRepository.findByCompanyIdAndRole(companyId, 5);
+        for (User owner : owners) {
+            owner.setStatusId(isActive ? 1 : 2);
+            owner.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(owner);
+        }
+
+        return company;
+    }
+    
+
 
 }
