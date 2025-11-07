@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -95,6 +96,26 @@ public class OrderController {
     @GetMapping("/branch/{branchId}")
     public List<Order> getOrdersByBranchId(@PathVariable Integer branchId) {
         return orderServices.getOrdersByBranchId(branchId);
+    }
+
+    // Yêu cầu thanh toán (cập nhật statusId = 4)
+    @PutMapping("/{orderId}/request-payment")
+    public ResponseEntity<?> requestPayment(@PathVariable Integer orderId) {
+        try {
+            Order order = orderServices.getById(orderId);
+            if (order == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // Cập nhật status thành 4 (yêu cầu thanh toán)
+            order.setStatusId(4);
+            Order updatedOrder = orderServices.saveOrder(order);
+
+            return ResponseEntity.ok(updatedOrder);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     // Thống kê số lượng đơn hàng theo period
