@@ -118,30 +118,30 @@ public class CompanyServices {
     }
 
     //Quản lý cửa hàng
-    /// Danh sách công ty đã được duyệt (kích hoạt)
+    // ✅ Danh sách công ty đã được duyệt (statusId = 1)
     public List<Company> getActiveCompanies() {
         return companyRepository.findByStatusId(1);
     }
 
-    /// Cập nhật trạng thái kích hoạt / vô hiệu hóa công ty
+    // ✅ Kích hoạt / vô hiệu hóa công ty
     @Transactional
     public Company toggleCompanyStatus(Integer companyId, boolean isActive) {
-    Company company = companyRepository.findById(companyId)
-        .orElseThrow(() -> new RuntimeException("Không tìm thấy công ty có id = " + companyId));
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy công ty có id = " + companyId));
 
-    company.setStatusId(isActive ? 1 : 2); // 1 = Active, 2 = Inactive
-    company.setUpdatedAt(LocalDateTime.now());
-    companyRepository.save(company);
+        company.setStatusId(isActive ? 1 : 2); // 1 = Active, 2 = Inactive
+        company.setUpdatedAt(LocalDateTime.now());
+        companyRepository.save(company);
 
-    // Cập nhật luôn user chủ công ty (role = 5)
-    List<User> owners = userRepository.findByCompanyIdAndRole(companyId, 5);
-    for (User owner : owners) {
-        owner.setStatusId(isActive ? 1 : 2);
-        owner.setUpdatedAt(LocalDateTime.now());
-        userRepository.save(owner);
-    }
+        // Cập nhật luôn user chủ công ty
+        List<User> owners = userRepository.findByCompanyIdAndRole(companyId, 5);
+        for (User owner : owners) {
+            owner.setStatusId(isActive ? 1 : 2);
+            owner.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(owner);
+        }
 
-    return company;
+        return company;
     }
     
 

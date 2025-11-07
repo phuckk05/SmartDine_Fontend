@@ -19,6 +19,7 @@ import com.smartdine.services.CompanyServices;
 
 @RestController
 @RequestMapping({ "/api/companys", "/api/company" })
+@CrossOrigin(origins = "*")
 public class CompanyController {
     @Autowired
     CompanyServices companyServices;
@@ -119,30 +120,24 @@ public class CompanyController {
     }
 
     //Quản lý cửa hàng
-    /// Lấy danh sách công ty đã duyệt (statusId = 1)
+     // Danh sách công ty đã duyệt (active)
     @GetMapping("/active")
     public ResponseEntity<?> getActiveCompanies() {
-    try {
-        List<Company> active = companyServices.getActiveCompanies();
-        return ResponseEntity.ok(active);
-    } catch (Exception e) {
-        e.printStackTrace();
-        return ResponseEntity.internalServerError().body("Lỗi khi lấy danh sách công ty đã duyệt");
-    }
+        try {
+            return ResponseEntity.ok(companyServices.getActiveCompanies());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Lỗi khi lấy danh sách công ty đã duyệt");
+        }
     }
 
-    /// Kích hoạt hoặc vô hiệu hóa công ty
+    // Kích hoạt / vô hiệu hóa công ty
     @PutMapping("/toggle/{id}/{active}")
     public ResponseEntity<?> toggleCompanyStatus(@PathVariable Integer id, @PathVariable boolean active) {
-    try {
-        Company updated = companyServices.toggleCompanyStatus(id, active);
-        return ResponseEntity.ok(updated);
-    } catch (Exception e) {
-        e.printStackTrace();
-        return ResponseEntity.badRequest().body("Lỗi khi cập nhật trạng thái công ty: " + e.getMessage());
+        try {
+            return ResponseEntity.ok(companyServices.toggleCompanyStatus(id, active));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Lỗi khi cập nhật trạng thái công ty: " + e.getMessage());
+        }
     }
-    }
-
-    
 
 }
