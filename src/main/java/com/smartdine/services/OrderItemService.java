@@ -24,6 +24,12 @@ public class OrderItemService {
         return orderItemRepository.save(orderItem);
     }
 
+    // Thêm danh sách order items
+    @Transactional
+    public List<OrderItem> addOrderItems(List<OrderItem> orderItems) {
+        return orderItemRepository.saveAll(orderItems);
+    }
+
     // Lấy danh sách OrderItem theo các orderId
     public List<OrderItem> getOrderItemsByOrderIds(List<Integer> orderIds) {
         if (orderIds == null || orderIds.isEmpty()) {

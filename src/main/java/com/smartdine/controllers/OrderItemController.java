@@ -29,10 +29,10 @@ public class OrderItemController {
 
     // save order item
     @PostMapping("/save")
-    public ResponseEntity<?> saveOrderItem(@RequestBody OrderItem orderItem) {
+    public ResponseEntity<?> saveOrderItem(@RequestBody List<OrderItem> orderItems) {
         try {
-            OrderItem savedOrderItem = orderItemServices.addOrderItem(orderItem);
-            return ResponseEntity.ok(savedOrderItem);
+            List<OrderItem> savedOrderItems = orderItemServices.addOrderItems(orderItems);
+            return ResponseEntity.ok(savedOrderItems);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();
