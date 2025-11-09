@@ -240,6 +240,9 @@ class _ScreenKitchenState extends ConsumerState<ScreenKitchen>
       );
     }
 
+    //Sắp xếp giảm dần theo thời gian tạo (mới nhất lên đầu)
+    orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
     return ListView.separated(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),

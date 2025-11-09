@@ -1,37 +1,35 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mart_dine/api/company_API.dart'; // hoặc store_API.dart tùy bạn
-import 'package:mart_dine/models/company.dart';
+import 'package:mart_dine/API/company_owner_api.dart';
+import 'package:mart_dine/models/company_owner.dart';
 
-class QlCuaHangNotifier extends StateNotifier<AsyncValue<List<Company>>> {
-  final CompanyAPI _api;
+final qlCuaHangProvider =
+    StateNotifierProvider<QlCuaHangNotifier, AsyncValue<List<CompanyOwner>>>(
+      (ref) => QlCuaHangNotifier(ref),
+    );
 
-  QlCuaHangNotifier(this._api) : super(const AsyncValue.loading()) {
-    loadActiveStores();
+class QlCuaHangNotifier extends StateNotifier<AsyncValue<List<CompanyOwner>>> {
+  final Ref ref;
+  QlCuaHangNotifier(this.ref) : super(const AsyncLoading()) {
+    loadCompanyOwners();
   }
 
-  // Lấy danh sách cửa hàng đã duyệt (statusId = 1)
-  Future<void> loadActiveStores() async {
+  Future<void> loadCompanyOwners() async {
     try {
-      final stores = await _api.getActiveCompanies(); // dùng API ở trên
-      state = AsyncValue.data(stores);
+      final api = ref.read(companyOwnerApiProvider);
+      final list = await api.getCompanyOwners();
+      state = AsyncData(list);
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      state = AsyncError(e, st);
     }
   }
 
-  // Bật/tắt cửa hàng (active / inactive)
-  Future<void> toggleStoreStatus(int id, bool isActive) async {
+  Future<void> deleteCompany(int companyId) async {
     try {
-      await _api.toggleCompanyStatus(id, isActive);
-      await loadActiveStores();
+      final api = ref.read(companyOwnerApiProvider);
+      await api.deleteCompany(companyId);
+      loadCompanyOwners(); // load lại danh sách sau khi xóa
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      state = AsyncError(e, st);
     }
   }
 }
-
-// Provider chính
-final qlCuaHangProvider =
-    StateNotifierProvider<QlCuaHangNotifier, AsyncValue<List<Company>>>(
-      (ref) => QlCuaHangNotifier(ref.watch(companyApiProvider)),
-    );

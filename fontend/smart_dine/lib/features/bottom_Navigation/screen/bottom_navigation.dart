@@ -32,7 +32,7 @@ class _BottomNavigationState extends ConsumerState<ScreenBottomNavigation> {
   final List<Widget> _adminScreens = [
     const ScreenDashboard(),
     const ScreenQlXacNhan(),
-    const ScreenQlcuahang(),
+    const ScreenQlCuaHang(),
   ];
 
   @override
