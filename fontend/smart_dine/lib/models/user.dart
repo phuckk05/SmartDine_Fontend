@@ -101,8 +101,14 @@ class User {
       'backImage': backImage,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
-      'deletedAt': deletedAt != null ? deletedAt!.toIso8601String() : null,
+      'deletedAt': deletedAt?.toIso8601String(),
     };
+  }
+
+  int? parseInt(dynamic v) {
+    if (v == null) return null;
+    if (v is int) return v;
+    return int.tryParse(v.toString());
   }
 
   factory User.fromMap(Map<String, dynamic> map) {
@@ -135,13 +141,13 @@ class User {
     }
 
     return User(
-      id: int.tryParse(map['id']?.toString() ?? '') ?? 0,
+      id: _parseInt(map['id']) ?? 0,
       fullName: map['fullName'] ?? '',
       email: map['email'] ?? '',
       phone: map['phone'] ?? '',
       passworkHash: map['passworkHash'] ?? '',
       statusId: _parseInt(map['statusId']) ?? 0,
-      role: _parseInt(map['statusId']) ?? 0,
+      role: _parseInt(map['role']) ?? 0,
       fontImage: map['fontImage'] ?? '',
       backImage: map['backImage'] ?? '',
       createdAt: _parseDate(map['createdAt']),

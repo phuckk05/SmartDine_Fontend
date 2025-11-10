@@ -10,7 +10,7 @@ class Item {
   final DateTime? updatedAt;
   final DateTime? deletedAt;
 
-  const Item({
+  Item({
     this.id,
     required this.companyId,
     required this.name,
@@ -20,6 +20,85 @@ class Item {
     this.updatedAt,
     this.deletedAt,
   });
+
+  // Robust parsing helpers
+  static int? _parseInt(dynamic v) {
+    if (v == null) return null;
+    if (v is int) return v;
+    return int.tryParse(v.toString());
+  }
+
+  static double _parseDouble(dynamic v) {
+    if (v == null) return 0.0;
+    if (v is double) return v;
+    if (v is int) return v.toDouble();
+    return double.tryParse(v.toString()) ?? 0.0;
+  }
+
+  static DateTime _parseDate(dynamic v) {
+    if (v == null) return DateTime.now();
+    if (v is DateTime) return v;
+    if (v is int) return DateTime.fromMillisecondsSinceEpoch(v);
+    if (v is String) {
+      final parsed = DateTime.tryParse(v);
+      if (parsed != null) return parsed;
+      final i = int.tryParse(v);
+      if (i != null) return DateTime.fromMillisecondsSinceEpoch(i);
+    }
+    return DateTime.now();
+  }
+
+  static DateTime? _parseNullableDate(dynamic v) {
+    if (v == null) return null;
+    if (v is DateTime) return v;
+    if (v is int) return DateTime.fromMillisecondsSinceEpoch(v);
+    if (v is String) {
+      final parsed = DateTime.tryParse(v);
+      if (parsed != null) return parsed;
+      final i = int.tryParse(v);
+      if (i != null) return DateTime.fromMillisecondsSinceEpoch(i);
+    }
+    return null;
+  }
+
+  factory Item.fromMap(Map<String, dynamic> map) {
+    return Item(
+      id: _parseInt(map['id'] ?? map['Id'] ?? map['ID']),
+      companyId:
+          _parseInt(map['company_id'] ?? map['companyId'] ?? map['company']) ??
+          0,
+      name: map['name']?.toString() ?? '',
+      price: _parseDouble(map['price'] ?? map['unit_price'] ?? 0),
+      statusId:
+          _parseInt(map['status_id'] ?? map['statusId'] ?? map['status']) ?? 0,
+      createdAt: _parseDate(
+        map['created_at'] ?? map['createdAt'] ?? map['created'],
+      ),
+      updatedAt: _parseDate(
+        map['updated_at'] ?? map['updatedAt'] ?? map['updated'],
+      ),
+      deletedAt: _parseNullableDate(
+        map['deleted_at'] ?? map['deletedAt'] ?? map['deleted'],
+      ),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'company_id': companyId,
+      'name': name,
+      'price': price,
+      'status_id': statusId,
+      'created_at': createdAt?.toIso8601String(),
+      'updated_at': updatedAt?.toIso8601String(),
+      'deleted_at': deletedAt?.toIso8601String(),
+    };
+  }
+
+  factory Item.fromJson(String source) => Item.fromMap(json.decode(source));
+
+  String toJson() => json.encode(toMap());
 
   Item copyWith({
     int? id,
@@ -43,55 +122,23 @@ class Item {
     );
   }
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'companyId': companyId,
-      'name': name,
-      'price': price,
-      'statusId': statusId,
-      'createdAt': createdAt?.toIso8601String(),
-      'updatedAt': updatedAt?.toIso8601String(),
-      'deletedAt': deletedAt?.toIso8601String(),
-    };
+  @override
+  String toString() {
+    return 'Item(id: $id, companyId: $companyId, name: $name, price: $price, statusId: $statusId)';
   }
 
-  factory Item.fromMap(Map<String, dynamic> map) {
-    return Item(
-      id: _asInt(map['id']),
-      companyId: _asInt(map['companyId'] ?? map['company_id']),
-      name: map['name']?.toString() ?? '',
-      price: _asDouble(map['price']),
-      statusId: _asInt(map['statusId'] ?? map['status_id']),
-      createdAt: _parseDate(map['createdAt'] ?? map['created_at']),
-      updatedAt: _parseDate(map['updatedAt'] ?? map['updated_at']),
-      deletedAt: _parseDate(map['deletedAt'] ?? map['deleted_at']),
-    );
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Item &&
+        other.id == id &&
+        other.companyId == companyId &&
+        other.name == name;
   }
 
-  String toJson() => jsonEncode(toMap());
-
-  factory Item.fromJson(String source) =>
-      Item.fromMap(jsonDecode(source) as Map<String, dynamic>);
-
-  static int _asInt(dynamic value) {
-    if (value == null) return 0;
-    if (value is int) return value;
-    return int.tryParse(value.toString()) ?? 0;
-  }
-
-  static double _asDouble(dynamic value) {
-    if (value == null) return 0;
-    if (value is double) return value;
-    if (value is int) return value.toDouble();
-    return double.tryParse(value.toString()) ?? 0;
-  }
-
-  static DateTime? _parseDate(dynamic value) {
-    if (value == null) return null;
-    if (value is DateTime) return value;
-    return DateTime.tryParse(value.toString());
-  }
+  @override
+  int get hashCode =>
+      id.hashCode ^ companyId.hashCode ^ name.hashCode ^ price.hashCode;
 }
 
 // ...existing code...

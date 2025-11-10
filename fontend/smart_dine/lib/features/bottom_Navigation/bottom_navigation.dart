@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/features/kitchen/screen_caidat.dart';
+import 'package:mart_dine/features/kitchen/screen_kitchen.dart';
 import 'package:mart_dine/features/kitchen/screen_lichsu.dart';
-import 'package:mart_dine/features/kitchen/screen_phongbep.dart';
-import 'package:mart_dine/features/admin/screen_dashboard.dart';
-import 'package:mart_dine/features/admin/screen_qlcuahang.dart';
-import 'package:mart_dine/features/admin/screen_qlxacnhan.dart';
 
-// Các state provider
+// // Các state provider
 final currentIndexProvider = StateProvider<int>((ref) => 0);
 
 class ScreenBottomNavigation extends ConsumerStatefulWidget {
@@ -23,16 +20,16 @@ class ScreenBottomNavigation extends ConsumerStatefulWidget {
 class _BottomNavigationState extends ConsumerState<ScreenBottomNavigation> {
   // Danh sách các màn hình cho Kitchen (index = 1)
   final List<Widget> _kitchenScreens = [
-    const KitchenScreen(),
-    const HistoryScreen(),
-    const SettingsScreen(),
+    const ScreenKitchen(),
+    const ScreenHistory(),
+    const ScreenSetting(),
   ];
 
-  // Danh sách các màn hình cho Admin (index = 2)
+  //   // Danh sách các màn hình cho Admin (index = 2)
   final List<Widget> _adminScreens = [
-    const DashboardScreen(),
-    const ConfirmManagementScreen(), // screen_qlxacnhan.dart
-    const StoreManagementScreen(), // screen_qlcuahang.dart
+    // const DashboardScreen(),
+    // const ConfirmManagementScreen(), // screen_qlxacnhan.dart
+    // const StoreManagementScreen(), // screen_qlcuahang.dart
   ];
 
   @override

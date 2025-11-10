@@ -48,6 +48,28 @@ class OrderProvider extends StateNotifier<List<Order>> {
       return null;
     }
   }
+
+  Future<void> loadOrdersByBranchId(int branchId) async {
+    final orders = await orderApi.getOrdersByBranchId(branchId);
+    state = orders;
+  }
+
+  Set<Order> build() {
+    return const {};
+  }
+
+  //Kiểm tra orderId nếu có lấy tableOrderId
+  int? checkOrderExists(int orderId) {
+    print('Checking existence for order ID: $orderId');
+    for (final order in state) {
+      print('Checking order ID: ${order.id} against $orderId');
+      // ignore: unrelated_type_equality_checks
+      if (order.id == orderId) {
+        return order.tableId;
+      }
+    }
+    return null;
+  }
 }
 
 // Provider for OrderProvider

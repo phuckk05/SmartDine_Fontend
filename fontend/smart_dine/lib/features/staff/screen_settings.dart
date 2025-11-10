@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mart_dine/features/staff/screen_order_history.dart';
 import 'package:mart_dine/features/staff/screen_user_profile.dart';
 import 'package:mart_dine/providers/mode_provider.dart';
 
 class ScreenSettings extends ConsumerWidget {
-  const ScreenSettings({Key? key}) : super(key: key);
+  const ScreenSettings({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -100,11 +99,11 @@ class ScreenSettings extends ConsumerWidget {
           ),
           OutlinedButton(
             onPressed: () {},
-            child: Text('Đăng xuất'),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.black,
               side: BorderSide(color: Colors.grey.shade400),
             ),
+            child: Text('Đăng xuất'),
           ),
         ],
       ),

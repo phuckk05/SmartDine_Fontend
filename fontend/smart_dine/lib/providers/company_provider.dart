@@ -12,7 +12,7 @@ class CompanyNotifier extends StateNotifier<Company?> {
 
   // Đăng ký user
   Future<int> signUpComapny(Company company, int userId) async {
-    print("company ${company} - id ${userId}");
+    print("company $company - id $userId");
     try {
       final response = await companyAPI.createCompany(company);
       if (response != null) {

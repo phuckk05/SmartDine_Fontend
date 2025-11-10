@@ -1,47 +1,54 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/API/order_API.dart';
+import 'package:mart_dine/API/reservation_API.dart';
 import 'package:mart_dine/API/table_API.dart';
 import 'package:mart_dine/models/table.dart';
 
-class TableProvider extends StateNotifier<List<Table>> {
-  final TableAPI tableAPI;
-  TableProvider(this.tableAPI) : super([]) {
-    getAll();
+class TableNotifier extends StateNotifier<List<DiningTable>> {
+  final TableApi tableAPI;
+  TableNotifier(this.tableAPI) : super([]);
+
+  Set<DiningTable> build() {
+    return const {};
   }
 
-  //Lấy danh sách bàn
-  Future<void> getAll() async {
-    final tables = await tableAPI.fetchTables();
-    state = tables.isNotEmpty ? tables : [];
+  //Load danh sách bàn
+  Future<void> loadTables(int branchId) async {
+    final tables = await tableAPI.getTablesByBranchId(branchId);
+    state = tables;
   }
 
-  //Thêm bàn
-  void addTable(Table table) {
-    state = [...state, table];
-  }
-
-  //Cập nhật bàn
-  void updateTable(Table updatedTable) {
-    state = [
-      for (final table in state)
-        if (table.id == updatedTable.id) updatedTable else table,
-    ];
-  }
-
-  //Xóa bàn
-  void deleteTable(int tableId) {
-    state = state.where((table) => table.id != tableId).toList();
+  //Lấy name table by id
+  String? getTableNameById(int? tableId) {
+    if (tableId == null) return null;
+    try {
+      final table = state.firstWhere((table) => table.id == tableId);
+      return table.name;
+    } catch (_) {
+      return null;
+    }
   }
 }
 
-final tableNotifierProvider = StateNotifierProvider<TableProvider, List<Table>>(
-  (ref) {
-    return TableProvider(ref.watch(tableApiProvider));
-  },
-);
-
-// FutureProvider for unpaid table IDs today
-final getUnpaidTableIdsToday = FutureProvider<List<int>>((ref) async {
+final tableNotifierProvider =
+    StateNotifierProvider<TableNotifier, List<DiningTable>>((ref) {
+      return TableNotifier(ref.read(tableApiProvider));
+    });
+final unpaidTablesByBranchProvider = FutureProvider.family<Set<int>, int>((
+  ref,
+  branchId,
+) async {
   final orderApi = ref.watch(orderApiProvider);
-  return orderApi.fetchUnpaidTableIdsToday();
+  final orders = await orderApi.fetchOrdersByBranchIdToday(branchId);
+  final activeTableIds =
+      orders
+          .where((order) => order.statusId == 2 || order.statusId == 4)
+          .map((order) => order.tableId)
+          .toSet();
+  return activeTableIds;
 });
+final reservedTablesByBranchProvider =
+    FutureProvider.family<Map<String, dynamic>, int>((ref, branchId) async {
+      final reservationApi = ref.watch(reservationApiProvider);
+      return await reservationApi.getReservedTablesByBranch(branchId);
+    });
