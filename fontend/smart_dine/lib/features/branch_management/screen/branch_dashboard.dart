@@ -4,6 +4,7 @@ import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/branch_management/screen/order_list_screen.dart';
 import 'package:mart_dine/features/branch_management/screen/today_activities_screen.dart';
 import '../../../providers/branch_statistics_provider.dart';
+import '../../../providers/user_session_provider.dart';
 import '../../../models/statistics.dart';
 
 class BranchDashboardScreen extends ConsumerStatefulWidget {
@@ -17,23 +18,38 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
   // Primary color constant
   static const Color primaryColor = Color(0xFF6200EE);
 
-  String? _getBranchId() {
-    // TODO: Get branchId từ user context thông qua UserBranch
-    // For now, return mock branchId
-    return '1'; // Mock branch ID as String
-  }
-
   @override
   Widget build(BuildContext context) {
-    final branchId = _getBranchId();
-    if (branchId == null) {
-      return const Scaffold(
-        body: Center(child: Text('Không tìm thấy thông tin chi nhánh')),
+    // Lấy branchId từ user session
+    final currentBranchId = ref.watch(currentBranchIdProvider);
+    final isAuthenticated = ref.watch(isAuthenticatedProvider);
+    
+    // Nếu chưa có session, tự động tạo mock session (chỉ cho development)
+    if (!isAuthenticated && currentBranchId == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Chỉ mock khi thực sự không có session nào
+        final session = ref.read(userSessionProvider);
+        if (session.userId == null) {
+          ref.read(userSessionProvider.notifier).mockLogin(branchId: 1);
+        }
+      });
+      
+      return Scaffold(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Style.backgroundColor,
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Đang khởi tạo phiên làm việc...'),
+            ],
+          ),
+        ),
       );
     }
 
-    // Convert String to int for API call
-    final branchIdInt = int.tryParse(branchId) ?? 1;
+    final branchIdInt = currentBranchId!; // Safe to use ! here since we checked above
     final statisticsAsyncValue = ref.watch(branchStatisticsProvider(branchIdInt));
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
@@ -62,7 +78,7 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
           ),
           data: (statistics) => RefreshIndicator(
             onRefresh: () async {
-              return ref.refresh(branchStatisticsProvider(branchIdInt));
+              return ref.refresh(branchStatisticsProvider(ref.read(currentBranchIdProvider)!));
             },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -109,7 +125,7 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
         ),
         IconButton(
           onPressed: () {
-            final branchIdInt = int.tryParse(_getBranchId() ?? '1') ?? 1;
+            final branchIdInt = ref.read(currentBranchIdProvider)!;
             // ignore: unused_result
             ref.refresh(branchStatisticsProvider(branchIdInt));
           },

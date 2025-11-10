@@ -1,5 +1,5 @@
 name: mart_dine
-description: "Hệ thống quản lý nhà hàng & phục vụ khách hàng"
+description: "Hệ thống quản lý nhà hàng & phuc vụ khách hành"
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
@@ -43,7 +43,7 @@ dependencies:
   #internationalization
   intl: ^0.19.0
 
-  #thư viện websocket để làm realtime
+  #thư viện wbsocket để làm realtieme
   stomp_dart_client: ^1.0.0
 
   # Các plugin phụ trợ
@@ -58,16 +58,24 @@ dependencies:
   riverpod_annotation: ^2.6.1
   http: ^1.1.0
   path: ^1.8.3
-  
   # Thư viện hỗ trợ UI
   google_fonts: ^6.1.0
   fluentui_system_icons: ^1.1.273
   lucide_icons: ^0.257.0
   lottie: ^3.3.0
   dotted_border: ^2.1.0
-  
-  # Biểu đồ
   fl_chart: ^1.1.1
+  
+  # Email validation
+  email_validator: ^2.1.17
+  mailer: ^6.6.0
+  
+  # Dropdown with search
+  dropdown_button2: ^2.3.9
+  
+  # Connectivity check
+  connectivity_plus: ^5.0.2
+
 
 dev_dependencies:
   flutter_test:
@@ -91,7 +99,6 @@ flutter:
    - assets/images/logoApp.png
    - assets/images/LogoApp2.png
    - assets/images/daidien.jpg
-   - assets/sounds/
   # fonts:
   #   - family: Schyler
   #     fonts:

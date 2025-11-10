@@ -162,7 +162,7 @@ class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
                   _selectedPeriod = value!;
                 });
                 // Refresh data when period changes
-                final branchIdInt = int.tryParse(_getBranchId() ?? '1') ?? 1;
+                final branchIdInt = ref.read(currentBranchIdProvider) ?? 1;
                 // ignore: unused_result
                 ref.refresh(branchStatisticsProvider(branchIdInt));
               },

@@ -1,96 +1,130 @@
-class UserSession {
-  final int userId;
-  final String userName;
-  final String userRole; // 'admin', 'manager', 'staff'
-  final List<int> branchIds; // Chi nhánh mà user có quyền truy cập
-  final int? currentBranchId; // Chi nhánh hiện tại đang làm việc
-  final DateTime loginTime;
-  final bool isAuthenticated;
+import 'dart:convert';
 
-  const UserSession({
-    required this.userId,
-    required this.userName,
-    required this.userRole,
-    required this.branchIds,
+class UserSession {
+  final int? userId;
+  final String? email;
+  final String? name;
+  final String? userName;
+  final int? role;
+  final int? userRole;
+  final int? companyId;
+  final int? currentBranchId;
+  final List<int> branchIds;
+  final bool isAuthenticated;
+  final DateTime? loginTime;
+
+  UserSession({
+    this.userId,
+    this.email,
+    this.name,
+    this.userName,
+    this.role,
+    this.userRole,
+    this.companyId,
     this.currentBranchId,
-    required this.loginTime,
-    this.isAuthenticated = true,
+    this.branchIds = const [],
+    this.isAuthenticated = false,
+    this.loginTime,
   });
 
-  // Factory constructor cho user chưa đăng nhập
   factory UserSession.guest() {
     return UserSession(
-      userId: 0,
-      userName: 'Guest',
-      userRole: 'guest',
-      branchIds: const [],
-      currentBranchId: null,
-      loginTime: DateTime.now(),
       isAuthenticated: false,
     );
   }
 
-  // Factory constructor từ API response
-  factory UserSession.fromJson(Map<String, dynamic> json) {
+  factory UserSession.authenticated({
+    required int userId,
+    required String email,
+    required String name,
+    String? userName,
+    required int role,
+    int? userRole,
+    required int companyId,
+    int? currentBranchId,
+    List<int>? branchIds,
+  }) {
     return UserSession(
-      userId: json['userId'] ?? 0,
-      userName: json['userName'] ?? '',
-      userRole: json['userRole'] ?? 'staff',
-      branchIds: (json['branchIds'] as List<dynamic>?)?.map((e) => e as int).toList() ?? [],
-      currentBranchId: json['currentBranchId'],
-      loginTime: json['loginTime'] != null 
-          ? DateTime.parse(json['loginTime']) 
-          : DateTime.now(),
-      isAuthenticated: json['isAuthenticated'] ?? false,
+      userId: userId,
+      email: email,
+      name: name,
+      userName: userName ?? name,
+      role: role,
+      userRole: userRole ?? role,
+      companyId: companyId,
+      currentBranchId: currentBranchId,
+      branchIds: branchIds ?? [],
+      isAuthenticated: true,
+      loginTime: DateTime.now(),
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'userId': userId,
-      'userName': userName,
-      'userRole': userRole,
-      'branchIds': branchIds,
-      'currentBranchId': currentBranchId,
-      'loginTime': loginTime.toIso8601String(),
-      'isAuthenticated': isAuthenticated,
-    };
-  }
-
-  // Tạo session mới với branch khác
   UserSession copyWith({
     int? userId,
+    String? email,
+    String? name,
     String? userName,
-    String? userRole,
-    List<int>? branchIds,
+    int? role,
+    int? userRole,
+    int? companyId,
     int? currentBranchId,
-    DateTime? loginTime,
+    List<int>? branchIds,
     bool? isAuthenticated,
+    DateTime? loginTime,
   }) {
     return UserSession(
       userId: userId ?? this.userId,
+      email: email ?? this.email,
+      name: name ?? this.name,
       userName: userName ?? this.userName,
+      role: role ?? this.role,
       userRole: userRole ?? this.userRole,
-      branchIds: branchIds ?? this.branchIds,
+      companyId: companyId ?? this.companyId,
       currentBranchId: currentBranchId ?? this.currentBranchId,
-      loginTime: loginTime ?? this.loginTime,
+      branchIds: branchIds ?? this.branchIds,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+      loginTime: loginTime ?? this.loginTime,
     );
   }
 
-  // Kiểm tra quyền truy cập chi nhánh
-  bool hasAccessToBranch(int branchId) {
-    return branchIds.contains(branchId) || userRole == 'admin';
+  Map<String, dynamic> toMap() {
+    return {
+      'userId': userId,
+      'email': email,
+      'name': name,
+      'userName': userName,
+      'role': role,
+      'userRole': userRole,
+      'companyId': companyId,
+      'currentBranchId': currentBranchId,
+      'branchIds': branchIds,
+      'isAuthenticated': isAuthenticated,
+      'loginTime': loginTime?.toIso8601String(),
+    };
   }
 
-  // Kiểm tra quyền admin
-  bool get isAdmin => userRole == 'admin';
-
-  // Kiểm tra quyền manager
-  bool get isManager => userRole == 'manager' || userRole == 'admin';
-
-  @override
-  String toString() {
-    return 'UserSession(userId: $userId, userName: $userName, role: $userRole, currentBranch: $currentBranchId)';
+  factory UserSession.fromMap(Map<String, dynamic> map) {
+    return UserSession(
+      userId: map['userId'],
+      email: map['email'],
+      name: map['name'],
+      userName: map['userName'] ?? map['name'],
+      role: map['role'],
+      userRole: map['userRole'] ?? map['role'],
+      companyId: map['companyId'],
+      currentBranchId: map['currentBranchId'],
+      branchIds: List<int>.from(map['branchIds'] ?? []),
+      isAuthenticated: map['isAuthenticated'] ?? false,
+      loginTime: map['loginTime'] != null ? DateTime.parse(map['loginTime']) : null,
+    );
   }
+
+  // Required methods
+  String toJson() => json.encode(toMap());
+  factory UserSession.fromJson(String source) => UserSession.fromMap(json.decode(source));
+
+  // Helper methods
+  bool hasAccessToBranch(int branchId) => branchIds.contains(branchId);
+  bool get isAdmin => role == 1; // Assuming 1 is admin role
+  bool get isManager => role == 2; // Assuming 2 is manager role
 }

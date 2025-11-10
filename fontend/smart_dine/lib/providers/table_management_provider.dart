@@ -37,8 +37,7 @@ class TableManagementNotifier extends StateNotifier<AsyncValue<List<table_model.
     try {
       return await _api.getTableById(tableId);
     } catch (error) {
-      print('Error getting table by id: $error');
-      return null;
+            return null;
     }
   }
 
@@ -52,8 +51,7 @@ class TableManagementNotifier extends StateNotifier<AsyncValue<List<table_model.
       }
       return false;
     } catch (error) {
-      print('Error creating table: $error');
-      return false;
+            return false;
     }
   }
 
@@ -67,8 +65,7 @@ class TableManagementNotifier extends StateNotifier<AsyncValue<List<table_model.
       }
       return false;
     } catch (error) {
-      print('Error updating table: $error');
-      return false;
+            return false;
     }
   }
 
@@ -82,8 +79,7 @@ class TableManagementNotifier extends StateNotifier<AsyncValue<List<table_model.
       }
       return false;
     } catch (error) {
-      print('Error deleting table: $error');
-      return false;
+            return false;
     }
   }
 }

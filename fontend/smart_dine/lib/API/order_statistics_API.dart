@@ -14,8 +14,7 @@ class OrderStatisticsAPI {
       
       return data is Map<String, dynamic> ? data : null;
     } catch (e) {
-      print('Error getting order statistics by branch: $e');
-      return null;
+            return null;
     }
   }
 
@@ -27,8 +26,7 @@ class OrderStatisticsAPI {
       
       return data is Map<String, dynamic> ? data : null;
     } catch (e) {
-      print('Error getting today order summary: $e');
-      return null;
+            return null;
     }
   }
 
@@ -40,8 +38,7 @@ class OrderStatisticsAPI {
       
       return data is Map<String, dynamic> ? data : null;
     } catch (e) {
-      print('Error getting peak hours: $e');
-      return null;
+            return null;
     }
   }
 
@@ -56,8 +53,7 @@ class OrderStatisticsAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting all orders: $e');
-      return null;
+            return null;
     }
   }
 
@@ -69,8 +65,7 @@ class OrderStatisticsAPI {
       
       return data is Map<String, dynamic> ? data : null;
     } catch (e) {
-      print('Error getting order by id: $e');
-      return null;
+            return null;
     }
   }
 
@@ -85,8 +80,7 @@ class OrderStatisticsAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting unpaid tables today: $e');
-      return null;
+            return null;
     }
   }
 
@@ -101,8 +95,7 @@ class OrderStatisticsAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting orders by table today: $e');
-      return null;
+            return null;
     }
   }
 }

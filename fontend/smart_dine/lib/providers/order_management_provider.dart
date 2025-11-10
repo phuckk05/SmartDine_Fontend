@@ -1,6 +1,50 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../API/order_management_API.dart';
+import '../API/order_item_API.dart';
+import '../API/menu_item_API.dart';
 import '../models/order.dart';
+import '../models/item.dart';
+import 'user_session_provider.dart';
+
+// Provider để lấy order với full items theo orderId  
+final orderWithItemsProvider = FutureProvider.family<Order?, int>((ref, orderId) async {
+  final api = ref.read(orderManagementApiProvider);
+  final session = ref.read(userSessionProvider);
+  
+  // 1. Lấy thông tin cơ bản của order
+  final order = await api.getOrderById(orderId);
+  if (order == null) {
+    return null;
+  }
+
+  // 2. Lấy order items từ API khác
+  final orderItemAPI = OrderItemAPI();
+  final items = await orderItemAPI.getOrderItemsByOrderId(orderId);
+  
+  // 3. Load tất cả menu items của company (ưu tiên lấy từ session, fallback từ order, cuối cùng = 1)
+  final menuAPI = MenuItemAPI();
+  final companyId = session.companyId ?? order.companyId ?? 1;
+  final menuItems = await menuAPI.getMenuItemsByCompanyId(companyId);
+  
+  // Tạo map để lookup nhanh menu item theo ID
+  final menuMap = <int, Item>{};
+  for (final menuItem in menuItems) {
+    if (menuItem.id != null) {
+      menuMap[menuItem.id!] = menuItem;
+    }
+  }
+
+  // 4. Map order items với thông tin menu và tính tổng tiền
+  double totalAmount = 0.0;
+  for (final item in items) {
+    final menuItem = menuMap[item.itemId];
+    final itemPrice = menuItem?.price ?? 0.0;
+    totalAmount += itemPrice * item.quantity;
+  }
+
+  // 5. Trả về order với tổng tiền đã tính
+  return order.copyWith(totalAmount: totalAmount);
+});
 
 // Provider cho order management
 final orderManagementProvider = StateNotifierProvider<OrderManagementNotifier, AsyncValue<List<Order>>>((ref) {
@@ -9,11 +53,81 @@ final orderManagementProvider = StateNotifierProvider<OrderManagementNotifier, A
   );
 });
 
-// Provider cho orders theo branch ID
+// Provider cho orders theo branch ID (basic - chỉ thông tin order)
 final ordersByBranchProvider = StateNotifierProvider.family<OrderManagementNotifier, AsyncValue<List<Order>>, int>((ref, branchId) {
   final notifier = OrderManagementNotifier(ref.read(orderManagementApiProvider));
   notifier.loadOrdersByBranchId(branchId);
   return notifier;
+});
+
+// Class để wrap order với metadata
+class OrderWithMetadata {
+  final Order order;
+  final int itemsCount;
+  
+  OrderWithMetadata({
+    required this.order, 
+    required this.itemsCount,
+  });
+}
+
+// Provider cho orders với đầy đủ items và totalAmount theo branch ID
+final ordersWithItemsByBranchProvider = FutureProvider.family<List<OrderWithMetadata>, int>((ref, branchId) async {
+  final api = ref.read(orderManagementApiProvider);
+  final session = ref.read(userSessionProvider);
+  
+  // 1. Lấy danh sách orders cơ bản
+  final orders = await api.getOrdersByBranchId(branchId);
+  if (orders == null || orders.isEmpty) {
+    return [];
+  }
+
+  // 2. Load menu items cho company  
+  final companyId = session.companyId ?? 1;
+  final menuAPI = MenuItemAPI();
+  final menuItems = await menuAPI.getMenuItemsByCompanyId(companyId);
+  
+  // Tạo map để lookup nhanh menu item theo ID
+  final menuMap = <int, Item>{};
+  for (final menuItem in menuItems) {
+    if (menuItem.id != null) {
+      menuMap[menuItem.id!] = menuItem;
+    }
+  }
+
+  // 3. Load items count và tính totalAmount cho từng order
+  final List<OrderWithMetadata> ordersWithData = [];
+  final orderItemAPI = OrderItemAPI();
+  
+  for (final order in orders) {
+    if (order.id == null) continue;
+    
+    // Load order items để đếm và tính tiền
+    final items = await orderItemAPI.getOrderItemsByOrderId(order.id!);
+    
+    // Tính totalAmount và itemsCount
+    double totalAmount = 0.0;
+    int itemsCount = items.length;
+    
+    for (final item in items) {
+      final menuItem = menuMap[item.itemId];
+      final itemPrice = menuItem?.price ?? 0.0;
+      totalAmount += itemPrice * item.quantity;
+    }
+    
+    // Tạo order với totalAmount
+    final orderWithTotalAmount = order.copyWith(totalAmount: totalAmount);
+    
+    // Wrap với metadata
+    final orderWithMetadata = OrderWithMetadata(
+      order: orderWithTotalAmount,
+      itemsCount: itemsCount,
+    );
+    
+    ordersWithData.add(orderWithMetadata);
+  }
+  
+  return ordersWithData;
 });
 
 // Provider cho order statuses
@@ -32,46 +146,32 @@ class OrderManagementNotifier extends StateNotifier<AsyncValue<List<Order>>> {
 
   Future<void> loadOrders() async {
     try {
-      print('🔄 OrderManagementProvider: Starting loadOrders()');
-      state = const AsyncValue.loading();
+            state = const AsyncValue.loading();
       final orders = await _api.getAllOrders();
       
-      print('📊 OrderManagementProvider: API returned ${orders?.length ?? 'null'} orders');
-      
-      if (orders != null) {
-        print('✅ OrderManagementProvider: Setting data with ${orders.length} orders');
-        state = AsyncValue.data(orders);
+            if (orders != null) {
+                state = AsyncValue.data(orders);
       } else {
-        print('⚠️ OrderManagementProvider: API returned null, setting empty list');
-        state = const AsyncValue.data([]);
+                state = const AsyncValue.data([]);
       }
     } catch (error, stackTrace) {
-      print('❌ OrderManagementProvider: Error occurred: $error');
-      print('📍 OrderManagementProvider: Stack trace: $stackTrace');
-      state = AsyncValue.error(error, stackTrace);
+                  state = AsyncValue.error(error, stackTrace);
     }
   }
 
   // Load orders theo branch ID
   Future<void> loadOrdersByBranchId(int branchId) async {
     try {
-      print('🔄 OrderManagementProvider: Starting loadOrdersByBranchId($branchId)');
-      state = const AsyncValue.loading();
+            state = const AsyncValue.loading();
       final orders = await _api.getOrdersByBranchId(branchId);
       
-      print('📊 OrderManagementProvider: API returned ${orders?.length ?? 'null'} orders for branch $branchId');
-      
-      if (orders != null) {
-        print('✅ OrderManagementProvider: Setting data with ${orders.length} orders');
-        state = AsyncValue.data(orders);
+            if (orders != null) {
+                state = AsyncValue.data(orders);
       } else {
-        print('⚠️ OrderManagementProvider: API returned null, setting empty list');
-        state = const AsyncValue.data([]);
+                state = const AsyncValue.data([]);
       }
     } catch (error, stackTrace) {
-      print('❌ OrderManagementProvider: Error occurred: $error');
-      print('📍 OrderManagementProvider: Stack trace: $stackTrace');
-      state = AsyncValue.error(error, stackTrace);
+                  state = AsyncValue.error(error, stackTrace);
     }
   }
 
@@ -79,17 +179,17 @@ class OrderManagementNotifier extends StateNotifier<AsyncValue<List<Order>>> {
     try {
       return await _api.getOrderById(orderId);
     } catch (error) {
-      print('Error getting order by id: $error');
-      return null;
+            return null;
     }
   }
+
+
 
   Future<List<int>?> getUnpaidTableIds() async {
     try {
       return await _api.getUnpaidOrderTableIdsToday();
     } catch (error) {
-      print('Error getting unpaid table ids: $error');
-      return null;
+            return null;
     }
   }
 
@@ -97,8 +197,7 @@ class OrderManagementNotifier extends StateNotifier<AsyncValue<List<Order>>> {
     try {
       return await _api.getOrdersByTableIdToday(tableId);
     } catch (error) {
-      print('Error getting orders by table id: $error');
-      return null;
+            return null;
     }
   }
 }

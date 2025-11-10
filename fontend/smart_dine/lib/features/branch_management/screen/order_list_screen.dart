@@ -48,7 +48,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
     }
     
     final branchIdInt = currentBranchId;
-    final ordersAsyncValue = ref.watch(ordersByBranchProvider(branchIdInt));
+    final ordersAsyncValue = ref.watch(ordersWithItemsByBranchProvider(branchIdInt));
     final statusesAsyncValue = ref.watch(orderStatusProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -176,8 +176,9 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
     );
   }
 
-  Widget _buildOrderList(List<Order> orders, List<OrderStatus> statuses, bool isDark) {
-    // Set status relations
+  Widget _buildOrderList(List<OrderWithMetadata> ordersWithMeta, List<OrderStatus> statuses, bool isDark) {
+    // Extract orders và set status relations
+    final orders = ordersWithMeta.map((meta) => meta.order).toList();
     for (final order in orders) {
       order.status = statuses.firstWhere(
         (s) => s.id == order.statusId,
@@ -186,18 +187,19 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
     }
 
     // Apply filters
-    List<Order> filteredOrders = orders.where((order) {
+    List<OrderWithMetadata> filteredOrdersMeta = ordersWithMeta.where((orderMeta) {
+      final order = orderMeta.order;
       final matchesSearch = _searchController.text.isEmpty ||
           order.id.toString().contains(_searchController.text) ||
           (order.userName?.toLowerCase().contains(_searchController.text.toLowerCase()) ?? false);
       
       final matchesStatus = _selectedStatusFilter == null ||
-          order.statusId == _selectedStatusFilter;
+          order.statusId == int.tryParse(_selectedStatusFilter!);
 
       return matchesSearch && matchesStatus;
     }).toList();
 
-    if (filteredOrders.isEmpty) {
+    if (filteredOrdersMeta.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -227,16 +229,17 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
       },
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: filteredOrders.length,
+        itemCount: filteredOrdersMeta.length,
         itemBuilder: (context, index) {
-          final order = filteredOrders[index];
-          return _buildOrderCard(order, isDark);
+          final orderMeta = filteredOrdersMeta[index];
+          final order = orderMeta.order;
+          return _buildOrderCard(order, orderMeta.itemsCount, isDark);
         },
       ),
     );
   }
 
-  Widget _buildOrderCard(Order order, bool isDark) {
+  Widget _buildOrderCard(Order order, int itemsCount, bool isDark) {
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
     final textColor = isDark ? Style.colorLight : Style.colorDark;
     
@@ -341,7 +344,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
                       Icon(Icons.restaurant_menu, size: 16, color: Colors.grey[600]),
                       const SizedBox(width: 4),
                       Text(
-                        '${order.items?.length ?? 0} món',
+                        '$itemsCount món',
                         style: Style.fontContent.copyWith(
                           color: Colors.grey[600],
                         ),

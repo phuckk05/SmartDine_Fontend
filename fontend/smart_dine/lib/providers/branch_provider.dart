@@ -44,8 +44,7 @@ class BranchNotifier extends StateNotifier<Branch?> {
         return 2;
       }
     } catch (e) {
-      print("Tìm không thấy companyCode : ${e.toString()}");
-    }
+          }
     return 0;
   }
 
@@ -56,26 +55,22 @@ class BranchNotifier extends StateNotifier<Branch?> {
       if (userBranchData != null && userBranchData['branchId'] != null) {
         return userBranchData['branchId'] as int;
       }
-      print('Không tìm thấy branchId cho userId: $userId');
-      return null;
+            return null;
     } catch (e) {
-      print('Lỗi lấy branchId: $e');
-      return null;
+            return null;
     }
   }
 
   // Lấy companyId theo branchId
   Future<int?> getCompanyIdByBranchId(int branchId) async {
     try {
-      final branch = await branchAPI.getBranchById(branchId);
+  final branch = await branchAPI.getBranchById(branchId.toString());
       if (branch != null) {
         return branch.companyId;
       }
-      print('Không tìm thấy branch với id: $branchId');
-      return null;
+            return null;
     } catch (e) {
-      print('Lỗi lấy companyId từ branchId: $e');
-      return null;
+            return null;
     }
   }
 }

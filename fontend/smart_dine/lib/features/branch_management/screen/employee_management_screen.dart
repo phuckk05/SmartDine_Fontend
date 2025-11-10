@@ -4,6 +4,7 @@ import 'package:mart_dine/core/style.dart';
 import 'package:bcrypt/bcrypt.dart';
 import '../../../models/user.dart';
 import '../../../providers/employee_management_provider.dart';
+import '../../../providers/user_session_provider.dart';
 
 // Status class for user statuses
 class UserStatus {
@@ -43,7 +44,7 @@ class EmployeeManagementScreen extends ConsumerStatefulWidget {
 class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScreen> {
   // Hàm load lại dữ liệu nhân viên (invalidate provider)
   Future<void> _loadEmployees() async {
-    final branchId = _getBranchId();
+    final branchId = ref.read(currentBranchIdProvider);
     if (branchId != null) {
       ref.invalidate(employeeManagementProvider(branchId));
     }
@@ -91,20 +92,52 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
     super.dispose();
   }
 
-  int? _getBranchId() {
-    // TODO: Get branchId từ user context thông qua UserBranch
-    // For now, return mock branchId
-    return 1; // Mock branch ID
-  }
-
   @override
   Widget build(BuildContext context) {
-    final branchId = _getBranchId();
-    if (branchId == null) {
-      return const Scaffold(
-        body: Center(child: Text('Không tìm thấy thông tin chi nhánh')),
+    // Lấy branchId từ user session
+    final currentBranchId = ref.watch(currentBranchIdProvider);
+    final isAuthenticated = ref.watch(isAuthenticatedProvider);
+    
+    // Nếu chưa có session, tự động tạo mock session (chỉ cho development)
+    if (!isAuthenticated && currentBranchId == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Chỉ mock khi thực sự không có session nào
+        final session = ref.read(userSessionProvider);
+        if (session.userId == null) {
+          ref.read(userSessionProvider.notifier).mockLogin(branchId: 1);
+        }
+      });
+      
+      return Scaffold(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Style.backgroundColor,
+        appBar: widget.showBackButton
+          ? AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              title: Text('Quản lý nhân viên', style: Style.fontTitle),
+            )
+          : AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              automaticallyImplyLeading: false,
+              title: Text('Quản lý nhân viên', style: Style.fontTitle),
+            ),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Đang khởi tạo phiên làm việc...'),
+            ],
+          ),
+        ),
       );
     }
+
+    final branchId = currentBranchId!; // Safe since we checked above
 
     final employeesAsyncValue = ref.watch(employeeManagementProvider(branchId));
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -152,7 +185,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
-                  ref.invalidate(employeeManagementProvider(branchId));
+                  ref.invalidate(employeeManagementProvider(ref.read(currentBranchIdProvider)!));
                 },
                 child: const Text('Thử lại'),
               ),
@@ -199,7 +232,13 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
             ),
           ),
           // Employee list
-          ...employees.map((employee) {
+          ...employees.where((employee) {
+            if (_searchController.text.isEmpty) return true;
+            final searchTerm = _searchController.text.toLowerCase();
+            return employee.fullName.toLowerCase().contains(searchTerm) ||
+                   employee.phone.toLowerCase().contains(searchTerm) ||
+                   employee.email.toLowerCase().contains(searchTerm);
+          }).map((employee) {
             String? statusName = employee.statusName;
             if (statusName == null && employee.statusId != null) {
               final found = _userStatuses.firstWhere(
@@ -596,7 +635,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
                                     _selectedRoleId != null) {
                                   
                                   // Call API to add employee
-                                  final branchId = _getBranchId();
+                                  final branchId = ref.read(currentBranchIdProvider);
                                   if (branchId != null) {
                                     try {
                                       // Use User.create() factory to properly hash password
@@ -779,7 +818,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
                                     _selectedStatusId != null &&
                                     _selectedRoleId != null) {
                                   
-                                  final branchId = _getBranchId();
+                                  final branchId = ref.read(currentBranchIdProvider);
                                   if (branchId != null && employee.id != null) {
                                     try {
                                       // Hash password if updated, otherwise keep existing
@@ -995,7 +1034,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () async {
-                          final branchId = _getBranchId();
+                          final branchId = ref.read(currentBranchIdProvider);
                           if (branchId != null && employee.id != null) {
                             try {
                               await ref.read(employeeManagementProvider(branchId).notifier)

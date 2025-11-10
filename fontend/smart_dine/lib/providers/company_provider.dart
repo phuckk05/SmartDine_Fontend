@@ -8,13 +8,11 @@ class CompanyNotifier extends StateNotifier<Company?> {
   final CompanyAPI companyAPI;
   final UserAPI userAPI;
 
-  Set<Company?> build() {
-    return const {};
-  }
+  //Constructor
+  CompanyNotifier(this.companyAPI, this.userAPI) : super(null);
 
   // Đăng ký user
   Future<int> signUpComapny(Company company, int userId) async {
-    print("company $company - id $userId");
     try {
       final response = await companyAPI.createCompany(company);
       if (response != null) {
@@ -24,14 +22,10 @@ class CompanyNotifier extends StateNotifier<Company?> {
         return 1;
       }
     } catch (e) {
-      print('Lỗi tạo company :  $e');
       return 0;
     }
     return 0;
   }
-
-  //Constructor
-  CompanyNotifier(this.companyAPI, this.userAPI) : super(null);
 }
 
 final companyNotifierProvider =

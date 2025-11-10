@@ -22,17 +22,12 @@ class BranchStatisticsAPI {
         url += '?date=$date';
       }
       
-      print('Fetching branch statistics for branch $branchId from: $url');
-      
-      final response = await _httpService.get(url);
+            final response = await _httpService.get(url);
       final data = _httpService.handleResponse(response);
       
-      print('Successfully fetched branch statistics: $data');
-      return data is Map<String, dynamic> ? data : null;
+            return data is Map<String, dynamic> ? data : null;
     } catch (e) {
-      print('Error getting branch statistics: $e');
-      
-      // Test API endpoint specifically
+            // Test API endpoint specifically
       final apiWorking = await _httpService.testApiEndpoint('$baseUrl/orders/statistics/branch/$branchId');
       if (!apiWorking) {
         throw Exception('Server không phản hồi. Vui lòng thử lại sau hoặc liên hệ admin.');
@@ -66,8 +61,7 @@ class BranchStatisticsAPI {
       }
       return [];
     } catch (e) {
-      print('Error getting revenue trends: $e');
-      return [];
+            return [];
     }
   }
 
@@ -85,8 +79,7 @@ class BranchStatisticsAPI {
         {'name': 'Chả Cá', 'orders': 8, 'revenue': 640000},
       ].take(limit).toList();
     } catch (e) {
-      print('Error getting top dishes: $e');
-      return [];
+            return [];
     }
   }
 
@@ -104,8 +97,7 @@ class BranchStatisticsAPI {
       }
       return [];
     } catch (e) {
-      print('Error getting employee performance: $e');
-      return [];
+            return [];
     }
   }
 
@@ -124,8 +116,7 @@ class BranchStatisticsAPI {
         'manager': 'Nguyễn Văn A',
       };
     } catch (e) {
-      print('Error getting branch by id: $e');
-      return null;
+            return null;
     }
   }
 }

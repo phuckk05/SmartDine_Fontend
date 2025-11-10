@@ -37,8 +37,7 @@ class EmployeeManagementNotifier extends StateNotifier<AsyncValue<List<User>>> {
     try {
       return await _api.getEmployeeById(employeeId);
     } catch (error) {
-      print('Error getting employee by id: $error');
-      return null;
+            return null;
     }
   }
 
@@ -52,8 +51,7 @@ class EmployeeManagementNotifier extends StateNotifier<AsyncValue<List<User>>> {
       }
       return false;
     } catch (error) {
-      print('Error updating employee: $error');
-      return false;
+            return false;
     }
   }
 
@@ -67,8 +65,7 @@ class EmployeeManagementNotifier extends StateNotifier<AsyncValue<List<User>>> {
       }
       return false;
     } catch (error) {
-      print('Error deleting employee: $error');
-      return false;
+            return false;
     }
   }
 
@@ -82,8 +79,7 @@ class EmployeeManagementNotifier extends StateNotifier<AsyncValue<List<User>>> {
       }
       return false;
     } catch (error) {
-      print('Error adding employee: $error');
-      return false;
+            return false;
     }
   }
 }

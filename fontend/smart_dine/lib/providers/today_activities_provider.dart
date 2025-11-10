@@ -103,8 +103,7 @@ class TodayActivitiesNotifier extends StateNotifier<AsyncValue<TodayActivitiesDa
         );
       }
     } catch (error, stackTrace) {
-      print('Error loading today activities: $error');
-      state = AsyncValue.error(error, stackTrace);
+            state = AsyncValue.error(error, stackTrace);
     }
   }
 

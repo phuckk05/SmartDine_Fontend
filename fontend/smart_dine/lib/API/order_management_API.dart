@@ -10,24 +10,15 @@ class OrderManagementAPI {
   // Lấy tất cả orders
   Future<List<Order>?> getAllOrders() async {
     try {
-      print('🔄 Calling API: $baseUrl/orders');
       final response = await _httpService.get('$baseUrl/orders');
       final data = _httpService.handleResponse(response);
       
-      print('📡 API Response status: ${response.statusCode}');
-      print('📝 API Response data type: ${data.runtimeType}');
-      
       if (data is List) {
-        print('📊 Parsed data count: ${data.length}');
         List<Order> orders = data.map((json) => Order.fromMap(json)).toList();
-        print('✅ Successfully parsed ${orders.length} orders');
         return orders;
       }
-      print('❌ API returned unexpected data format');
       return null;
-    } catch (e, stackTrace) {
-      print('❌ Error getting all orders: $e');
-      print('📍 Stack trace: $stackTrace');
+    } catch (e) {
       return null;
     }
   }
@@ -35,27 +26,17 @@ class OrderManagementAPI {
   // Lấy orders theo branch ID  
   Future<List<Order>?> getOrdersByBranchId(int branchId) async {
     try {
-      print('🔄 Calling API: $baseUrl/orders/branch/$branchId');
       final response = await _httpService.get('$baseUrl/orders/branch/$branchId');
       final data = _httpService.handleResponse(response);
-      print('📡 API Response status: ${response.statusCode}');
-      print('📝 API Response data type: ${data.runtimeType}');
-      print('🟢 API Response data: $data');
       if (data is List) {
-        print('📊 Parsed data count: ${data.length}');
         List<Order> orders = data.map((json) => Order.fromMap(json)).toList();
-        print('✅ Successfully parsed ${orders.length} orders for branch $branchId');
         return orders;
       } else if (data is Map<String, dynamic> && data['data'] is List) {
-        print('🟢 API Response data["data"]: ${data['data']}');
         List<Order> orders = (data['data'] as List).map((json) => Order.fromMap(json)).toList();
         return orders;
       }
-      print('❌ API returned unexpected data format, returning empty list');
       return [];
-    } catch (e, stackTrace) {
-      print('❌ Error getting orders by branch: $e');
-      print('📍 Stack trace: $stackTrace');
+    } catch (e) {
       return null;
     }
   }
@@ -65,16 +46,16 @@ class OrderManagementAPI {
     try {
       final response = await _httpService.get('$baseUrl/orders/$orderId');
       final data = _httpService.handleResponse(response);
-      print('🟢 API Response for getOrderById($orderId): $data');
       if (data is Map<String, dynamic>) {
         return Order.fromMap(data);
       }
       return null;
     } catch (e) {
-      print('Error getting order by id: $e');
       return null;
     }
   }
+
+
 
   // Lấy danh sách tableId đã có order chưa thanh toán hôm nay
   Future<List<int>?> getUnpaidOrderTableIdsToday() async {
@@ -87,7 +68,6 @@ class OrderManagementAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting unpaid table ids: $e');
       return null;
     }
   }
@@ -103,7 +83,6 @@ class OrderManagementAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting orders by table id: $e');
       return null;
     }
   }
@@ -122,7 +101,6 @@ class OrderManagementAPI {
         OrderStatus(id: 6, code: 'CANCELLED', name: 'Đã hủy'),
       ];
     } catch (e) {
-      print('Error getting order statuses: $e');
       return null;
     }
   }
@@ -130,21 +108,14 @@ class OrderManagementAPI {
   // Lấy thống kê orders theo branchId
   Future<Map<String, dynamic>?> getOrderStatistics(int branchId) async {
     try {
-      print('🔄 Getting order statistics for branch: $branchId');
-      final response = await _httpService.get('$baseUrl/orders/statistics/branch/$branchId');
+            final response = await _httpService.get('$baseUrl/orders/statistics/branch/$branchId');
       final data = _httpService.handleResponse(response);
       
-      print('📡 Statistics API Response status: ${response.statusCode}');
-      
-      if (data is Map<String, dynamic>) {
-        print('✅ Successfully got statistics for branch $branchId');
-        return data;
+            if (data is Map<String, dynamic>) {
+                return data;
       }
-      print('❌ Statistics API returned unexpected data format');
-      return null;
-    } catch (e, stackTrace) {
-      print('❌ Error getting order statistics: $e');
-      print('📍 Stack trace: $stackTrace');
+            return null;
+    } catch (e) {
       return null;
     }
   }
@@ -152,21 +123,14 @@ class OrderManagementAPI {
   // Lấy tóm tắt orders hôm nay theo branchId
   Future<Map<String, dynamic>?> getTodayOrderSummary(int branchId) async {
     try {
-      print('🔄 Getting today order summary for branch: $branchId');
       final response = await _httpService.get('$baseUrl/orders/summary/today/$branchId');
       final data = _httpService.handleResponse(response);
       
-      print('📡 Summary API Response status: ${response.statusCode}');
-      
       if (data is Map<String, dynamic>) {
-        print('✅ Successfully got today summary for branch $branchId');
         return data;
       }
-      print('❌ Summary API returned unexpected data format');
       return null;
-    } catch (e, stackTrace) {
-      print('❌ Error getting today order summary: $e');
-      print('📍 Stack trace: $stackTrace');
+    } catch (e) {
       return null;
     }
   }

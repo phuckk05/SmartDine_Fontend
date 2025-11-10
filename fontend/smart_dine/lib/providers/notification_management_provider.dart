@@ -61,8 +61,7 @@ class NotificationManagementNotifier extends StateNotifier<AsyncValue<List<model
         }
       } catch (error) {
         // Handle error silently or show a toast
-        print('Error marking notification as read: $error');
-      }
+              }
     }
   }
 
@@ -94,8 +93,7 @@ class NotificationManagementNotifier extends StateNotifier<AsyncValue<List<model
           state = AsyncValue.data(updatedNotifications);
         }
       } catch (error) {
-        print('Error marking all notifications as read: $error');
-      }
+              }
     }
   }
 
@@ -113,8 +111,7 @@ class NotificationManagementNotifier extends StateNotifier<AsyncValue<List<model
           state = AsyncValue.data(updatedNotifications);
         }
       } catch (error) {
-        print('Error deleting notification: $error');
-      }
+              }
     }
   }
 

@@ -17,22 +17,27 @@ class OrderDetailScreen extends ConsumerWidget {
     final textColor = isDark ? Style.colorLight : Style.colorDark;
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
 
-    final orderAsync = ref.watch(orderManagementProvider.notifier).getOrderById(orderId);
+    final orderAsync = ref.watch(orderWithItemsProvider(orderId));
 
-    return FutureBuilder(
-      future: orderAsync,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+    return orderAsync.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stack) => Scaffold(
+        body: Center(child: Text('Lỗi: $error')),
+      ),
+      data: (order) {
+        if (order == null) {
+          return const Scaffold(
+            body: Center(child: Text('Không tìm thấy dữ liệu đơn hàng')),
+          );
         }
-        if (!snapshot.hasData || snapshot.data == null) {
-          return const Center(child: Text('Không tìm thấy dữ liệu đơn hàng'));
-        }
-        final order = snapshot.data!;
         return Scaffold(
           backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
           appBar: AppBarCus(
-            title: 'Chi tiết đơn',
+            title: 'Chi tiết đơn hàng',
+            isCanpop: true,
+            isButtonEnabled: true,
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
@@ -56,13 +61,13 @@ class OrderDetailScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            order.branchName ?? 'Chi nhánh',
-                            style: Style.fontTitleMini.copyWith(color: textColor),
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Chi nhánh ${order.branchId ?? 1}',
+                              style: Style.fontTitleMini.copyWith(color: textColor),
+                            ),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                             decoration: BoxDecoration(
@@ -71,7 +76,7 @@ class OrderDetailScreen extends ConsumerWidget {
                               border: Border.all(color: Colors.blue),
                             ),
                             child: Text(
-                              order.getStatusName(),
+                              _getPaymentStatusName(order.statusId),
                               style: Style.fontCaption.copyWith(
                                 color: Colors.blue,
                                 fontWeight: FontWeight.w600,
@@ -136,24 +141,40 @@ class OrderDetailScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  child: Column(
-                    children: order.items?.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final item = entry.value;
-                      return Column(
-                        children: [
-                          if (index > 0) const Divider(height: 24),
-                          _buildOrderItem(
-                            item.itemName ?? '',
-                            'x${item.quantity}',
-                            item.itemPrice != null ? '${item.itemPrice!.toStringAsFixed(0)}đ' : '',
-                            item.note ?? '',
-                            textColor,
+                  child: order.items?.isNotEmpty == true
+                    ? Column(
+                        children: order.items!.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final item = entry.value;
+                          return Column(
+                            children: [
+                              if (index > 0) const Divider(height: 24),
+                              _buildOrderItem(
+                                item.itemName ?? 'Món ${item.itemId}',
+                                'x${item.quantity}',
+                                item.itemPrice != null ? '${item.itemPrice!.toStringAsFixed(0)}đ' : '0đ',
+                                item.note ?? '',
+                                textColor,
+                              ),
+                            ],
+                          );
+                        }).toList(),
+                      )
+                    : Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            children: [
+                              Text(
+                                'Chưa có món ăn nào',
+                                style: Style.fontContent.copyWith(
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      );
-                    }).toList() ?? [],
-                  ),
+                        ),
+                      ),
                 ),
                 const SizedBox(height: 20),
 
@@ -210,8 +231,8 @@ class OrderDetailScreen extends ConsumerWidget {
                   ),
                   child: Column(
                     children: [
-                      _buildInfoRow(order.userName ?? '', 'Tiền mặt', textColor),
-                      _buildInfoRow('Trạng thái thanh toán', order.getStatusName(), textColor),
+                      _buildInfoRow('Phương thức thanh toán', 'Tiền mặt', textColor),
+                      _buildInfoRow('Trạng thái thanh toán', _getPaymentStatusName(order.statusId), textColor),
                     ],
                   ),
                 ),
@@ -325,5 +346,24 @@ class OrderDetailScreen extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  String _getPaymentStatusName(int? statusId) {
+    switch (statusId) {
+      case 1:
+        return 'Chờ xử lý';
+      case 2:
+        return 'Đang nấu';
+      case 3:
+        return 'Sẵn sàng';
+      case 4:
+        return 'Đã phục vụ';
+      case 5:
+        return 'Đã thanh toán';
+      case 6:
+        return 'Đã hủy';
+      default:
+        return 'Chưa xác định';
+    }
   }
 }

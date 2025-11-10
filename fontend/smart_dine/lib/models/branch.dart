@@ -1,5 +1,33 @@
 import 'dart:convert';
 
+class BranchStatus {
+  final int id;
+  final String code; // ACTIVE, INACTIVE, MAINTENANCE
+  final String name;
+
+  BranchStatus({
+    required this.id,
+    required this.code,
+    required this.name,
+  });
+
+  factory BranchStatus.fromJson(Map<String, dynamic> json) {
+    return BranchStatus(
+      id: json['id'] ?? 0,
+      code: json['code'] ?? '',
+      name: json['name'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'code': code,
+      'name': name,
+    };
+  }
+}
+
 class Branch {
   //Properties
   final int id;
@@ -8,7 +36,6 @@ class Branch {
   final String branchCode;
   final String address;
   final String image;
-  final String phone;
   final int statusId;
   final int managerId;
   final DateTime createdAt;
@@ -29,7 +56,6 @@ class Branch {
     required this.branchCode,
     required this.address,
     required this.image,
-    required this.phone,
     required this.statusId,
     required this.managerId,
     required this.createdAt,
@@ -50,11 +76,13 @@ class Branch {
   }) {
     final now = DateTime.now();
     return Branch(
+      id: 0, // Temporary ID for new branch
       companyId: companyId,
       name: name,
       branchCode: branchCode,
       address: address,
       image: image,
+
       statusId: 3,
       managerId: managerId,
       createdAt: now,
@@ -85,6 +113,7 @@ class Branch {
       branchCode: branchCode ?? this.branchCode,
       address: address ?? this.address,
       image: image ?? this.image,
+
       statusId: statusId ?? this.statusId,
       managerId: managerId ?? this.managerId,
       createdAt: createdAt ?? this.createdAt,
@@ -123,7 +152,7 @@ class Branch {
       branchCode: map['branchCode'] ?? '',
       address: map['address'] ?? '',
       image: map['image'] ?? '',
-      phone: map['phone'] ?? '',
+
       statusId: int.tryParse(map['statusId'].toString()) ?? 0,
       managerId: int.tryParse(map['managerId'].toString()) ?? 0,
       createdAt: DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
@@ -143,7 +172,7 @@ class Branch {
 
   @override
   String toString() {
-    return 'Branch(id: $id, companyId: $companyId, name: $name, branchCode: $branchCode, address: $address, image: $image, phone: $phone, statusId: $statusId, managerId: $managerId, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'Branch(id: $id, companyId: $companyId, name: $name, branchCode: $branchCode, address: $address, image: $image, statusId: $statusId, managerId: $managerId, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override

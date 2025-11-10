@@ -106,6 +106,8 @@ class _DishStatisticsScreenState extends State<DishStatisticsScreen> {
       appBar: widget.showBackButton 
         ? AppBarCus(
             title: 'Thống kê món',
+            isCanpop: true,
+            isButtonEnabled: true,
           )
         : AppBar(
             backgroundColor: Colors.transparent,

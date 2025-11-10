@@ -19,7 +19,7 @@ class AuthService {
       final data = _httpService.handleResponse(response);
       
       // Parse response to UserSession
-      return UserSession.fromJson(data);
+      return UserSession.fromMap(data);
     } catch (e) {
       throw Exception('Đăng nhập thất bại: ${e.toString()}');
     }
@@ -33,8 +33,7 @@ class AuthService {
         headers: {'Authorization': 'Bearer $token'},
       );
     } catch (e) {
-      print('Logout error: $e');
-      // Không throw error vì logout luôn thành công ở client
+            // Không throw error vì logout luôn thành công ở client
     }
   }
 
@@ -97,17 +96,17 @@ class AuthService {
     }
   }
 
-  // 📱 Demo/Mock login với các loại tài khoản khác nhau
+  // 📱 Demo/Mock login cho development
   Future<UserSession> mockLogin({
     String username = 'admin',
-    String role = 'admin', 
+    int role = 1, // 1 = admin, 2 = manager, 3 = staff
     List<int> branchIds = const [1, 2, 3],
   }) async {
     // Simulate API delay
     await Future.delayed(const Duration(milliseconds: 500));
     
     return UserSession(
-      userId: _getUserIdFromUsername(username),
+      userId: 1,
       userName: username,
       userRole: role,
       branchIds: branchIds,
@@ -115,74 +114,5 @@ class AuthService {
       loginTime: DateTime.now(),
       isAuthenticated: true,
     );
-  }
-
-  // 🎭 Mock các loại tài khoản khác nhau cho testing
-  Future<UserSession> mockLoginByAccount(String accountType) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    switch (accountType.toLowerCase()) {
-      case 'admin':
-        return UserSession(
-          userId: 1,
-          userName: 'Admin Tổng',
-          userRole: 'admin',
-          branchIds: [1, 2, 3, 4, 5], // Admin thấy tất cả chi nhánh
-          currentBranchId: 1,
-          loginTime: DateTime.now(),
-          isAuthenticated: true,
-        );
-        
-      case 'manager_branch_2':
-        return UserSession(
-          userId: 2,
-          userName: 'Manager Chi Nhánh 2',
-          userRole: 'manager',
-          branchIds: [2], // Chỉ quản lý chi nhánh 2
-          currentBranchId: 2,
-          loginTime: DateTime.now(),
-          isAuthenticated: true,
-        );
-        
-      case 'staff_branch_3':
-        return UserSession(
-          userId: 3,
-          userName: 'Nhân Viên Chi Nhánh 3',
-          userRole: 'staff',
-          branchIds: [3], // Chỉ làm việc ở chi nhánh 3
-          currentBranchId: 3,
-          loginTime: DateTime.now(),
-          isAuthenticated: true,
-        );
-        
-      case 'multi_branch_manager':
-        return UserSession(
-          userId: 4,
-          userName: 'Manager Đa Chi Nhánh',
-          userRole: 'manager',
-          branchIds: [2, 3, 4], // Quản lý nhiều chi nhánh
-          currentBranchId: 2,
-          loginTime: DateTime.now(),
-          isAuthenticated: true,
-        );
-        
-      default:
-        // Default guest/demo account
-        return UserSession(
-          userId: 999,
-          userName: 'Demo User',
-          userRole: 'staff',
-          branchIds: [1],
-          currentBranchId: 1,
-          loginTime: DateTime.now(),
-          isAuthenticated: true,
-        );
-    }
-  }
-
-  // Helper: Tạo userId từ username
-  int _getUserIdFromUsername(String username) {
-    // Simple hash để tạo consistent userId từ username
-    return username.hashCode.abs() % 1000 + 1;
   }
 }

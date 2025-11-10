@@ -20,8 +20,7 @@ class CompanyAPI {
           .map((company) => Company.fromMap(company as Map<String, dynamic>))
           .toList();
     }
-    print("loi lấy companys: ${response.statusCode}");
-    return [];
+        return [];
   }
 
   //Đăng kí company

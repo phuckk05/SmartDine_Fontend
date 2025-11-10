@@ -40,8 +40,7 @@ class EmployeeManagementAPI {
       }
       return [];
     } catch (e) {
-      print('Error getting all employees: $e');
-      return null;
+            return null;
     }
   }
 
@@ -50,6 +49,7 @@ class EmployeeManagementAPI {
     try {
       final response = await _httpService.get('$baseUrl/employees/branch/$branchId');
       final data = _parseResponse(response);
+      
       if (data != null) {
         List<dynamic> employees;
         if (data is Map<String, dynamic> && data['data'] != null) {
@@ -59,11 +59,12 @@ class EmployeeManagementAPI {
         } else {
           return [];
         }
-        return employees.map((json) => User.fromMap(Map<String, dynamic>.from(json))).toList();
+        
+        final users = employees.map((json) => User.fromMap(Map<String, dynamic>.from(json))).toList();
+        return users;
       }
       return [];
     } catch (e) {
-      print('Error getting employees by branch: $e');
       return null;
     }
   }
@@ -85,8 +86,7 @@ class EmployeeManagementAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting employee by id: $e');
-      return null;
+            return null;
     }
   }
 
@@ -108,8 +108,7 @@ class EmployeeManagementAPI {
       }
       return null;
     } catch (e) {
-      print('Error adding employee: $e');
-      return null;
+            return null;
     }
   }
 
@@ -131,8 +130,7 @@ class EmployeeManagementAPI {
       }
       return null;
     } catch (e) {
-      print('Error updating employee: $e');
-      return null;
+            return null;
     }
   }
 
@@ -142,8 +140,7 @@ class EmployeeManagementAPI {
       final response = await _httpService.delete('$baseUrl/employees/$employeeId');
       return response.statusCode >= 200 && response.statusCode < 300;
     } catch (e) {
-      print('Error deleting employee: $e');
-      return false;
+            return false;
     }
   }
 
@@ -158,8 +155,7 @@ class EmployeeManagementAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting employee performance: $e');
-      return null;
+            return null;
     }
   }
 
@@ -180,8 +176,7 @@ class EmployeeManagementAPI {
       
       return response.statusCode >= 200 && response.statusCode < 300;
     } catch (e) {
-      print('Error adding employee to branch: $e');
-      return false;
+            return false;
     }
   }
 
@@ -191,8 +186,7 @@ class EmployeeManagementAPI {
       final response = await _httpService.delete('$baseUrl/employees/$employeeId/remove-branch/$branchId');
       return response.statusCode >= 200 && response.statusCode < 300;
     } catch (e) {
-      print('Error removing employee from branch: $e');
-      return false;
+            return false;
     }
   }
 
@@ -215,8 +209,7 @@ class EmployeeManagementAPI {
       }
       return [];
     } catch (e) {
-      print('Error getting roles: $e');
-      return null;
+            return null;
     }
   }
 
@@ -239,8 +232,7 @@ class EmployeeManagementAPI {
       }
       return [];
     } catch (e) {
-      print('Error getting user statuses: $e');
-      return null;
+            return null;
     }
   }
 }

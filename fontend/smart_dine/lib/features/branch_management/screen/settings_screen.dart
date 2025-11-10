@@ -18,6 +18,8 @@ class SettingsScreen extends StatelessWidget {
       appBar: showBackButton 
         ? AppBarCus(
             title: 'Cài đặt',
+            isCanpop: true,
+            isButtonEnabled: true,
           )
         : AppBar(
             backgroundColor: Colors.transparent,

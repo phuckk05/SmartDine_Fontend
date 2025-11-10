@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
 import '../../../models/table.dart' as table_model;
 import '../../../providers/table_management_provider.dart';
+import '../../../providers/user_session_provider.dart';
 import '../../../API/table_management_API.dart';
 
 // Status class for table statuses
@@ -43,7 +44,7 @@ class TableManagementScreen extends ConsumerStatefulWidget {
 class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
   // Hàm load lại dữ liệu bàn (invalidate provider)
   Future<void> _loadTables() async {
-    final branchId = _getBranchId();
+    final branchId = ref.read(currentBranchIdProvider);
     if (branchId != null) {
       ref.invalidate(tableManagementProvider(branchId));
     }
@@ -63,7 +64,12 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   
   // Data
-  List<TableStatus> _tableStatuses = [];
+  List<TableStatus> _tableStatuses = [
+    TableStatus(id: 1, name: 'Trống', code: 'EMPTY'),
+    TableStatus(id: 2, name: 'Đang sử dụng', code: 'OCCUPIED'),
+    TableStatus(id: 3, name: 'Đã đặt', code: 'RESERVED'),
+    TableStatus(id: 4, name: 'Bảo trì', code: 'MAINTENANCE'),
+  ];
   List<TableType> _tableTypes = [
     TableType(id: 1, name: 'Bàn thường', code: 'NORMAL'),
     TableType(id: 2, name: 'Bàn VIP', code: 'VIP'),
@@ -108,24 +114,53 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
     super.dispose();
   }
 
-  int? _getBranchId() {
-    // TODO: Get branchId từ user context thông qua UserBranch
-    // For now, return mock branchId
-    return 1; // Mock branch ID
-  }
-
   @override
   Widget build(BuildContext context) {
     // Load meta nếu chưa có
     if (!_tableMetaLoaded) {
       _loadTableMeta();
     }
-    final branchId = _getBranchId();
-    if (branchId == null) {
-      return const Scaffold(
-        body: Center(child: Text('Không tìm thấy thông tin chi nhánh')),
+    
+    // Lấy branchId từ user session
+    final currentBranchId = ref.watch(currentBranchIdProvider);
+    final isAuthenticated = ref.watch(isAuthenticatedProvider);
+    
+    // Nếu chưa có session, tự động tạo mock session
+    if (!isAuthenticated || currentBranchId == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(userSessionProvider.notifier).mockLogin(branchId: 1);
+      });
+      
+      return Scaffold(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Style.backgroundColor,
+        appBar: widget.showBackButton
+          ? AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              title: Text('Quản lý bàn', style: Style.fontTitle),
+            )
+          : AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              automaticallyImplyLeading: false,
+              title: Text('Quản lý bàn', style: Style.fontTitle),
+            ),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Đang khởi tạo phiên làm việc...'),
+            ],
+          ),
+        ),
       );
     }
+
+    final branchId = currentBranchId;
 
     final tablesAsyncValue = ref.watch(tableManagementProvider(branchId));
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -725,7 +760,7 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
                                     _selectedStatusId != null &&
                                     _selectedTypeId != null) {
                                   
-                                  final branchId = _getBranchId();
+                                  final branchId = ref.read(currentBranchIdProvider);
                                   if (branchId != null) {
                                     try {
                                       final newTable = table_model.Table(
@@ -893,7 +928,7 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
                                     _selectedStatusId != null &&
                                     _selectedTypeId != null) {
                                   
-                                  final branchId = _getBranchId();
+                                  final branchId = ref.read(currentBranchIdProvider);
                                   if (branchId != null && table.id != null) {
                                     try {
                                       final updatedTable = table.copyWith(
@@ -1096,7 +1131,7 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () async {
-                          final branchId = _getBranchId();
+                          final branchId = ref.read(currentBranchIdProvider);
                           if (branchId != null && table.id != null) {
                             try {
                               await ref.read(tableManagementProvider(branchId).notifier)

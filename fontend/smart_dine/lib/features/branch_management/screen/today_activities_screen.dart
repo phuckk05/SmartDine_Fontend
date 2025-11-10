@@ -4,8 +4,6 @@ import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/widgets/appbar.dart';
 import '../../../providers/today_activities_provider.dart';
 import '../../../providers/user_session_provider.dart';
-import '../../../widgets/account_switcher.dart';
-import '../../../config/app_config.dart';
 
 class TodayActivitiesScreen extends ConsumerStatefulWidget {
   const TodayActivitiesScreen({super.key});
@@ -35,7 +33,11 @@ class _TodayActivitiesScreenState extends ConsumerState<TodayActivitiesScreen> {
       
       return Scaffold(
         backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
-        appBar: AppBarCus(title: 'Hoạt động hôm nay'),
+        appBar: AppBarCus(
+          title: 'Hoạt động hôm nay',
+          isCanpop: true,
+          isButtonEnabled: true,
+        ),
         body: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -55,6 +57,8 @@ class _TodayActivitiesScreenState extends ConsumerState<TodayActivitiesScreen> {
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
       appBar: AppBarCus(
         title: 'Hoạt động hôm nay',
+        isCanpop: true,
+        isButtonEnabled: true,
       ),
       body: todayActivitiesAsync.when(
         loading: () => const Center(
@@ -107,8 +111,6 @@ class _TodayActivitiesScreenState extends ConsumerState<TodayActivitiesScreen> {
       child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🔧 Development Mode - Account Switcher
-            if (AppConfig.isDevelopment) const AccountSwitcher(),
             // Doanh thu card
             Container(
               padding: const EdgeInsets.all(20),

@@ -25,8 +25,7 @@ class PaymentStatisticsAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting daily revenue: $e');
-      return null;
+            return null;
     }
   }
 
@@ -51,8 +50,7 @@ class PaymentStatisticsAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting weekly revenue: $e');
-      return null;
+            return null;
     }
   }
 
@@ -77,8 +75,7 @@ class PaymentStatisticsAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting monthly revenue: $e');
-      return null;
+            return null;
     }
   }
 
@@ -102,8 +99,7 @@ class PaymentStatisticsAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting yearly revenue: $e');
-      return null;
+            return null;
     }
   }
 
@@ -126,8 +122,7 @@ class PaymentStatisticsAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting simple revenue trends: $e');
-      return null;
+            return null;
     }
   }
 
@@ -154,8 +149,7 @@ class PaymentStatisticsAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting revenue trends: $e');
-      return null;
+            return null;
     }
   }
 
@@ -180,8 +174,7 @@ class PaymentStatisticsAPI {
       }
       return null;
     } catch (e) {
-      print('Error comparing revenue: $e');
-      return null;
+            return null;
     }
   }
 
@@ -207,8 +200,32 @@ class PaymentStatisticsAPI {
       }
       return null;
     } catch (e) {
-      print('Error comparing branch revenue: $e');
+            return null;
+    }
+  }
+
+  // Lấy potential revenue bao gồm serving orders
+  Future<double?> getPotentialRevenueByDay({
+    required String date, // YYYY-MM-DD format
+    int? branchId,
+    int? companyId,
+    bool includeServing = true,
+  }) async {
+    try {
+      await Future.delayed(const Duration(milliseconds: 100));
+      
+      String url = '$uri2/payments/revenue/potential?date=$date&includeServing=$includeServing';
+      if (branchId != null) url += '&branchId=$branchId';
+      if (companyId != null) url += '&companyId=$companyId';
+      
+      final response = await http.get(Uri.parse(url));
+      
+      if (response.statusCode == 200) {
+        return double.parse(response.body);
+      }
       return null;
+    } catch (e) {
+            return null;
     }
   }
 }

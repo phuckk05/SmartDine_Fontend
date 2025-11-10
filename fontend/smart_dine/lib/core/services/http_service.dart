@@ -45,18 +45,14 @@ class HttpService {
         return await request();
       } on SocketException catch (e) {
         lastException = Exception('Không có kết nối internet. Vui lòng kiểm tra mạng và thử lại.');
-        print('Attempt $attempt failed with SocketException: $e');
-      } on HttpException catch (e) {
+              } on HttpException catch (e) {
         lastException = Exception('Lỗi kết nối server. Vui lòng thử lại sau.');
-        print('Attempt $attempt failed with HttpException: $e');
-      } on FormatException catch (e) {
+              } on FormatException catch (e) {
         lastException = Exception('Dữ liệu trả về không hợp lệ.');
-        print('Attempt $attempt failed with FormatException: $e');
-        break; // Don't retry for format exceptions
+                break; // Don't retry for format exceptions
       } catch (e) {
         lastException = Exception('Lỗi kết nối: ${e.toString()}');
-        print('Attempt $attempt failed: $e');
-      }
+              }
       
       // Wait before retry (exponential backoff)
       if (attempt < _maxRetries) {
@@ -167,25 +163,21 @@ class HttpService {
       
       return response.statusCode == 200;
     } catch (e) {
-      print('Connection check failed: $e');
-      return false;
+            return false;
     }
   }
 
   // Test specific API endpoint
   Future<bool> testApiEndpoint(String url) async {
     try {
-      print('Testing API endpoint: $url');
-      final response = await _client.get(
+            final response = await _client.get(
         Uri.parse(url),
         headers: _headers,
       ).timeout(const Duration(seconds: 10));
       
-      print('API test result: ${response.statusCode}');
-      return response.statusCode >= 200 && response.statusCode < 300;
+            return response.statusCode >= 200 && response.statusCode < 300;
     } catch (e) {
-      print('API endpoint test failed: $e');
-      return false;
+            return false;
     }
   }
 

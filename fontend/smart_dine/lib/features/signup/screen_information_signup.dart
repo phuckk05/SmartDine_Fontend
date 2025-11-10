@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:dotted_border/dotted_border.dart';
-import 'package:email_validator/email_validator.dart';
+// import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -134,12 +134,15 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
   }
 
   //Lấy company id từ chi nhánh
-  int? getCompanyIdFromBranch(String branchCode) {}
+  int? getCompanyIdFromBranch(String branchCode) {
+    // TODO: Implement logic to get company ID from branch code
+    return null;
+  }
 
   //Hàm check email
   //Hàm check email
   bool isValidEmail(String email) {
-    return EmailValidator.validate(email);
+    return RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email);
   }
 
   //Hàm check value trước khi đăng kí
@@ -331,8 +334,7 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
 
     if (result != "0") {
       ref.read(image.notifier).state = result;
-      print("anh day :$result");
-    } else {
+          } else {
       Constrats.showThongBao(context, "Lỗi chọn ảnh");
     }
   }

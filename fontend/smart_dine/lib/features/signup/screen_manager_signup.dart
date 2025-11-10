@@ -11,7 +11,7 @@ import 'package:mart_dine/features/signin/screen_signin.dart';
 import 'package:mart_dine/models/branch.dart';
 import 'package:mart_dine/models/company.dart';
 import 'package:mart_dine/providers/branch_provider.dart';
-import 'package:mart_dine/providers/company_provider.dart';
+// import 'package:mart_dine/providers/company_provider.dart';
 import 'package:mart_dine/providers/companys_provider.dart';
 import 'package:mart_dine/providers/internet_provider.dart';
 import 'package:mart_dine/providers/loading_provider.dart';
@@ -94,8 +94,7 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
     final result = await cloudinaryAPI.getURL(file);
     if (result != "0") {
       ref.read(_imageUrlProvider.notifier).state = result.toString();
-      print("anh day :$result");
-      print(ref.watch(_imageUrlProvider));
+
     } else {
       Constrats.showThongBao(context, "Lỗi chọn ảnh");
     }
@@ -129,8 +128,7 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
       Constrats.showThongBao(context, "Không có internet !");
     } else {
       final imageUrl = ref.watch(_imageUrlProvider);
-      print("url image : $imageUrl");
-      if (_nameController.text.isNotEmpty &&
+            if (_nameController.text.isNotEmpty &&
           _addressController.text.isNotEmpty &&
           _codeController.text.isNotEmpty &&
           _codeRestaurantController.text.isNotEmpty &&

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../API/branch_statistics_API.dart';
+import '../API/payment_statistics_API.dart';
 import '../models/statistics.dart';
 
 // Provider cho branch statistics API
@@ -13,6 +14,7 @@ final branchStatisticsProvider = StateNotifierProvider.family<BranchStatisticsNo
 class BranchStatisticsNotifier extends StateNotifier<AsyncValue<BranchMetrics?>> {
   final BranchStatisticsAPI _api;
   final int _branchId;
+  final PaymentStatisticsAPI _paymentApi = PaymentStatisticsAPI();
 
   BranchStatisticsNotifier(this._api, this._branchId) : super(const AsyncValue.loading()) {
     // Auto load statistics when notifier is created
@@ -22,11 +24,33 @@ class BranchStatisticsNotifier extends StateNotifier<AsyncValue<BranchMetrics?>>
   Future<void> loadStatistics({String? date}) async {
     try {
       state = const AsyncValue.loading();
+      
+      // Load basic statistics
       final data = await _api.getBranchStatistics(_branchId, date: date);
       
       if (data != null) {
-        // Convert API response to BranchMetrics model
-        final metrics = BranchMetrics.fromMap(data);
+        // Load potential revenue data (including serving orders)
+        final today = date ?? DateTime.now().toIso8601String().split('T')[0];
+        final revenue = await _paymentApi.getPotentialRevenueByDay(
+          branchId: _branchId, 
+          date: today,
+          includeServing: true, // Include serving orders for more accurate revenue
+        );
+        
+        // Create enhanced metrics with revenue
+        final metrics = BranchMetrics(
+          period: 'today',
+          dateRange: data['date'] ?? today,
+          totalRevenue: ((revenue ?? 0.0) * 1000).round(), // Convert to int (VND)
+          totalOrders: data['totalOrdersToday'] ?? 0,
+          avgOrderValue: (revenue != null && (data['totalOrdersToday'] ?? 0) > 0) 
+              ? ((revenue * 1000) / (data['totalOrdersToday'] ?? 1)).round()
+              : 0,
+          newCustomers: data['pendingOrdersToday'] ?? 0,
+          customerSatisfaction: (data['completionRate'] ?? 0.0).toDouble(),
+          growthRates: GrowthRates.fromJson({}), // Will be calculated later
+        );
+        
         state = AsyncValue.data(metrics);
       } else {
         state = AsyncValue.error(
@@ -35,7 +59,6 @@ class BranchStatisticsNotifier extends StateNotifier<AsyncValue<BranchMetrics?>>
         );
       }
     } catch (error, stackTrace) {
-      print('Provider error: $error');
       state = AsyncValue.error(error, stackTrace);
     }
   }
@@ -49,8 +72,7 @@ class BranchStatisticsNotifier extends StateNotifier<AsyncValue<BranchMetrics?>>
       }
       return [];
     } catch (error) {
-      print('Error loading revenue trends: $error');
-      return [];
+            return [];
     }
   }
 
@@ -63,8 +85,7 @@ class BranchStatisticsNotifier extends StateNotifier<AsyncValue<BranchMetrics?>>
       }
       return [];
     } catch (error) {
-      print('Error loading top dishes: $error');
-      return [];
+            return [];
     }
   }
 
@@ -77,8 +98,7 @@ class BranchStatisticsNotifier extends StateNotifier<AsyncValue<BranchMetrics?>>
       }
       return [];
     } catch (error) {
-      print('Error loading employee performance: $error');
-      return [];
+            return [];
     }
   }
 }

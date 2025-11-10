@@ -1,21 +1,31 @@
 class Role {
   final String id; // UUID hoặc ID do Firestore tạo
-  final String
-  code; //Max vai trò: "admin", "manager", "cashier", "staff", "chef"
-  final String
-  name; // Tên vai trò: "Admin", "Manager", "Cashier", "Staff", "Chef"
-  final String description; // Mô tả chi tiết vai trò
+  final String code; // Mã vai trò: "admin", "manager", "cashier", "staff", "chef"
+  final String name; // Tên vai trò: "Admin", "Manager", "Cashier", "Staff", "Chef"
+  final String? description; // Mô tả chi tiết vai trò
+  
   Role({
     required this.id,
     required this.code,
     required this.name,
+    this.description,
   });
+
+  factory Role.fromJson(Map<String, dynamic> json) {
+    return Role(
+      id: json['id'].toString(),
+      code: json['code'] ?? '',
+      name: json['name'] ?? '',
+      description: json['description'],
+    );
+  }
 
   Role copyWith({String? id, String? code, String? name, String? description}) {
     return Role(
-      id: json['id'],
-      code: json['code'],
-      name: json['name'],
+      id: id ?? this.id,
+      code: code ?? this.code,
+      name: name ?? this.name,
+      description: description ?? this.description,
     );
   }
 
@@ -24,15 +34,17 @@ class Role {
       'id': id,
       'code': code,
       'name': name,
+      if (description != null) 'description': description,
     };
   }
 
   // Legacy support for old fromMap
   factory Role.fromMap(Map<String, dynamic> map) {
     return Role(
-      id: map['id']?.toInt() ?? 0,
+      id: map['id']?.toString() ?? '0',
       code: map['code'] ?? '',
       name: map['name'] ?? '',
+      description: map['description'],
     );
   }
 

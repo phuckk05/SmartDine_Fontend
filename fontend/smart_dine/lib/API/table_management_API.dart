@@ -40,8 +40,7 @@ class TableManagementAPI {
       }
       return [];
     } catch (e) {
-      print('Error getting all tables: $e');
-      return null;
+            return null;
     }
   }
 
@@ -64,8 +63,7 @@ class TableManagementAPI {
       }
       return [];
     } catch (e) {
-      print('Error getting tables by branch: $e');
-      return null;
+            return null;
     }
   }
 
@@ -86,8 +84,7 @@ class TableManagementAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting table by id: $e');
-      return null;
+            return null;
     }
   }
 
@@ -109,8 +106,7 @@ class TableManagementAPI {
       }
       return null;
     } catch (e) {
-      print('Error creating table: $e');
-      return null;
+            return null;
     }
   }
 
@@ -132,8 +128,7 @@ class TableManagementAPI {
       }
       return null;
     } catch (e) {
-      print('Error updating table: $e');
-      return null;
+            return null;
     }
   }
 
@@ -143,8 +138,7 @@ class TableManagementAPI {
       final response = await _httpService.delete('$baseUrl/tables/$tableId');
       return response.statusCode >= 200 && response.statusCode < 300;
     } catch (e) {
-      print('Error deleting table: $e');
-      return false;
+            return false;
     }
   }
 
@@ -159,8 +153,7 @@ class TableManagementAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting occupancy statistics: $e');
-      return null;
+            return null;
     }
   }
 
@@ -175,8 +168,7 @@ class TableManagementAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting utilization statistics: $e');
-      return null;
+            return null;
     }
   }
 
@@ -199,8 +191,7 @@ class TableManagementAPI {
       }
       return [];
     } catch (e) {
-      print('Error getting available tables: $e');
-      return null;
+            return null;
     }
   }
 
@@ -215,8 +206,7 @@ class TableManagementAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting table statistics: $e');
-      return null;
+            return null;
     }
   }
 
@@ -239,8 +229,7 @@ class TableManagementAPI {
       }
       return [];
     } catch (e) {
-      print('Error getting table types: $e');
-      return null;
+            return null;
     }
   }
 
@@ -263,8 +252,7 @@ class TableManagementAPI {
       }
       return [];
     } catch (e) {
-      print('Error getting table statuses: $e');
-      return null;
+            return null;
     }
   }
 
@@ -277,8 +265,7 @@ class TableManagementAPI {
       );
       return response.statusCode >= 200 && response.statusCode < 300;
     } catch (e) {
-      print('Error updating table status: $e');
-      return false;
+            return false;
     }
   }
 
@@ -301,8 +288,7 @@ class TableManagementAPI {
       }
       return [];
     } catch (e) {
-      print('Error getting table orders: $e');
-      return null;
+            return null;
     }
   }
 }

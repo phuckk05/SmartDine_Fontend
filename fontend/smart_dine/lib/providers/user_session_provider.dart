@@ -38,11 +38,10 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
       
       if (sessionJson != null) {
         final sessionMap = json.decode(sessionJson) as Map<String, dynamic>;
-        state = UserSession.fromJson(sessionMap);
+        state = UserSession.fromMap(sessionMap);
       }
     } catch (e) {
-      print('Error loading user session: $e');
-      // Giữ trạng thái guest nếu có lỗi
+            // Giữ trạng thái guest nếu có lỗi
     }
   }
 
@@ -53,15 +52,14 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
       final sessionJson = json.encode(state.toJson());
       await prefs.setString(_sessionKey, sessionJson);
     } catch (e) {
-      print('Error saving user session: $e');
-    }
+          }
   }
 
   // Đăng nhập user
   Future<void> login({
     required int userId,
     required String userName,
-    required String userRole,
+    required int userRole,
     required List<int> branchIds,
     int? defaultBranchId,
   }) async {
@@ -102,7 +100,7 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
   // Cập nhật thông tin user
   Future<void> updateUserInfo({
     String? userName,
-    String? userRole,
+    int? userRole,
     List<int>? branchIds,
   }) async {
     state = state.copyWith(
@@ -137,17 +135,6 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
       currentBranchId: branchId ?? AppConfig.defaultBranchId
     );
     await _saveSession();
-  }
-
-  // Login với loại tài khoản cụ thể (cho testing)
-  Future<void> mockLoginByAccountType(String accountType) async {
-    try {
-      final session = await _authService.mockLoginByAccount(accountType);
-      state = session;
-      await _saveSession();
-    } catch (e) {
-      throw Exception('Lỗi đăng nhập: ${e.toString()}');
-    }
   }
 
   // Kiểm tra quyền truy cập branch

@@ -23,8 +23,7 @@ class MenuStatisticsAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting top dishes by branch: $e');
-      return null;
+            return null;
     }
   }
 
@@ -42,8 +41,7 @@ class MenuStatisticsAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting all menus: $e');
-      return null;
+            return null;
     }
   }
 
@@ -60,8 +58,7 @@ class MenuStatisticsAPI {
       }
       return null;
     } catch (e) {
-      print('Error getting menu by id: $e');
-      return null;
+            return null;
     }
   }
 
@@ -80,8 +77,7 @@ class MenuStatisticsAPI {
       }
       return null;
     } catch (e) {
-      print('Error creating menu: $e');
-      return null;
+            return null;
     }
   }
 
@@ -100,8 +96,7 @@ class MenuStatisticsAPI {
       }
       return null;
     } catch (e) {
-      print('Error updating menu: $e');
-      return null;
+            return null;
     }
   }
 
@@ -115,8 +110,7 @@ class MenuStatisticsAPI {
       
       return response.statusCode == 204;
     } catch (e) {
-      print('Error deleting menu: $e');
-      return false;
+            return false;
     }
   }
 }

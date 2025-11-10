@@ -19,7 +19,7 @@ class AppConfig {
   // 🏢 DEFAULT BRANCH SETTINGS
   static const int defaultBranchId = 1;
   static const List<int> mockUserBranches = [1, 2, 3];
-  static const String mockUserRole = 'admin'; // 'admin', 'manager', 'staff'
+  static const int mockUserRole = 1; // 1 = admin, 2 = manager, 3 = staff
   
   // 🚀 DEVELOPMENT HELPERS
   static const bool skipSplashScreen = true;      // Bỏ qua màn hình chào

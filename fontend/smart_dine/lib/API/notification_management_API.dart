@@ -98,8 +98,7 @@ class NotificationManagementAPI {
         ),
       ];
     } catch (e) {
-      print('Error getting notifications: $e');
-      return null;
+            return null;
     }
   }
 
@@ -147,8 +146,7 @@ class NotificationManagementAPI {
         ),
       ];
     } catch (e) {
-      print('Error getting notification categories: $e');
-      return null;
+            return null;
     }
   }
 
@@ -159,8 +157,7 @@ class NotificationManagementAPI {
       await Future.delayed(const Duration(milliseconds: 100)); // Giảm từ 500ms xuống 100ms
       return true;
     } catch (e) {
-      print('Error marking notification as read: $e');
-      return false;
+            return false;
     }
   }
 
@@ -171,8 +168,7 @@ class NotificationManagementAPI {
       await Future.delayed(const Duration(milliseconds: 200)); // Giảm từ 800ms xuống 200ms
       return true;
     } catch (e) {
-      print('Error marking all notifications as read: $e');
-      return false;
+            return false;
     }
   }
 
@@ -183,8 +179,7 @@ class NotificationManagementAPI {
       await Future.delayed(const Duration(milliseconds: 100)); // Giảm từ 500ms xuống 100ms
       return true;
     } catch (e) {
-      print('Error deleting notification: $e');
-      return false;
+            return false;
     }
   }
 }

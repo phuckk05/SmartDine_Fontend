@@ -7,8 +7,7 @@ class CorsProxyService {
   static Future<HttpServer> startProxy() async {
     final server = await HttpServer.bind('localhost', int.parse(_proxyPort));
     
-    print('CORS Proxy server started on http://localhost:$_proxyPort');
-    print('Proxying requests to https://$_targetHost');
+        print('Proxying requests to https://$_targetHost');
     
     await for (HttpRequest request in server) {
       _handleRequest(request);
@@ -68,8 +67,7 @@ class CorsProxyService {
       await request.response.close();
       
     } catch (e) {
-      print('Proxy error: $e');
-      request.response.statusCode = 500;
+            request.response.statusCode = 500;
       request.response.write('Proxy error: $e');
       await request.response.close();
     } finally {

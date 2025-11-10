@@ -43,10 +43,7 @@ class UserAPI {
         headers: {'Content-Type': 'application/json'},
       );
 
-      print('SignIn Response Status: ${response.statusCode}');
-      print('SignIn Response Body: ${response.body}');
-
-      if (response.statusCode == 200) {
+                  if (response.statusCode == 200) {
         if (response.body.isEmpty) {
           print('Empty response body');
           return null;
@@ -56,8 +53,7 @@ class UserAPI {
       }
       return null;
     } catch (e) {
-      print('SignIn Error: $e');
-      return null;
+            return null;
     }
   }
 
