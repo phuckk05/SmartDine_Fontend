@@ -2,6 +2,7 @@ package com.smartdine.controllers;
 
 import java.util.List;
 
+import com.smartdine.response.GetListCompanyAndOwnerResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -129,13 +130,14 @@ public class CompanyController {
         }
     }
 
-    // ✅ Kích hoạt / vô hiệu hóa công ty
-    @PutMapping("/toggle/{id}/{active}")
-    public ResponseEntity<?> toggleCompanyStatus(@PathVariable Integer id, @PathVariable boolean active) {
+    @GetMapping("/get-list-company-and-owner")
+    public ResponseEntity<List<GetListCompanyAndOwnerResponse>> getListCompanyAndOwner() {
         try {
-            return ResponseEntity.ok(companyServices.toggleCompanyStatus(id, active));
+            List<GetListCompanyAndOwnerResponse> list = companyServices.getListCompanyAndOwner();
+            return ResponseEntity.ok(list);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Lỗi khi cập nhật trạng thái công ty: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
         }
     }
 

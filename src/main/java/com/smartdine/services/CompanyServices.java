@@ -3,6 +3,7 @@ package com.smartdine.services;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.smartdine.response.GetListCompanyAndOwnerResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -143,7 +144,9 @@ public class CompanyServices {
 
         return company;
     }
-    
 
 
+    public List<GetListCompanyAndOwnerResponse> getListCompanyAndOwner() {
+        return companyRepository.getListCompanyAndOwner();
+    }
 }
