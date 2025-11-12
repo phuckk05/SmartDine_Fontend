@@ -284,6 +284,7 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
     AutoDisposeStateProvider<File?> image,
     AutoDisposeStateProvider<String?> imageUrl,
     BuildContext context,
+    ImageSource source,
   ) async {
     final hasInternet = ref.read(internetProvider);
     if (!hasInternet) {
@@ -292,7 +293,7 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
       //Khia báo
       final ImagePicker picker = ImagePicker();
       //Lấy ảnh
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      final pickedFile = await picker.pickImage(source: source);
       if (pickedFile != null) {
         final changeImage = File(pickedFile.path);
         if (!mounted) return;
@@ -315,6 +316,43 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
           }
         }
       }
+    }
+  }
+
+  Future<void> _selectImageSource(
+    AutoDisposeStateProvider<File?> image,
+    AutoDisposeStateProvider<String?> imageUrl,
+    BuildContext context,
+  ) async {
+    final ImageSource? source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (BuildContext bottomSheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined),
+                title: Text('Chụp ảnh', style: Style.fontContent),
+                onTap: () {
+                  Navigator.of(bottomSheetContext).pop(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: Text('Chọn từ thư viện', style: Style.fontContent),
+                onTap: () {
+                  Navigator.of(bottomSheetContext).pop(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (source != null) {
+      await _getCCCDImage(image, imageUrl, context, source);
     }
   }
 
@@ -558,7 +596,7 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
             padding: const EdgeInsets.symmetric(horizontal: 0),
             child: InkWell(
               onTap: () {
-                _getCCCDImage(
+                _selectImageSource(
                   _fontImageProvider,
                   _fontImageUrlProvider,
                   context,
@@ -627,7 +665,7 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
             padding: const EdgeInsets.symmetric(horizontal: 0),
             child: InkWell(
               onTap: () {
-                _getCCCDImage(
+                _selectImageSource(
                   _backImageProvider,
                   _backImageUrlProvider,
                   context,
