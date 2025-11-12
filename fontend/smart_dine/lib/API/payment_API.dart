@@ -10,7 +10,7 @@ class PaymentAPI {
   // Tạo payment mới
   Future<Payment?> createPayment(Payment payment) async {
     try {
-      final url = '$baseUrl';
+      final url = '$baseUrl/create';
       final response = await http.post(
         Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
@@ -32,7 +32,7 @@ class PaymentAPI {
   // Lấy payments theo orderId
   Future<List<Payment>> getPaymentsByOrderId(int orderId) async {
     try {
-      final url = '$baseUrl/payments/order/$orderId';
+      final url = '$baseUrl/order/$orderId';
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
@@ -50,7 +50,7 @@ class PaymentAPI {
   // Lấy payments theo branchId hôm nay
   Future<List<Payment>> getPaymentsByBranchToday(int branchId) async {
     try {
-      final url = '$baseUrl/payments/branch/$branchId/today';
+      final url = '$baseUrl/branch/$branchId/today';
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
@@ -75,7 +75,7 @@ class PaymentAPI {
       final dateStr =
           '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
-      String url = '$baseUrl/payments/revenue/day?date=$dateStr';
+      String url = '$baseUrl/revenue/day?date=$dateStr';
       if (branchId != null) url += '&branchId=$branchId';
       if (companyId != null) url += '&companyId=$companyId';
 
@@ -100,7 +100,7 @@ class PaymentAPI {
     int? companyId,
   }) async {
     try {
-      String url = '$baseUrl/payments/revenue/week?week=$week&year=$year';
+      String url = '$baseUrl/revenue/week?week=$week&year=$year';
       if (branchId != null) url += '&branchId=$branchId';
       if (companyId != null) url += '&companyId=$companyId';
 
@@ -125,7 +125,7 @@ class PaymentAPI {
     int? companyId,
   }) async {
     try {
-      String url = '$baseUrl/payments/revenue/month?year=$year&month=$month';
+      String url = '$baseUrl/revenue/month?year=$year&month=$month';
       if (branchId != null) url += '&branchId=$branchId';
       if (companyId != null) url += '&companyId=$companyId';
 
@@ -149,7 +149,7 @@ class PaymentAPI {
     int? companyId,
   }) async {
     try {
-      String url = '$baseUrl/payments/revenue/year?year=$year';
+      String url = '$baseUrl/revenue/year?year=$year';
       if (branchId != null) url += '&branchId=$branchId';
       if (companyId != null) url += '&companyId=$companyId';
 

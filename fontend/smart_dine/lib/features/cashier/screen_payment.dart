@@ -10,6 +10,7 @@ import 'package:mart_dine/models/order.dart';
 import 'package:mart_dine/models/order_item.dart';
 import 'package:mart_dine/models/payment.dart';
 import 'package:mart_dine/providers/menu_item_provider.dart';
+import 'package:mart_dine/providers/user_provider.dart';
 
 class ScreenPayment extends ConsumerStatefulWidget {
   final int tableId;
@@ -107,14 +108,23 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
 
     try {
       final total = _calculateTotal();
+      final currentUser = ref.read(userNotifierProvider);
+      int? cashierId;
+      final currentUserId = currentUser?.id;
+      if (currentUserId != null && currentUserId > 0) {
+        cashierId = currentUserId;
+      } else if (widget.order.userId > 0) {
+        cashierId = widget.order.userId;
+      }
 
       // Tạo payment
       final payment = Payment(
-        orderId: widget.order.id!,
+        orderId: widget.order.id,
         amount: total,
         paymentMethod: _selectedPaymentMethod,
         branchId: widget.order.branchId,
         companyId: widget.order.companyId,
+        cashierId: cashierId,
       );
 
       final paymentApi = ref.read(paymentApiProvider);
