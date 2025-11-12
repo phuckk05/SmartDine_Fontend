@@ -2,18 +2,30 @@ package com.smartdine.response;
 
 public class GetListCompanyAndOwnerResponse {
     private String companyName;
-    private Integer userId;
     private String ownerName;
     private String phoneNumber;
+    private Integer userId;
+    private Long totalBranches;
 
     public GetListCompanyAndOwnerResponse() {
     }
 
-    public GetListCompanyAndOwnerResponse(String companyName, Integer userId, String ownerName, String phoneNumber) {
+    public GetListCompanyAndOwnerResponse(String companyName, Integer userId, String fullName, String phone, Long totalBranches) {
         this.companyName = companyName;
         this.userId = userId;
-        this.ownerName = ownerName;
-        this.phoneNumber = phoneNumber;
+        this.ownerName = fullName;
+        this.phoneNumber = phone;
+        this.totalBranches = totalBranches; // ép sang int nếu cần
+    }
+
+    // accept primitive long (JPA may pass primitive long)
+    public GetListCompanyAndOwnerResponse(String companyName, Integer userId, String fullName, String phone, long totalBranches) {
+        this(companyName, userId, fullName, phone, Long.valueOf(totalBranches));
+    }
+
+    // optional: accept int (in case JPA returns int)
+    public GetListCompanyAndOwnerResponse(String companyName, Integer userId, String fullName, String phone, int totalBranches) {
+        this(companyName, userId, fullName, phone, Long.valueOf(totalBranches));
     }
 
     public String getCompanyName() {
@@ -46,5 +58,13 @@ public class GetListCompanyAndOwnerResponse {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public Long getTotalBranches() {
+        return totalBranches;
+    }
+
+    public void setTotalBranches(Long totalBranches) {
+        this.totalBranches = totalBranches;
     }
 }
