@@ -350,11 +350,28 @@ public class PaymentController {
     }
 
     // Tạo payment mới
-    @PostMapping
-    public ResponseEntity<?> createPayment(@RequestBody Payment payment) {
+    @PostMapping("/create")
+    public ResponseEntity<?> createPayment(@RequestBody Map<String, Object> payload) {
         try {
+            // Convert payload to Payment object
+            Payment payment = new Payment();
+            payment.setOrderId(Integer.parseInt(payload.get("order_id").toString()));
+            payment.setCompanyId(Integer.parseInt(payload.get("company_id").toString()));
+            payment.setBranchId(Integer.parseInt(payload.get("branch_id").toString()));
+
+            // Set amount as both total_amount and final_amount
+            BigDecimal amount = new BigDecimal(payload.get("amount").toString());
+            payment.setTotalAmount(amount);
+            payment.setFinalAmount(amount);
+
+            // Set default cashier_id (can be updated later)
+            payment.setCashierId(1); // Default cashier
+            payment.setStatusId(1); // Default status
+
             Payment createdPayment = paymentService.createPayment(payment);
-            return ResponseEntity.ok(Map.of("payment", createdPayment));
+            Map<String, Object> response = new HashMap<>();
+            response.put("payment", createdPayment);
+            return ResponseEntity.ok(response);
         } catch (Exception ex) {
             return ResponseEntity.badRequest().body("Lỗi tạo payment: " + ex.getMessage());
         }

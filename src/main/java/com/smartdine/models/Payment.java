@@ -3,6 +3,8 @@ package com.smartdine.models;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -20,18 +22,22 @@ public class Payment {
     private Integer id;
 
     @Column(name = "order_id")
+    @JsonProperty("order_id")
     private Integer orderId;
 
     @Column(name = "cashier_id")
     private Integer cashierId;
 
     @Column(name = "company_id")
+    @JsonProperty("company_id")
     private Integer companyId;
 
     @Column(name = "branch_id")
+    @JsonProperty("branch_id")
     private Integer branchId;
 
     @Column(name = "total_amount")
+    @JsonProperty("amount")
     private BigDecimal totalAmount;
 
     @Column(name = "discount_amount")
@@ -41,10 +47,11 @@ public class Payment {
     private BigDecimal discountPercent = BigDecimal.ZERO;
 
     @Column(name = "final_amount")
+    @JsonProperty("amount")
     private BigDecimal finalAmount;
 
     @Column(name = "status_id")
-    private Integer statusId;
+    private Integer statusId = 1; // Default status
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
