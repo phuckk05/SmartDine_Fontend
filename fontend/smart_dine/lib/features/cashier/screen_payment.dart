@@ -10,6 +10,7 @@ import 'package:mart_dine/models/order.dart';
 import 'package:mart_dine/models/order_item.dart';
 import 'package:mart_dine/models/payment.dart';
 import 'package:mart_dine/providers/menu_item_provider.dart';
+import 'package:mart_dine/providers/table_provider.dart';
 
 class ScreenPayment extends ConsumerStatefulWidget {
   final int tableId;
@@ -133,6 +134,9 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
       final orderApi = ref.read(orderApiProvider);
       await orderApi.updateOrderStatusAlt(widget.order.id, 3);
 
+      // Invalidate the unpaidTablesByBranchProvider to refresh the table list
+      ref.invalidate(unpaidTablesByBranchProvider(widget.order.branchId));
+
       if (mounted) {
         // Hiển thị dialog thành công
         showDialog(
@@ -246,6 +250,18 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
                     color: Colors.grey.shade600,
                   ),
                 ),
+                if (widget.order.note != null &&
+                    widget.order.note!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Ghi chú đơn hàng: ${widget.order.note}',
+                    style: Style.fontNormal.copyWith(
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

@@ -28,6 +28,7 @@ class ScreenMenu extends ConsumerStatefulWidget {
   final int? userId;
   final Order? initialOrder;
   final List<OrderItem>? initialOrderItems;
+  final int role; // 1: Nhân viên, 2: Thu ngân
 
   const ScreenMenu({
     super.key,
@@ -38,6 +39,7 @@ class ScreenMenu extends ConsumerStatefulWidget {
     this.userId,
     this.initialOrder,
     this.initialOrderItems,
+    required this.role,
   });
 
   @override
@@ -61,6 +63,8 @@ final _isRequestingPaymentProvider = StateProvider<bool>((ref) => false);
 final _orderNoteProvider = StateProvider<String>((ref) => '');
 final _itemNotesProvider = StateProvider<Map<int, String>>((ref) => {});
 final _expandedNotesProvider = StateProvider<Set<int>>((ref) => {});
+final _itemNoteControllersProvider =
+    StateProvider<Map<int, TextEditingController>>((ref) => {});
 
 class _ScreenMenuState extends ConsumerState<ScreenMenu> {
   bool _showSearchBar = false;
@@ -85,9 +89,16 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
   final TextEditingController _searchController = TextEditingController();
   String _searchKeyword = '';
 
+  // Local list to track controllers for disposal
+  final List<TextEditingController> _allControllers = [];
+
   @override
   void dispose() {
     _searchController.dispose();
+    // Dispose all item note controllers
+    for (final controller in _allControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -290,17 +301,14 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
       return;
     }
 
-    ref.read(_isRequestingPaymentProvider.notifier).state = true;
-
-    try {
-      // Thanh toán ngay lập tức - chuyển trực tiếp đến màn hình thanh toán
+    // For cashier role (2), navigate to payment screen instead of requesting payment
+    if (widget.role == 2) {
       if (mounted) {
         // Đóng drawer nếu đang mở
         if (_scaffoldKey.currentState?.isEndDrawerOpen ?? false) {
           Navigator.of(context).pop();
         }
-
-        // Chuyển đến màn hình thanh toán
+        // Navigate to payment screen
         Routes.pushRightLeftConsumerFul(
           context,
           ScreenPayment(
@@ -308,8 +316,44 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
             tableName: widget.tableName,
             order: _currentOrder!,
             orderItems: _existingOrderItems,
+            companyId: widget.companyId,
           ),
         );
+      }
+      return;
+    }
+
+    // For staff role (1), proceed with requesting payment
+    // Check if staff role and not all items are served
+    if (widget.role == 1 &&
+        !_existingOrderItems.every((item) => item.statusId == 3)) {
+      Constrats.showThongBao(context, 'Bàn này chưa phục vụ xong.');
+      return;
+    }
+
+    ref.read(_isRequestingPaymentProvider.notifier).state = true;
+
+    try {
+      // Update order status to 4 (requested payment)
+      final orderApi = ref.read(orderApiProvider);
+      final updatedOrder = _currentOrder!.copyWith(statusId: 4);
+      await orderApi.saveOrder(updatedOrder);
+
+      // Update table status to 4 (waiting for payment)
+      // Note: Table status update would need to be implemented in the backend API
+      // For now, we'll just update the local state and navigate back
+
+      if (mounted) {
+        // Đóng drawer nếu đang mở
+        if (_scaffoldKey.currentState?.isEndDrawerOpen ?? false) {
+          Navigator.of(context).pop();
+        }
+
+        // Show success message
+        Constrats.showThongBao(context, 'Đã yêu cầu thanh toán!');
+
+        // Navigate back to table selection screen
+        Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
@@ -437,6 +481,24 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
     final currentNote = ref.watch(_itemNotesProvider)[itemId] ?? '';
     final isExpanded = ref.watch(_expandedNotesProvider).contains(itemId);
 
+    // Get or create controller for this item
+    final controllers = ref.watch(_itemNoteControllersProvider);
+    TextEditingController controller;
+    if (controllers.containsKey(itemId)) {
+      controller = controllers[itemId]!;
+    } else {
+      controller = TextEditingController(text: currentNote);
+      _allControllers.add(controller);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final updatedControllers = Map<int, TextEditingController>.from(
+          controllers,
+        );
+        updatedControllers[itemId] = controller;
+        ref.read(_itemNoteControllersProvider.notifier).state =
+            updatedControllers;
+      });
+    }
+
     return Column(
       children: [
         ListTile(
@@ -526,7 +588,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                 ),
               ),
               maxLines: 1,
-              controller: TextEditingController(text: currentNote),
+              controller: controller,
               onChanged: (value) {
                 final currentNotes = ref.read(_itemNotesProvider);
                 final updatedNotes = Map<int, String>.from(currentNotes);
@@ -851,7 +913,9 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                                     : Text(
                                       _currentOrder?.statusId == 3
                                           ? 'Đã yêu cầu'
-                                          : 'THANH TOÁN',
+                                          : (widget.role == 1
+                                              ? 'Yêu cầu thanh toán'
+                                              : 'Thanh toán'),
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                       ),
