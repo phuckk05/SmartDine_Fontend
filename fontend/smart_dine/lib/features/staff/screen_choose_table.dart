@@ -16,8 +16,7 @@ import 'package:mart_dine/routes.dart';
 
 class ScreenChooseTable extends ConsumerStatefulWidget {
   final int? branchId;
-  final int role; // 1: Nhân viên, 2: Thu ngân
-  const ScreenChooseTable({super.key, this.branchId, required this.role});
+  const ScreenChooseTable({super.key, this.branchId});
 
   @override
   ConsumerState<ScreenChooseTable> createState() => _ScreenChooseTableState();
@@ -57,99 +56,97 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
 
   // Thay thế phần _openTable trong screen_choose_table.dart
 
-  Future<void> _openTable(DiningTable table, bool hasUnpaidOrders) async {
-    Order? initialOrder;
-    List<OrderItem> initialItems = const <OrderItem>[];
+Future<void> _openTable(DiningTable table, bool hasUnpaidOrders) async {
+  Order? initialOrder;
+  List<OrderItem> initialItems = const <OrderItem>[];
 
-    if (hasUnpaidOrders) {
-      bool dialogOpened = false;
-      if (mounted) {
-        dialogOpened = true;
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => const Center(child: CircularProgressIndicator()),
-        );
-      }
-
-      try {
-        final orderApi = ref.read(orderApiProvider);
-        final orders = await orderApi.fetchOrdersByTableIdToday(table.id);
-
-        if (orders.isNotEmpty) {
-          orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-          // Find the most recent active order for this table.
-          // Active means statusId == 2 (being served) or statusId == 4 (requested payment).
-          Order? current;
-          for (final order in orders) {
-            if (order.statusId == 2 || order.statusId == 4) {
-              current = order;
-              break;
-            }
-          }
-
-          if (current != null) {
-            final orderItemApi = ref.read(orderItemApiProvider);
-            final items = await orderItemApi.getOrderItemsByOrderId(current.id);
-            initialOrder = current;
-            initialItems = List<OrderItem>.from(items);
-
-            // Nếu order có yêu cầu thanh toán (statusId == 4) và là thu ngân, chuyển đến màn hình thanh toán
-            if (current.statusId == 4 && widget.role == 2) {
-              if (mounted && dialogOpened) {
-                Navigator.of(context, rootNavigator: true).pop();
-              }
-
-              if (!mounted) return;
-
-              Routes.pushRightLeftConsumerFul(
-                context,
-                ScreenPayment(
-                  tableId: table.id,
-                  tableName: table.name,
-                  order: current,
-                  orderItems: initialItems,
-                  companyId: current.companyId,
-                ),
-              );
-              return;
-            }
-          } else {
-            // No active orders (e.g., all orders are paid - statusId == 3).
-            initialOrder = null;
-            initialItems = const <OrderItem>[];
-          }
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Không tải được order hiện tại: $e')),
-          );
-        }
-      } finally {
-        if (mounted && dialogOpened) {
-          Navigator.of(context, rootNavigator: true).pop();
-        }
-      }
+  if (hasUnpaidOrders) {
+    bool dialogOpened = false;
+    if (mounted) {
+      dialogOpened = true;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
     }
 
-    if (!mounted) return;
+    try {
+      final orderApi = ref.read(orderApiProvider);
+      final orders = await orderApi.fetchOrdersByTableIdToday(table.id);
 
-    Routes.pushRightLeftConsumerFul(
-      context,
-      ScreenMenu(
-        tableId: table.id,
-        tableName: table.name,
-        branchId: widget.branchId ?? 1,
-        companyId: 1,
-        userId: 1,
-        initialOrder: initialOrder,
-        initialOrderItems: initialItems,
-        role: widget.role,
-      ),
-    );
+      if (orders.isNotEmpty) {
+        orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+        // Find the most recent active order for this table.
+        // Active means statusId == 2 (being served) or statusId == 4 (requested payment).
+        Order? current;
+        for (final order in orders) {
+          if (order.statusId == 2 || order.statusId == 4) {
+            current = order;
+            break;
+          }
+        }
+
+        if (current != null) {
+          final orderItemApi = ref.read(orderItemApiProvider);
+          final items = await orderItemApi.getOrderItemsByOrderId(current.id);
+          initialOrder = current;
+          initialItems = List<OrderItem>.from(items);
+
+          // Nếu order có yêu cầu thanh toán (statusId == 4), chuyển đến màn hình thanh toán
+          if (current.statusId == 4) {
+            if (mounted && dialogOpened) {
+              Navigator.of(context, rootNavigator: true).pop();
+            }
+            
+            if (!mounted) return;
+            
+            Routes.pushRightLeftConsumerFul(
+              context,
+              ScreenPayment(
+                tableId: table.id,
+                tableName: table.name,
+                order: current,
+                orderItems: initialItems,
+              ),
+            );
+            return;
+          }
+        } else {
+          // No active orders (e.g., all orders are paid - statusId == 3).
+          initialOrder = null;
+          initialItems = const <OrderItem>[];
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Không tải được order hiện tại: $e')),
+        );
+      }
+    } finally {
+      if (mounted && dialogOpened) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    }
   }
+
+  if (!mounted) return;
+
+  Routes.pushRightLeftConsumerFul(
+    context,
+    ScreenMenu(
+      tableId: table.id,
+      tableName: table.name,
+      branchId: widget.branchId ?? 1,
+      companyId: 1,
+      userId: 1,
+      initialOrder: initialOrder,
+      initialOrderItems: initialItems,
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
