@@ -355,17 +355,21 @@ public class PaymentController {
         try {
             // Convert payload to Payment object
             Payment payment = new Payment();
-            payment.setOrderId(Integer.parseInt(payload.get("order_id").toString()));
-            payment.setCompanyId(Integer.parseInt(payload.get("company_id").toString()));
-            payment.setBranchId(Integer.parseInt(payload.get("branch_id").toString()));
+            payment.setOrderId(parseRequiredInt(payload, "order_id"));
+            payment.setCompanyId(parseRequiredInt(payload, "company_id"));
+            payment.setBranchId(parseRequiredInt(payload, "branch_id"));
 
             // Set amount as both total_amount and final_amount
-            BigDecimal amount = new BigDecimal(payload.get("amount").toString());
+            BigDecimal amount = parseRequiredBigDecimal(payload, "amount");
             payment.setTotalAmount(amount);
             payment.setFinalAmount(amount);
 
-            // Set default cashier_id (can be updated later)
-            payment.setCashierId(1); // Default cashier
+            // Allow custom cashier_id when provided
+            if (payload.containsKey("cashier_id") && payload.get("cashier_id") != null) {
+                payment.setCashierId(parseRequiredInt(payload, "cashier_id"));
+            } else {
+                payment.setCashierId(1); // Default cashier
+            }
             payment.setStatusId(1); // Default status
 
             Payment createdPayment = paymentService.createPayment(payment);
@@ -375,6 +379,22 @@ public class PaymentController {
         } catch (Exception ex) {
             return ResponseEntity.badRequest().body("Lỗi tạo payment: " + ex.getMessage());
         }
+    }
+
+    private Integer parseRequiredInt(Map<String, Object> payload, String key) {
+        Object value = payload.get(key);
+        if (value == null) {
+            throw new IllegalArgumentException(key + " is required");
+        }
+        return Integer.parseInt(value.toString());
+    }
+
+    private BigDecimal parseRequiredBigDecimal(Map<String, Object> payload, String key) {
+        Object value = payload.get(key);
+        if (value == null) {
+            throw new IllegalArgumentException(key + " is required");
+        }
+        return new BigDecimal(value.toString());
     }
 
     // Lấy payments theo orderId
