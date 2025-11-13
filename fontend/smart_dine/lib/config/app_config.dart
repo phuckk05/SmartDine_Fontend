@@ -7,7 +7,7 @@
 
 class AppConfig {
   // 🔐 AUTHENTICATION SETTINGS
-  static const bool useRealAuthentication = false; // Chuyển thành true khi có login screen
+  static const bool useRealAuthentication = true; // Bật authentication với AuthWrapper
   static const bool requireLogin = false;          // Bắt buộc đăng nhập
   static const bool autoMockLogin = true;          // Tự động mock login cho development
   

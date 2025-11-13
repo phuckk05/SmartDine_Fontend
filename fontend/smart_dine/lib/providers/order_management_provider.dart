@@ -36,14 +36,37 @@ final orderWithItemsProvider = FutureProvider.family<Order?, int>((ref, orderId)
 
   // 4. Map order items với thông tin menu và tính tổng tiền
   double totalAmount = 0.0;
-  for (final item in items) {
-    final menuItem = menuMap[item.itemId];
+  final enrichedItems = <OrderItem>[];
+  
+  for (final apiItem in items) {
+    final menuItem = menuMap[apiItem.itemId];
     final itemPrice = menuItem?.price ?? 0.0;
-    totalAmount += itemPrice * item.quantity;
+    totalAmount += itemPrice * apiItem.quantity;
+    
+    // Chuyển đổi từ API OrderItem sang Order model OrderItem với thông tin enriched
+    final enrichedItem = OrderItem(
+      id: apiItem.id,
+      orderId: apiItem.orderId,
+      itemId: apiItem.itemId,
+      quantity: apiItem.quantity,
+      note: apiItem.note,
+      statusId: apiItem.statusId,
+      addedBy: apiItem.addedBy,
+      servedBy: apiItem.servedBy,
+      createdAt: apiItem.createdAt,
+      updatedAt: DateTime.now(),
+      itemName: menuItem?.name ?? 'Món ${apiItem.itemId}',
+      itemPrice: itemPrice,
+    );
+    
+    enrichedItems.add(enrichedItem);
   }
 
-  // 5. Trả về order với tổng tiền đã tính
-  return order.copyWith(totalAmount: totalAmount);
+  // 5. Trả về order với items và tổng tiền đã tính
+  return order.copyWith(
+    items: enrichedItems,
+    totalAmount: totalAmount,
+  );
 });
 
 // Provider cho order management

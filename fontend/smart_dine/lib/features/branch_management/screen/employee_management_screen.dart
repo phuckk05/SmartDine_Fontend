@@ -5,6 +5,8 @@ import 'package:bcrypt/bcrypt.dart';
 import '../../../models/user.dart';
 import '../../../providers/employee_management_provider.dart';
 import '../../../providers/user_session_provider.dart';
+import '../../../providers/user_approval_provider.dart';
+import '../widgets/user_approval_dialog.dart';
 
 // Status class for user statuses
 class UserStatus {
@@ -68,8 +70,8 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
   // Data
   List<UserStatus> _userStatuses = [
     UserStatus(id: 1, name: 'Hoạt động', code: 'ACTIVE'),
-    UserStatus(id: 2, name: 'Tạm ngưng', code: 'INACTIVE'),
-    UserStatus(id: 3, name: 'Bị khóa', code: 'BLOCKED'),
+    UserStatus(id: 2, name: 'Tạm ngưng', code: 'INACTIVE'),  
+    UserStatus(id: 3, name: 'Chờ duyệt', code: 'PENDING'),
   ];
   
   List<Role> _roles = [
@@ -152,6 +154,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
             elevation: 0,
             centerTitle: true,
             title: Text('Quản lý nhân viên', style: Style.fontTitle),
+            actions: [_buildApprovalButton(isDark)],
           )
         : AppBar(
             backgroundColor: Colors.transparent,
@@ -159,6 +162,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
             centerTitle: true,
             automaticallyImplyLeading: false,
             title: Text('Quản lý nhân viên', style: Style.fontTitle),
+            actions: [_buildApprovalButton(isDark)],
           ),
       body: employeesAsyncValue.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -510,11 +514,11 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
   Color _getStatusColor(int? statusId) {
     switch (statusId) {
       case 1:
-        return Colors.green;
+        return Colors.green; // Hoạt động
       case 2:
-        return Colors.orange;
+        return Colors.orange; // Tạm ngưng
       case 3:
-        return Colors.red;
+        return Colors.amber; // Chờ duyệt
       default:
         return Colors.grey;
     }
@@ -527,7 +531,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
     _phoneController.clear();
     _emailController.clear();
     _passwordController.clear();
-    _selectedStatusId = _userStatuses.isNotEmpty ? _userStatuses.first.id : null;
+    _selectedStatusId = 3; // Mặc định là "Chờ duyệt" cho nhân viên mới
     _selectedRoleId = _roles.isNotEmpty ? _roles.first.id : null;
 
     showDialog(
@@ -1123,6 +1127,71 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
             ),
           ),
         );
+      },
+    );
+  }
+
+  // Build nút duyệt tài khoản với badge số lượng chờ duyệt
+  Widget _buildApprovalButton(bool isDark) {
+    final session = ref.watch(userSessionProvider);
+    final companyId = session.companyId ?? 1; // Fallback to 1 if null
+    
+    return Consumer(
+      builder: (context, ref, child) {
+        final pendingCount = ref.watch(pendingUsersCountProvider(companyId));
+        
+        return Stack(
+          children: [
+            IconButton(
+              onPressed: () => _showApprovalDialog(),
+              icon: Icon(
+                Icons.pending_actions,
+                color: isDark ? Style.colorLight : Style.colorDark,
+              ),
+              tooltip: 'Duyệt tài khoản nhân viên',
+            ),
+            // Badge hiển thị số lượng chờ duyệt
+            if (pendingCount > 0)
+              Positioned(
+                right: 6,
+                top: 6,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 20,
+                    minHeight: 20,
+                  ),
+                  child: Text(
+                    pendingCount > 99 ? '99+' : pendingCount.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Hiển thị dialog duyệt tài khoản
+  void _showApprovalDialog() {
+    final session = ref.read(userSessionProvider);
+    final companyId = session.companyId ?? 1; // Fallback to 1 if null
+    
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return UserApprovalDialog(companyId: companyId);
       },
     );
   }

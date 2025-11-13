@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:mart_dine/features/signin/screen_signin.dart';
-// import 'package:mart_dine/features/staff/screen_choose_table.dart';
 import 'package:mart_dine/providers/mode_provider.dart';
-import 'features/branch_management/screen/branch_navigation.dart';
+import 'auth_wrapper.dart';
 import 'config/app_config.dart';
+
+// Comment: Các import cũ
+// import 'package:mart_dine/features/signin/screen_signin.dart';
+// import 'features/branch_management/screen/branch_navigation.dart';
+// import 'package:mart_dine/features/staff/screen_choose_table.dart';
 // import 'providers/user_session_provider.dart';
 
 Future<void> main() async {
@@ -33,10 +36,15 @@ class SmartDineApp extends ConsumerWidget {
               ref.watch(modeProvider) ? Brightness.dark : Brightness.light,
         ),
       ),
-      // Smart routing: Login hoặc Branch Management dựa trên config
+      // Smart routing: Sử dụng AuthWrapper để kiểm tra session và chuyển hướng theo role
       home: AppConfig.useRealAuthentication 
-          ? const ScreenSignIn()  // Production: Màn hình login
-          : const BranchManagementNavigation(), // Development: Thẳng branch management
+          ? const AuthLoadingWrapper()  // Production: Kiểm tra session và chuyển hướng
+          : const AuthLoadingWrapper(), // Development: Cũng dùng AuthWrapper để test
+      
+      // Comment: Logic routing cũ
+      // home: AppConfig.useRealAuthentication 
+      //     ? const ScreenSignIn()  // Production: Màn hình login
+      //     : const BranchManagementNavigation(), // Development: Thẳng branch management
     );
   }
 }

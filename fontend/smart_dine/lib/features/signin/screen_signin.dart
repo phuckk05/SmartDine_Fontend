@@ -1,13 +1,9 @@
-// import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/forgot_passwork/screens/screen_findaccuont.dart';
 import 'package:mart_dine/features/signup/screen_select_signup.dart';
-// import 'package:mart_dine/features/staff/screen_choose_table.dart'; // Tạm ẩn
-import 'package:mart_dine/features/branch_management/screen/branch_navigation.dart';
 import 'package:mart_dine/providers/branch_provider.dart';
 import 'package:mart_dine/providers/loading_provider.dart';
 import 'package:mart_dine/providers/user_provider.dart';
@@ -129,6 +125,10 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
           'Đăng nhập thành công!\nVai trò: $roleName ${branchId != null ? "- Chi nhánh: $branchId" : ""}',
         );
 
+        // AuthWrapper sẽ tự động chuyển hướng sau khi session được lưu
+        // Chỉ cần trigger rebuild để AuthWrapper hoạt động
+        
+        /* Comment: Logic chuyển hướng cũ - giờ do AuthWrapper xử lý
         // Điều hướng dựa theo role
         if (user.role == 2) {
           // Manager -> Màn hình quản lý chi nhánh
@@ -146,7 +146,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
             'Chức năng nhân viên đang được phát triển.',
           );
           
-          /* Tạm comment phần chọn bàn
+          // Tạm comment phần chọn bàn
           // Try to resolve companyId from branchId if available
           int? companyId;
           if (branchId != null) {
@@ -164,7 +164,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
               companyId: companyId ?? 0,
             ),
           );
-          */
+          
           // if (user.role == 1) {
           //   Routes.pushRightLeftConsumerFul(context, AdminHomeScreen());
           // } else if (user.role == 2) {
@@ -177,6 +177,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
           //   Routes.pushRightLeftConsumerFul(context, OwnerHomeScreen());
           // }
         }
+        */
       } else {
         Constrats.showThongBao(
           context,

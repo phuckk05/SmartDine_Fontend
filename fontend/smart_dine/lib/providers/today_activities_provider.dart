@@ -69,7 +69,32 @@ class TodayActivitiesNotifier extends StateNotifier<AsyncValue<TodayActivitiesDa
       final tables = futures[1] as List?;
       final unpaidTableIds = futures[2] as List<int>?;
       if (summaryData != null) {
-        final statusBreakdown = Map<String, int>.from(summaryData['statusBreakdown'] ?? {});
+        // Debug: Print API response to understand data structure
+        print('=== TODAY ACTIVITIES DEBUG ===');
+        print('Summary Data: $summaryData');
+        print('Tables: ${tables?.length}');
+        print('Unpaid Table IDs: $unpaidTableIds');
+        
+        // Safe parsing of status breakdown with fallback values
+        final rawStatusBreakdown = summaryData['statusBreakdown'];
+        Map<String, int> statusBreakdown = {};
+        
+        if (rawStatusBreakdown is Map) {
+          statusBreakdown = Map<String, int>.from(rawStatusBreakdown);
+        } else {
+          // Fallback: calculate from totalOrders if statusBreakdown not available
+          final totalOrders = summaryData['totalOrders'] ?? summaryData['totalOrdersToday'] ?? 0;
+          final completedOrders = summaryData['completedOrders'] ?? summaryData['completedOrdersToday'] ?? 0;
+          final pendingOrders = summaryData['pendingOrders'] ?? summaryData['pendingOrdersToday'] ?? 0;
+          
+          statusBreakdown = {
+            'completed': completedOrders,
+            'serving': pendingOrders,
+            'cancelled': 0,
+            'pending': totalOrders - completedOrders - pendingOrders,
+          };
+        }
+        
         final hourlyBreakdown = (summaryData['hourlyBreakdown'] as Map<String, dynamic>?)?.map(
           (key, value) => MapEntry(key, (value as num).toInt())
         ) ?? <String, int>{};
@@ -78,16 +103,20 @@ class TodayActivitiesNotifier extends StateNotifier<AsyncValue<TodayActivitiesDa
         final cancelledDishes = (summaryData['cancelledDishes'] as List?)?.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
         final extraSupplies = (summaryData['extraSupplies'] as List?)?.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
         final extraDocuments = (summaryData['extraDocuments'] as List?)?.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
+        
+        print('Processed Status Breakdown: $statusBreakdown');
+        final totalOrdersValue = summaryData['totalOrders'] ?? summaryData['totalOrdersToday'] ?? 0;
+        
         final data = TodayActivitiesData(
-          totalOrders: summaryData['totalOrders'] ?? 0,
+          totalOrders: totalOrdersValue,
           completedOrders: statusBreakdown['completed'] ?? 0,
-          servingOrders: statusBreakdown['serving'] ?? 0,
+          servingOrders: statusBreakdown['serving'] ?? statusBreakdown['pending'] ?? 0,
           cancelledOrders: statusBreakdown['cancelled'] ?? 0,
           totalTables: tables?.length ?? 0,
           unpaidTables: unpaidTableIds?.length ?? 0,
           statusBreakdown: statusBreakdown,
           hourlyBreakdown: hourlyBreakdown,
-          date: summaryData['date'] ?? '',
+          date: summaryData['date'] ?? DateTime.now().toIso8601String().split('T')[0],
           lastUpdated: DateTime.now(),
           soldDishes: soldDishes,
           extraDishes: extraDishes,
@@ -95,6 +124,9 @@ class TodayActivitiesNotifier extends StateNotifier<AsyncValue<TodayActivitiesDa
           extraSupplies: extraSupplies,
           extraDocuments: extraDocuments,
         );
+        
+        print('Final TodayActivitiesData: totalOrders=${data.totalOrders}, completed=${data.completedOrders}, serving=${data.servingOrders}');
+        print('================================');
         state = AsyncValue.data(data);
       } else {
         state = AsyncValue.error(

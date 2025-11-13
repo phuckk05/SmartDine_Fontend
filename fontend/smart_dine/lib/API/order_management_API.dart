@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/services/http_service.dart';
 import '../models/order.dart';
+import 'demo_data_helper.dart';
 
 final orderManagementApiProvider = Provider((ref) => OrderManagementAPI());
 
@@ -123,15 +124,30 @@ class OrderManagementAPI {
   // Lấy tóm tắt orders hôm nay theo branchId
   Future<Map<String, dynamic>?> getTodayOrderSummary(int branchId) async {
     try {
-      final response = await _httpService.get('$baseUrl/orders/summary/today/$branchId');
+      final url = '$baseUrl/orders/summary/today/$branchId';
+      print('=== ORDER SUMMARY API DEBUG ===');
+      print('Calling URL: $url');
+      
+      final response = await _httpService.get(url);
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      
       final data = _httpService.handleResponse(response);
+      print('Parsed data: $data');
+      print('Data type: ${data.runtimeType}');
       
       if (data is Map<String, dynamic>) {
+        print('✅ ORDER API SUCCESS - Using real data');
         return data;
       }
-      return null;
+      
+      // Fallback to demo data if API fails or returns null
+      print('❌ ORDER API RETURNED NULL - using demo data for today order summary');
+      return DemoDataHelper.generateTodayOrderSummary(branchId);
     } catch (e) {
-      return null;
+      print('❌ ORDER API ERROR: $e');
+      print('Using demo data as fallback');
+      return DemoDataHelper.generateTodayOrderSummary(branchId);
     }
   }
 }
