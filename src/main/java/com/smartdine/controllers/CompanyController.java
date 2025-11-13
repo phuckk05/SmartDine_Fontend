@@ -137,17 +137,8 @@ public class CompanyController {
         }
     }
 
-<<<<<<< HEAD
-    // Quản lý cửa hàng
-    // ✅ Danh sách công ty đã duyệt (active)
-    @GetMapping("/active")
-    public ResponseEntity<?> getActiveCompanies() {
-=======
-
-
     @GetMapping("/get-list-company-and-owner")
     public ResponseEntity<List<GetListCompanyAndOwnerResponse>> getListCompanyAndOwner() {
->>>>>>> bc249b156ae2cd818951108c384e8d1a5b110004
         try {
             List<GetListCompanyAndOwnerResponse> list = companyServices.getListCompanyAndOwner();
             return ResponseEntity.ok(list);
