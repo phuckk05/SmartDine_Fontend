@@ -7,38 +7,52 @@ class User {
   final String email;
   final String phone;
   final String passworkHash;
-  final String fontImage;
-  final String backImage;
-  final int statusId;
-  final int? role;
+  final String? fontImage;
+  final String? backImage;
+  final int? statusId;
+  final int? role; // Role: admin, manager, staff
+  final int? companyId; // Company/Restaurant ID
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? deletedAt;
+
+  // Relations - thông tin từ JOIN
+  String? roleName;
+  String? statusName;
+  String? companyName;
+  List<int>? branchIds; // Danh sách chi nhánh user được assign
+
   User({
     this.id,
     required this.fullName,
     required this.email,
     required this.phone,
     required this.passworkHash,
-    required this.fontImage,
-    required this.backImage,
-    required this.statusId,
+    this.fontImage,
+    this.backImage,
+    this.statusId,
     this.role,
+    this.companyId,
     required this.createdAt,
     required this.updatedAt,
-    required this.deletedAt,
+    this.deletedAt,
+    this.roleName,
+    this.statusName,
+    this.companyName,
+    this.branchIds,
   });
 
-  /// Hàm tạo user mới với hash mật khẩu
+  // Factory constructor để tạo User mới với password hashing
   factory User.create({
     required String fullName,
     required String email,
     required String phone,
     required String password, // nhận mật khẩu gốc
-    required int statusId,
-    required int? role,
-    required String? fontImage,
-    required String? backImage,
+    int? statusId,
+    int? role,
+    int? companyId,
+    String? fontImage,
+    String? backImage,
   }) {
     // hash mật khẩu
     final hashed = BCrypt.hashpw(password, BCrypt.gensalt());
@@ -48,8 +62,9 @@ class User {
       email: email,
       phone: phone,
       passworkHash: hashed,
-      statusId: statusId,
+      statusId: statusId ?? 1,
       role: role,
+      companyId: companyId,
       fontImage: fontImage ?? "Chưa có",
       backImage: backImage ?? "Chưa có",
       createdAt: now,
@@ -66,11 +81,16 @@ class User {
     String? passworkHash,
     int? statusId,
     int? role,
+    int? companyId,
     String? fontImage,
     String? backImage,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? deletedAt,
+    String? roleName,
+    String? statusName,
+    String? companyName,
+    List<int>? branchIds,
   }) {
     return User(
       id: id ?? this.id,
@@ -80,115 +100,130 @@ class User {
       passworkHash: passworkHash ?? this.passworkHash,
       statusId: statusId ?? this.statusId,
       role: role ?? this.role,
+      companyId: companyId ?? this.companyId,
       fontImage: fontImage ?? this.fontImage,
       backImage: backImage ?? this.backImage,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
+      roleName: roleName ?? this.roleName,
+      statusName: statusName ?? this.statusName,
+      companyName: companyName ?? this.companyName,
+      branchIds: branchIds ?? this.branchIds,
     );
   }
 
   Map<String, dynamic> toMap() {
-    return {
+    return <String, dynamic>{
       'id': id,
-      'fullName': fullName,
+      'full_name': fullName,
       'email': email,
       'phone': phone,
-      'passworkHash': passworkHash,
-      'statusId': statusId,
+      'passwork_hash': passworkHash,
+      'font_image': fontImage,
+      'back_image': backImage,
+      'status_id': statusId,
       'role': role,
-      'fontImage': fontImage,
-      'backImage': backImage,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
-      'deletedAt': deletedAt != null ? deletedAt!.toIso8601String() : null,
+      'company_id': companyId,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+      'deleted_at': deletedAt?.toIso8601String(),
     };
   }
 
   factory User.fromMap(Map<String, dynamic> map) {
-    // helper to parse int safely
-    // ignore: no_leading_underscores_for_local_identifiers
-    //Hàm kiểm tra kiểu dữ liệu
-    int? _parseInt(dynamic v) {
-      if (v == null) return null;
-      if (v is int) return v;
-      return int.tryParse(v.toString());
-    }
-
-    //Hàm chuyển đổi date
-    // ignore: no_leading_underscores_for_local_identifiers
-    DateTime _parseDate(dynamic v) {
-      if (v == null) return DateTime.now();
-      if (v is int) {
-        return DateTime.fromMillisecondsSinceEpoch(v);
-      }
-      if (v is String) {
-        // Try ISO8601 first
-        final parsed = DateTime.tryParse(v);
-        if (parsed != null) return parsed;
-        // fallback: try parsing as int string (epoch ms)
-        final i = int.tryParse(v);
-        if (i != null) return DateTime.fromMillisecondsSinceEpoch(i);
-      }
-      // default fallback
-      return DateTime.now();
-    }
-
     return User(
-      id: int.tryParse(map['id']?.toString() ?? '') ?? 0,
-      fullName: map['fullName'] ?? '',
-      email: map['email'] ?? '',
-      phone: map['phone'] ?? '',
-      passworkHash: map['passworkHash'] ?? '',
-      statusId: _parseInt(map['statusId']) ?? 0,
-      role: _parseInt(map['statusId']) ?? 0,
-      fontImage: map['fontImage'] ?? '',
-      backImage: map['backImage'] ?? '',
-      createdAt: _parseDate(map['createdAt']),
-      updatedAt: _parseDate(map['updatedAt']),
-      deletedAt: _parseDate(map['deletedAt']),
+      id: map['id'] != null ? map['id'] as int : null,
+      fullName: (map['fullName'] ?? map['full_name'] ?? '') as String,
+      email: (map['email'] ?? '') as String,
+      phone: (map['phone'] ?? '') as String,
+      passworkHash: (map['passworkHash'] ?? map['passwork_hash'] ?? '') as String,
+      fontImage: (map['fontImage'] ?? map['font_image']) as String?,
+      backImage: (map['backImage'] ?? map['back_image']) as String?,
+      statusId: (map['statusId'] ?? map['status_id']) as int?,
+      role: map['role'] as int?,
+      companyId: (map['companyId'] ?? map['company_id']) as int?,
+      createdAt: DateTime.parse((map['createdAt'] ?? map['created_at']) ?? DateTime.now().toIso8601String()),
+      updatedAt: DateTime.parse((map['updatedAt'] ?? map['updated_at']) ?? DateTime.now().toIso8601String()),
+      deletedAt: (map['deletedAt'] ?? map['deleted_at']) != null ? DateTime.parse(map['deletedAt'] ?? map['deleted_at']) : null,
+      roleName: (map['roleName'] ?? map['role_name']) as String?,
+      statusName: (map['statusName'] ?? map['status_name']) as String?,
+      companyName: (map['companyName'] ?? map['company_name']) as String?,
+      branchIds: (map['branchIds'] ?? map['branch_ids']) != null ? List<int>.from(map['branchIds'] ?? map['branch_ids']) : null,
     );
   }
 
   String toJson() => json.encode(toMap());
 
-  factory User.fromJson(String source) => User.fromMap(json.decode(source));
+  factory User.fromJson(String source) => User.fromMap(json.decode(source) as Map<String, dynamic>);
 
   @override
   String toString() {
-    return 'User(id: $id, full_Name: $fullName, email: $email, phone: $phone, passwork_Hash: $passworkHash, font_Image: $fontImage, back_Image: $backImage, created_At: $createdAt, updated_At: $updatedAt, deleted_At: $deletedAt)';
+    return 'User(id: $id, fullName: $fullName, email: $email, phone: $phone, role: $role, companyId: $companyId, branchIds: $branchIds)';
   }
 
   @override
-  bool operator ==(Object other) {
+  bool operator ==(covariant User other) {
     if (identical(this, other)) return true;
-
-    return other is User &&
-        other.id == id &&
-        other.fullName == fullName &&
-        other.email == email &&
-        other.phone == phone &&
-        other.passworkHash == passworkHash &&
-        other.statusId == statusId &&
-        other.role == role &&
-        other.fontImage == fontImage &&
-        other.backImage == backImage &&
-        other.createdAt == createdAt &&
-        other.updatedAt == updatedAt &&
-        other.deletedAt == deletedAt;
+  
+    return 
+      other.id == id &&
+      other.fullName == fullName &&
+      other.email == email &&
+      other.phone == phone &&
+      other.passworkHash == passworkHash &&
+      other.fontImage == fontImage &&
+      other.backImage == backImage &&
+      other.statusId == statusId &&
+      other.role == role &&
+      other.companyId == companyId &&
+      other.createdAt == createdAt &&
+      other.updatedAt == updatedAt &&
+      other.deletedAt == deletedAt;
   }
 
   @override
   int get hashCode {
     return id.hashCode ^
-        fullName.hashCode ^
-        email.hashCode ^
-        phone.hashCode ^
-        passworkHash.hashCode ^
-        fontImage.hashCode ^
-        backImage.hashCode ^
-        createdAt.hashCode ^
-        updatedAt.hashCode ^
-        deletedAt.hashCode;
+      fullName.hashCode ^
+      email.hashCode ^
+      phone.hashCode ^
+      passworkHash.hashCode ^
+      fontImage.hashCode ^
+      backImage.hashCode ^
+      statusId.hashCode ^
+      role.hashCode ^
+      companyId.hashCode ^
+      createdAt.hashCode ^
+      updatedAt.hashCode ^
+      deletedAt.hashCode;
+  }
+
+  // Utility methods cho branch management
+  bool hasRole(String roleName) {
+    return this.roleName?.toLowerCase() == roleName.toLowerCase();
+  }
+
+  bool isAdmin() => hasRole('admin');
+  bool isManager() => hasRole('manager');
+  bool isStaff() => hasRole('staff');
+
+  bool hasAccessToBranch(int branchId) {
+    return branchIds?.contains(branchId) ?? false;
+  }
+
+  bool get isActive => statusId == 1; // Assuming 1 = active status
+
+  String get roleDisplayName {
+    switch (roleName?.toLowerCase()) {
+      case 'admin':
+        return 'Quản trị viên';
+      case 'manager':
+        return 'Quản lý';
+      case 'staff':
+        return 'Nhân viên';
+      default:
+        return roleName ?? 'Chưa xác định';
+    }
   }
 }

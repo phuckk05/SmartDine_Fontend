@@ -8,6 +8,21 @@ final uri1 = 'https://spring-boot-smartdine.onrender.com/api/companys';
 final uri2 = 'https://smartdine-backend-oq2x.onrender.com/api/companys';
 
 class CompanyAPI {
+  //Lấy tất cả company
+  Future<List<Company>> getAllCompanys() async {
+    final response = await http.get(
+      Uri.parse('$uri2/all'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data
+          .map((company) => Company.fromMap(company as Map<String, dynamic>))
+          .toList();
+    }
+        return [];
+  }
+
   //Đăng kí company
   Future<Company?> createCompany(Company company) async {
     final response = await http.post(
@@ -25,7 +40,7 @@ class CompanyAPI {
   //Kiểm tra companyCode
   Future<Company?> exitsCompanyCode(String companyCode) async {
     final response = await http.get(
-      Uri.parse('${uri2}/${companyCode}'),
+      Uri.parse('$uri2/$companyCode'),
       headers: {'Content-Type': 'application/json'},
     );
     if (response.statusCode == 200 || response.statusCode == 201) {

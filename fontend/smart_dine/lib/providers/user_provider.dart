@@ -26,8 +26,7 @@ class UserNotifier extends StateNotifier<User?> {
 
   // Đăng ký user
   Future<int> signUpInfor(User user, String branchCode, int index) async {
-    print(' user : ${user}');
-    // Gọi API để tìm chi nhánh
+        // Gọi API để tìm chi nhánh
     final Branch? branch;
     bool check = false;
 
@@ -37,14 +36,14 @@ class UserNotifier extends StateNotifier<User?> {
         if (registerSuccess != null) {
           // Cập nhật state sau khi đăng ký thành công
           state = registerSuccess;
+
           return 2;
         } else {
           return 3;
         }
       } catch (e) {
         // ignore: avoid_print
-        print('Lỗi 2 :  $e');
-      }
+              }
     } else {
       try {
         branch = await branchAPI.findBranchByBranchCode(branchCode);
@@ -61,39 +60,34 @@ class UserNotifier extends StateNotifier<User?> {
               state = registerSuccess;
               try {
                 final responseUserBranch = await userBranchAPI.create(
-                  registerSuccess.id!.toInt(),
-                  branch.id!.toInt(),
+                  registerSuccess.id!,
+                  branch.id,
                 );
                 if (responseUserBranch == true) {
                   return 2;
                 }
                 return 4;
               } catch (e) {
-                print("Loi 3 :  $e");
-              }
+                              }
             } else {
               return 3;
             }
           } catch (e) {
             // ignore: avoid_print
-            print('Lỗi 2 :  $e');
-          }
+                      }
         }
       } catch (e) {
         // ignore: avoid_print
-        print('loi 1  $e');
-      }
+              }
     }
     return 0;
   }
 
   Future<User?> signInInfor(String email, String password) async {
-    print(' email : ${email} , password : ${password}');
-    try {
-      final user = await userAPI.signIn(email);
-      if (user != null) {
-        print('do');
-        // Cập nhật state sau khi đăng nhập thành công
+        try {
+      final user = await userAPI.signIn2(email);
+            if (user != null) {
+                // Cập nhật state sau khi đăng nhập thành công
         final isPasswordCorrect = BCrypt.checkpw(password, user.passworkHash);
         if (isPasswordCorrect) {
           state = user;
@@ -105,8 +99,7 @@ class UserNotifier extends StateNotifier<User?> {
         return null;
       }
     } catch (e) {
-      print('Lỗi đăng nhập: $e');
-      return null;
+            return null;
     }
   }
 
@@ -123,9 +116,13 @@ class UserNotifier extends StateNotifier<User?> {
         return false;
       }
     } catch (e) {
-      print('Lỗi cập nhật thông tin user: $e');
-      return false;
+            return false;
     }
+  }
+
+  // Lấy role từ user hiện tại
+  int? getCurrentUserRole() {
+    return state?.role;
   }
 }
 

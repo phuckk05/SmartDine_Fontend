@@ -9,7 +9,10 @@ import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/signin/screen_signin.dart';
 import 'package:mart_dine/models/branch.dart';
+import 'package:mart_dine/models/company.dart';
 import 'package:mart_dine/providers/branch_provider.dart';
+// import 'package:mart_dine/providers/company_provider.dart';
+import 'package:mart_dine/providers/companys_provider.dart';
 import 'package:mart_dine/providers/internet_provider.dart';
 import 'package:mart_dine/providers/loading_provider.dart';
 import 'package:mart_dine/routes.dart';
@@ -21,8 +24,9 @@ import 'package:mart_dine/widgets/loading.dart';
 final _isCanPop = StateProvider.autoDispose<bool>((ref) => false);
 final _isLoadingProvider = StateProvider<bool>((ref) => false);
 
-final _imageProvider = StateProvider.autoDispose<File?>((ref) => null);
-final _imageUrlProvider = StateProvider.autoDispose<String>((ref) => "");
+final _imageProvider = StateProvider<File?>((ref) => null);
+final _imageUrlProvider = StateProvider<String>((ref) => "");
+final _selectedCompanyProvider = StateProvider<Company?>((ref) => null);
 
 //Giao diện đăng kí chủ nhà hàng
 class ScreenManagerSignup extends ConsumerStatefulWidget {
@@ -46,10 +50,21 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
   final TextEditingController _codeRestaurantController =
       TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    _fetchCompanys();
+  }
+
+  //Lấy tất cả companys
+  Future<void> _fetchCompanys() async {
+    await ref.read(companysNotifierProvider.notifier).fetchCompanys();
+  }
+
   //Hàm lấy ảnh
   Future<void> _getCCCDImage(
-    AutoDisposeStateProvider<File?> image,
-    AutoDisposeStateProvider<String?> imageUrl,
+    StateProvider<File?> image,
+    StateProvider<String?> imageUrl,
     BuildContext context,
   ) async {
     if (!ref.watch(internetProvider)) {
@@ -79,8 +94,7 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
     final result = await cloudinaryAPI.getURL(file);
     if (result != "0") {
       ref.read(_imageUrlProvider.notifier).state = result.toString();
-      print("anh day :${result}");
-      print(ref.watch(_imageUrlProvider));
+
     } else {
       Constrats.showThongBao(context, "Lỗi chọn ảnh");
     }
@@ -113,13 +127,12 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
     if (!ref.watch(internetProvider)) {
       Constrats.showThongBao(context, "Không có internet !");
     } else {
-      final _imageUrl = ref.watch(_imageUrlProvider);
-      print("url image : $_imageUrl");
-      if (_nameController.text.isNotEmpty &&
+      final imageUrl = ref.watch(_imageUrlProvider);
+            if (_nameController.text.isNotEmpty &&
           _addressController.text.isNotEmpty &&
           _codeController.text.isNotEmpty &&
           _codeRestaurantController.text.isNotEmpty &&
-          _imageUrl.isNotEmpty) {
+          imageUrl.isNotEmpty) {
         //Chuyển hướng đăng kí qua role khác
         ref.read(isLoadingNotifierProvider.notifier).toggle(true);
         await siginUpBranch(branch, context);
@@ -167,14 +180,11 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
                 ),
                 child: Column(
                   children: [
-                    _label("Vui lòng nhập code nhà hàng*"),
-                    _textFiled(
-                      1,
-                      null,
-                      Icon(Icons.code, color: Colors.grey[600]),
-                      null,
-                      _codeRestaurantController,
-                      null,
+                    _label("Chọn nhà hàng*"),
+                    _companyDropdown(
+                      context,
+                      ref,
+                      ref.watch(companysNotifierProvider),
                     ),
                     SizedBox(height: 10),
                     _label("Tên chi nhánh nhà hàng*"),
@@ -291,7 +301,7 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
 
   //Phần Lấy CCCD
   Widget _getCCCD() {
-    final _Image = ref.watch(_imageProvider);
+    final image = ref.watch(_imageProvider);
     return Container(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 0),
@@ -316,7 +326,7 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
                     height: 100,
                     alignment: Alignment.center,
                     child:
-                        _Image == null
+                        image == null
                             ? Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -329,12 +339,12 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
                             )
                             : ClipRRect(
                               borderRadius: BorderRadius.circular(6.0),
-                              child: Image.file(_Image, fit: BoxFit.fill),
+                              child: Image.file(image, fit: BoxFit.fill),
                             ),
                   ),
                 ),
               ),
-              _Image == null
+              image == null
                   ? SizedBox()
                   : Positioned(
                     top: 0,
@@ -352,6 +362,31 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
           ),
         ),
       ),
+    );
+  }
+
+  //Dropdown button company
+  Widget _companyDropdown(
+    BuildContext context,
+    WidgetRef ref,
+    List<Company> companies,
+  ) {
+    final selectedCompany = ref.watch(_selectedCompanyProvider);
+    return DropdownButton<Company>(
+      hint: Text('Chọn công ty'),
+      value: selectedCompany,
+      isExpanded: true,
+      items:
+          companies.map((Company company) {
+            return DropdownMenuItem<Company>(
+              value: company,
+              child: Text(company.name),
+            );
+          }).toList(),
+      onChanged: (Company? newValue) {
+        ref.read(_selectedCompanyProvider.notifier).state = newValue;
+        _codeRestaurantController.text = newValue?.companyCode ?? '';
+      },
     );
   }
 

@@ -10,15 +10,14 @@ class RoleAPI {
   //Lấy tất cả role
   Future<List<Role>?> getAll() async {
     final response = await http.get(
-      Uri.parse('${uri2}'),
+      Uri.parse(uri2),
       headers: {'Content-Type': 'application/json'},
     );
     if (response.statusCode == 200 || response.statusCode == 201) {
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((e) => Role.fromJson(e)).toList();
     }
-    print("loi lay all role : ${response.statusCode}");
-    return null;
+        return null;
   }
 
   //Lấy role theo id
@@ -31,8 +30,7 @@ class RoleAPI {
       final Map<String, dynamic> data = jsonDecode(response.body);
       return Role.fromMap(data);
     }
-    print("loi lay role by id : ${response.statusCode}");
-    return null;
+        return null;
   }
 }
 

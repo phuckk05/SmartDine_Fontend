@@ -23,6 +23,8 @@ final _isLoadingProvider = StateProvider<bool>((ref) => false);
 final _imageProvider = StateProvider.autoDispose<File?>((ref) => null);
 final _imageUrlProvider = StateProvider.autoDispose<String>((ref) => "");
 
+// final _selectedCompanyProvider = StateProvider<Company?>((ref) => null);
+
 //Giao diện đăng kí chủ nhà hàng
 class ScreenOwnerSignup extends ConsumerStatefulWidget {
   final String? title;
@@ -44,8 +46,7 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
   @override
   void initState() {
     super.initState();
-    print(" id : ${widget.userId}");
-  }
+      }
 
   //Hàm lấy ảnh
   Future<void> _getCCCDImage(
@@ -80,8 +81,7 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
 
     if (result != "0") {
       ref.read(_imageUrlProvider.notifier).state = result.toString();
-      print("anh day :${result}");
-    } else {
+          } else {
       Constrats.showThongBao(context, "Lỗi chọn ảnh");
     }
   }
@@ -244,6 +244,31 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
     );
   }
 
+  //Dropdown button company
+  // Widget _companyDropdown(
+  //   BuildContext context,
+  //   WidgetRef ref,
+  //   List<Company> companies,
+  // ) {
+  //   final selectedCompany = ref.watch(_selectedCompanyProvider);
+  //   return DropdownButton<Company>(
+  //     hint: Text('Chọn công ty'),
+  //     value: selectedCompany,
+  //     isExpanded: true,
+  //     items:
+  //         companies.map((Company company) {
+  //           return DropdownMenuItem<Company>(
+  //             value: company,
+  //             child: Text(company.name),
+  //           );
+  //         }).toList(),
+  //     onChanged: (Company? newValue) {
+  //       ref.read(_selectedCompanyProvider.notifier).state = newValue;
+  //       _codeController.text = newValue?.companyCode ?? '';
+  //     },
+  //   );
+  // }
+
   //Textfield
   Widget _textFiled(
     int index,
@@ -279,7 +304,7 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
 
   //Phần Lấy CCCD
   Widget _getCCCD() {
-    final _image = ref.watch(_imageProvider);
+    final image = ref.watch(_imageProvider);
     return Container(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 0),
@@ -304,25 +329,22 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
                     height: 100,
                     alignment: Alignment.center,
                     child:
-                        _image == null
+                        image == null
                             ? Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(
-                                  "Giấy phép kinh doanh",
-                                  style: Style.fontContent,
-                                ),
+                                Text("Giấy phép", style: Style.fontContent),
                                 const Icon(Icons.add, color: Colors.grey),
                               ],
                             )
                             : ClipRRect(
                               borderRadius: BorderRadius.circular(6.0),
-                              child: Image.file(_image, fit: BoxFit.fill),
+                              child: Image.file(image, fit: BoxFit.fill),
                             ),
                   ),
                 ),
               ),
-              _image == null
+              image == null
                   ? SizedBox()
                   : Positioned(
                     top: 0,
@@ -355,8 +377,7 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
         child: MaterialButton(
           onPressed: () async {
             final anh = ref.watch(_imageUrlProvider);
-            print(" danh : ${anh}");
-            Company company = Company.create(
+                        Company company = Company.create(
               name: _nameController.text,
               address: _addressController.text,
               image: "765",

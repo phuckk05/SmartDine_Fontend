@@ -1,4 +1,4 @@
-import 'package:email_validator/email_validator.dart';
+// import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,8 +6,12 @@ import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/forgot_passwork/screens/screen_findaccuont.dart';
 import 'package:mart_dine/features/signup/screen_select_signup.dart';
+// import 'package:mart_dine/features/staff/screen_choose_table.dart'; // Tạm ẩn
+import 'package:mart_dine/features/branch_management/screen/branch_navigation.dart';
+import 'package:mart_dine/providers/branch_provider.dart';
 import 'package:mart_dine/providers/loading_provider.dart';
 import 'package:mart_dine/providers/user_provider.dart';
+import 'package:mart_dine/providers/user_session_provider.dart';
 import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets/loading.dart';
 
@@ -35,15 +39,15 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
 
   //Hàm check email
   bool isValidEmail(String email) {
-    return EmailValidator.validate(email);
+    return RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email);
   }
 
   //Hàm sigin
   void toSignIn() async {
-    if (isValidEmail(_emailController.text) == false) {
-      Constrats.showThongBao(context, 'Vui lòng nhập đúng định dạng email.');
-      return;
-    }
+    // if (isValidEmail(_emailController.text) == false) {
+    //   Constrats.showThongBao(context, 'Vui lòng nhập đúng định dạng email.');
+    //   return;
+    // }
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       Constrats.showThongBao(
         context,
@@ -56,18 +60,131 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
     final user = await ref
         .watch(userNotifierProvider.notifier)
         .signInInfor(_emailController.text, _passwordController.text);
+
     if (user != null) {
-      Constrats.showThongBao(
-        context,
-        'Đăng nhập thành công. Chào mừng bạn trở lại!',
-      );
-    } else {
-      Constrats.showThongBao(
-        context,
-        'Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin.',
-      );
+      // Kiểm tra trạng thái tài khoản
+      if (user.statusId == 3) {
+        // Chờ duyệt
+        Constrats.showThongBao(
+          context,
+          'Tài khoản của bạn chưa được duyệt. Vui lòng chờ admin phê duyệt.',
+        );
+        ref.read(isLoadingNotifierProvider.notifier).toggle(false);
+        return;
+      } else if (user.statusId == 2) {
+        //Không hoạt động
+        Constrats.showThongBao(
+          context,
+          'Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ admin.',
+        );
+        ref.read(isLoadingNotifierProvider.notifier).toggle(false);
+        return;
+      } else if (user.statusId == 1) {
+        // Đã duyệt
+                // Kiểm tra role và hiển thị thông tin
+        String roleName = '';
+        int? branchId;
+        switch (user.role) {
+          case 1:
+            roleName = 'Administrator';
+            break;
+          case 2:
+            roleName = 'Manager';
+            branchId = await ref
+                .read(branchNotifierProvider.notifier)
+                .getBranchIdByUserId(user.id as int);
+            break;
+          case 3:
+            roleName = 'Staff';
+            branchId = await ref
+                .read(branchNotifierProvider.notifier)
+                .getBranchIdByUserId(user.id as int);
+          case 4:
+            roleName = 'Chef';
+            branchId = await ref
+                .read(branchNotifierProvider.notifier)
+                .getBranchIdByUserId(user.id as int);
+            break;
+          case 5:
+            roleName = 'Owner';
+            break;
+          default:
+            roleName = 'Staff';
+            branchId = await ref
+                .read(branchNotifierProvider.notifier)
+                .getBranchIdByUserId(user.id as int);
+        }
+
+        // Lưu user session cho branch management
+        await ref.read(userSessionProvider.notifier).login(
+          userId: user.id ?? 0,
+          userName: user.fullName,
+          userRole: user.role ?? 3,
+          branchIds: branchId != null ? [branchId] : [],
+          defaultBranchId: branchId,
+        );
+
+        Constrats.showThongBao(
+          context,
+          'Đăng nhập thành công!\nVai trò: $roleName ${branchId != null ? "- Chi nhánh: $branchId" : ""}',
+        );
+
+        // Điều hướng dựa theo role
+        if (user.role == 2) {
+          // Manager -> Màn hình quản lý chi nhánh
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const BranchManagementNavigation(),
+            ),
+          );
+        } else if (user.role == 3) {
+          // Staff -> Màn hình chọn bàn (Tạm ẩn)
+          // TODO: Sẽ mở lại khi cần thiết
+          Constrats.showThongBao(
+            context,
+            'Chức năng nhân viên đang được phát triển.',
+          );
+          
+          /* Tạm comment phần chọn bàn
+          // Try to resolve companyId from branchId if available
+          int? companyId;
+          if (branchId != null) {
+            final cid = await ref
+                .read(branchNotifierProvider.notifier)
+                .getCompanyIdByBranchId(branchId);
+            if (cid != null) companyId = cid;
+          }
+
+          Routes.pushRightLeftConsumerFul(
+            context,
+            ScreenChooseTable(
+              branchId: branchId ?? 0,
+              userId: user.id ?? 0,
+              companyId: companyId ?? 0,
+            ),
+          );
+          */
+          // if (user.role == 1) {
+          //   Routes.pushRightLeftConsumerFul(context, AdminHomeScreen());
+          // } else if (user.role == 2) {
+          //   Routes.pushRightLeftConsumerFul(context, ManagerHomeScreen());
+          // } else if (user.role == 3) {
+          //   Routes.pushRightLeftConsumerFul(context, StaffHomeScreen());
+          // } else if (user.role == 4) {
+          //   Routes.pushRightLeftConsumerFul(context, ChefHomeScreen());
+          // } else if (user.role == 5) {
+          //   Routes.pushRightLeftConsumerFul(context, OwnerHomeScreen());
+          // }
+        }
+      } else {
+        Constrats.showThongBao(
+          context,
+          'Đăng nhập không thành công. Vui lòng kiểm tra lại email và mật khẩu.',
+        );
+      }
+      ref.read(isLoadingNotifierProvider.notifier).toggle(false);
     }
-    ref.read(isLoadingNotifierProvider.notifier).toggle(false);
   }
 
   //Hàm dispose
@@ -220,7 +337,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
 
   //Phần mật khẩu
   Widget _textFiledPass() {
-    final _isObscureText = ref.watch(_obscureText);
+    final isObscureText = ref.watch(_obscureText);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 0),
       child: ShadowCus(
@@ -229,7 +346,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
         child: TextField(
           controller: _passwordController,
-          obscureText: _isObscureText, // Toggle visibility
+          obscureText: isObscureText, // Toggle visibility
           decoration: InputDecoration(
             prefixIcon: Icon(Icons.lock, color: Colors.grey[600]),
             hintText: 'Mật khẩu', // Use hintText
@@ -243,11 +360,11 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
             ), // Adjust padding
             suffixIcon: IconButton(
               icon: Icon(
-                _isObscureText ? Icons.visibility_off : Icons.visibility,
+                isObscureText ? Icons.visibility_off : Icons.visibility,
                 color: Colors.grey[600],
               ),
               onPressed: () {
-                ref.read(_obscureText.notifier).state = !_isObscureText;
+                ref.read(_obscureText.notifier).state = !isObscureText;
               },
             ),
           ),

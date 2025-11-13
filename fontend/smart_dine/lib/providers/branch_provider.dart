@@ -1,12 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/API/branch_API.dart';
 import 'package:mart_dine/API/company_API.dart';
+import 'package:mart_dine/API/user_API.dart';
+import 'package:mart_dine/API/user_branch_API.dart';
 import 'package:mart_dine/models/branch.dart';
 
 class BranchNotifier extends StateNotifier<Branch?> {
   final BranchAPI branchAPI;
+  final UserAPI userAPI;
   final CompanyAPI companyAPI;
-  BranchNotifier(this.branchAPI, this.companyAPI) : super(null);
+  final UserBranchAPI userBranchAPI;
+  BranchNotifier(
+    this.branchAPI,
+    this.companyAPI,
+    this.userBranchAPI,
+    this.userAPI,
+  ) : super(null);
 
   Set<Branch> build() {
     return const {};
@@ -26,15 +35,43 @@ class BranchNotifier extends StateNotifier<Branch?> {
         if (response != null) {
           //Cập nhạt state
           state = response;
+          //Cập nhật bảng user_branch
+          // await userBranchAPI.create(userId, response.id!);
+          await userAPI.updateCompanyId(userId, responseCompany.id!);
           return 1;
         }
       } else {
         return 2;
       }
     } catch (e) {
-      print("Tìm không thấy companyCode : ${e.toString()}");
-    }
+          }
     return 0;
+  }
+
+  // Lấy branchId theo userId
+  Future<int?> getBranchIdByUserId(int userId) async {
+    try {
+      final userBranchData = await userBranchAPI.getBranchByUserId(userId);
+      if (userBranchData != null && userBranchData['branchId'] != null) {
+        return userBranchData['branchId'] as int;
+      }
+            return null;
+    } catch (e) {
+            return null;
+    }
+  }
+
+  // Lấy companyId theo branchId
+  Future<int?> getCompanyIdByBranchId(int branchId) async {
+    try {
+  final branch = await branchAPI.getBranchById(branchId.toString());
+      if (branch != null) {
+        return branch.companyId;
+      }
+            return null;
+    } catch (e) {
+            return null;
+    }
   }
 }
 
@@ -44,5 +81,7 @@ final branchNotifierProvider = StateNotifierProvider<BranchNotifier, Branch?>((
   return BranchNotifier(
     ref.watch(branchApiProvider),
     ref.watch(companyApiProvider),
+    ref.watch(userBranchApiProvider),
+    ref.watch(userApiProvider),
   );
 });
