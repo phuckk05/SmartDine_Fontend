@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.smartdine.response.GetListCompanyAndOwnerResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -176,4 +177,15 @@ public class CompanyServices {
         return result;
     }
 
+    public List<GetListCompanyAndOwnerResponse> getListCompanyAndOwner() {
+        return companyRepository.getListCompanyAndOwner();
+    }
+
+    // ✅ Update status (1 = active, 2 = inactive)
+    public Company updateCompanyStatus(Integer id, Integer statusId) {
+        Company company = companyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy công ty với ID: " + id));
+        company.setStatusId(statusId);
+        return companyRepository.save(company);
+    }
 }

@@ -37,7 +37,6 @@ public class Payment {
     private Integer branchId;
 
     @Column(name = "total_amount")
-    @JsonProperty("amount")
     private BigDecimal totalAmount;
 
     @Column(name = "discount_amount")
@@ -47,7 +46,6 @@ public class Payment {
     private BigDecimal discountPercent = BigDecimal.ZERO;
 
     @Column(name = "final_amount")
-    @JsonProperty("amount")
     private BigDecimal finalAmount;
 
     @Column(name = "status_id")

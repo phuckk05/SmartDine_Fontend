@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.smartdine.response.GetListCompanyAndOwnerResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -136,24 +137,45 @@ public class CompanyController {
         }
     }
 
+<<<<<<< HEAD
     // Quản lý cửa hàng
     // ✅ Danh sách công ty đã duyệt (active)
     @GetMapping("/active")
     public ResponseEntity<?> getActiveCompanies() {
+=======
+
+
+    @GetMapping("/get-list-company-and-owner")
+    public ResponseEntity<List<GetListCompanyAndOwnerResponse>> getListCompanyAndOwner() {
+>>>>>>> bc249b156ae2cd818951108c384e8d1a5b110004
         try {
-            return ResponseEntity.ok(companyServices.getActiveCompanies());
+            List<GetListCompanyAndOwnerResponse> list = companyServices.getListCompanyAndOwner();
+            return ResponseEntity.ok(list);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Lỗi khi lấy danh sách công ty đã duyệt");
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
         }
     }
 
-    // ✅ Kích hoạt / vô hiệu hóa công ty
-    @PutMapping("/toggle/{id}/{active}")
-    public ResponseEntity<?> toggleCompanyStatus(@PathVariable Integer id, @PathVariable boolean active) {
+    @PutMapping("/active/{id}")
+    public ResponseEntity<?> activateCompany(@PathVariable Integer id) {
         try {
-            return ResponseEntity.ok(companyServices.toggleCompanyStatus(id, active));
+            Company activated = companyServices.updateCompanyStatus(id, 1);
+            return ResponseEntity.ok(activated);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Lỗi khi cập nhật trạng thái công ty: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Lỗi khi kích hoạt công ty: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/inactive/{id}")
+    public ResponseEntity<?> deactivateCompany(@PathVariable Integer id) {
+        try {
+            Company deactivated = companyServices.updateCompanyStatus(id, 2);
+            return ResponseEntity.ok(deactivated);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Lỗi khi vô hiệu hóa công ty: " + e.getMessage());
         }
     }
 
