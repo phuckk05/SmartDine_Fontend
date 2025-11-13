@@ -6,9 +6,10 @@ import '../services/auth_service.dart';
 import '../config/app_config.dart';
 
 // Provider cho UserSession
-final userSessionProvider = StateNotifierProvider<UserSessionNotifier, UserSession>((ref) {
-  return UserSessionNotifier();
-});
+final userSessionProvider =
+    StateNotifierProvider<UserSessionNotifier, UserSession>((ref) {
+      return UserSessionNotifier();
+    });
 
 // Provider để lấy branchId hiện tại
 final currentBranchIdProvider = Provider<int?>((ref) {
@@ -25,7 +26,7 @@ final isAuthenticatedProvider = Provider<bool>((ref) {
 class UserSessionNotifier extends StateNotifier<UserSession> {
   static const String _sessionKey = 'user_session';
   final AuthService _authService = AuthService();
-  
+
   UserSessionNotifier() : super(UserSession.guest()) {
     _loadSession();
   }
@@ -35,13 +36,13 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final sessionJson = prefs.getString(_sessionKey);
-      
+
       if (sessionJson != null) {
         final sessionMap = json.decode(sessionJson) as Map<String, dynamic>;
         state = UserSession.fromMap(sessionMap);
       }
     } catch (e) {
-            // Giữ trạng thái guest nếu có lỗi
+      // Giữ trạng thái guest nếu có lỗi
     }
   }
 
@@ -51,8 +52,7 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
       final prefs = await SharedPreferences.getInstance();
       final sessionJson = json.encode(state.toJson());
       await prefs.setString(_sessionKey, sessionJson);
-    } catch (e) {
-          }
+    } catch (e) {}
   }
 
   // Đăng nhập user
@@ -64,9 +64,9 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
     int? defaultBranchId,
   }) async {
     // Chọn branch mặc định
-    final currentBranchId = defaultBranchId ?? 
-        (branchIds.isNotEmpty ? branchIds.first : null);
-    
+    final currentBranchId =
+        defaultBranchId ?? (branchIds.isNotEmpty ? branchIds.first : null);
+
     state = UserSession(
       userId: userId,
       userName: userName,
@@ -76,7 +76,7 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
       loginTime: DateTime.now(),
       isAuthenticated: true,
     );
-    
+
     await _saveSession();
   }
 
@@ -130,9 +130,9 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
       role: AppConfig.mockUserRole,
       branchIds: AppConfig.mockUserBranches,
     );
-    
+
     state = session.copyWith(
-      currentBranchId: branchId ?? AppConfig.defaultBranchId
+      currentBranchId: branchId ?? AppConfig.defaultBranchId,
     );
     await _saveSession();
   }

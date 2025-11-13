@@ -34,9 +34,7 @@ class SmartDineApp extends ConsumerWidget {
         ),
       ),
       // Smart routing: Login hoặc Branch Management dựa trên config
-      home: AppConfig.useRealAuthentication 
-          ? const ScreenSignIn()  // Production: Màn hình login
-          : const BranchManagementNavigation(), // Development: Thẳng branch management
+      home: ScreenSignIn(), // Development: Thẳng branch management
     );
   }
 }
