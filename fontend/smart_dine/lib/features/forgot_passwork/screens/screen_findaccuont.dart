@@ -1,4 +1,4 @@
-import 'package:email_validator/email_validator.dart';
+// import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/API/user_API.dart';
@@ -25,6 +25,10 @@ class ScreenFindaccuont extends ConsumerStatefulWidget {
 
 class _ScreenFindaccuontState extends ConsumerState<ScreenFindaccuont> {
   final TextEditingController _emailController = TextEditingController();
+
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email);
+  }
 
   @override
   void dispose() {
@@ -148,7 +152,7 @@ class _ScreenFindaccuontState extends ConsumerState<ScreenFindaccuont> {
       Constrats.showThongBao(context, 'Vui lòng nhập email.');
       return;
     }
-    if (!EmailValidator.validate(email)) {
+    if (!_isValidEmail(email)) {
       Constrats.showThongBao(context, 'Định dạng email không hợp lệ.');
       return;
     }

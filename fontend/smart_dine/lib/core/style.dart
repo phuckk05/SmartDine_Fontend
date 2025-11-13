@@ -16,7 +16,7 @@ class Style {
     height: 1.5,
     shadows: [
       Shadow(
-        color: Colors.black.withOpacity(0.1), // Đổ bóng nhẹ hơn, tinh tế
+        color: Colors.black.withValues(alpha: 0.1), // Đổ bóng nhẹ hơn, tinh tế
         offset: Offset(0, 2),
         blurRadius: 4,
       ),
@@ -30,7 +30,7 @@ class Style {
     height: 1.5,
     shadows: [
       Shadow(
-        color: Colors.black.withOpacity(0.1), // Đổ bóng nhẹ hơn, tinh tế
+        color: Colors.black.withValues(alpha: 0.1), // Đổ bóng nhẹ hơn, tinh tế
         offset: Offset(0, 2),
         blurRadius: 4,
       ),
@@ -53,7 +53,7 @@ class Style {
     color: Colors.blue.shade700,
     shadows: [
       Shadow(
-        color: Colors.black.withOpacity(0.1), // Đổ bóng nhẹ hơn, tinh tế
+        color: Colors.black.withValues(alpha: 0.1), // Đổ bóng nhẹ hơn, tinh tế
         offset: Offset(0, 2),
         blurRadius: 4,
       ),
@@ -68,7 +68,7 @@ class Style {
     height: 1.2,
     shadows: [
       Shadow(
-        color: Colors.black.withOpacity(0.1), // Đổ bóng nhẹ hơn, tinh tế
+        color: Colors.black.withValues(alpha: 0.1), // Đổ bóng nhẹ hơn, tinh tế
         offset: Offset(0, 2),
         blurRadius: 4,
       ),
@@ -83,7 +83,7 @@ class Style {
     height: 1.5,
     shadows: [
       Shadow(
-        color: Colors.black.withOpacity(0.1), // Đổ bóng nhẹ hơn, tinh tế
+        color: Colors.black.withValues(alpha: 0.1), // Đổ bóng nhẹ hơn, tinh tế
         offset: Offset(0, 2),
         blurRadius: 4,
       ),
@@ -108,7 +108,7 @@ class Style {
     color: Colors.grey[600], // Màu sắc nhẹ nhàng cho chú thích
     shadows: [
       Shadow(
-        color: Colors.black.withOpacity(0.05), // Đổ bóng nhẹ hơn, tinh tế
+        color: Colors.black.withValues(alpha: 0.05), // Đổ bóng nhẹ hơn, tinh tế
         offset: Offset(0, 1),
         blurRadius: 2,
       ),
@@ -123,7 +123,7 @@ class Style {
     height: 1.4,
     shadows: [
       Shadow(
-        color: Colors.black.withOpacity(0.05), // Đổ bóng nhẹ hơn, tinh tế
+        color: Colors.black.withValues(alpha: 0.05), // Đổ bóng nhẹ hơn, tinh tế
         offset: Offset(0, 1),
         blurRadius: 2,
       ),

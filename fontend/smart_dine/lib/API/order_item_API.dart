@@ -21,8 +21,7 @@ class OrderItemAPI {
           .map((item) => OrderItem.fromMap(item as Map<String, dynamic>))
           .toList();
     } else {
-      print("Loi lay order item: ${response.statusCode}");
-      throw Exception('Lỗi lấy danh sách order item');
+            throw Exception('Lỗi lấy danh sách order item');
     }
   }
 

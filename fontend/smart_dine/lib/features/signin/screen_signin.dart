@@ -1,18 +1,17 @@
-import 'dart:ffi';
-
-import 'package:email_validator/email_validator.dart';
+// import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mart_dine/API/user_branch_API.dart';
 import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/forgot_passwork/screens/screen_findaccuont.dart';
 import 'package:mart_dine/features/signup/screen_select_signup.dart';
-import 'package:mart_dine/features/staff/screen_choose_table.dart';
+// import 'package:mart_dine/features/staff/screen_choose_table.dart'; // Tạm ẩn
+import 'package:mart_dine/features/branch_management/screen/branch_navigation.dart';
 import 'package:mart_dine/providers/branch_provider.dart';
 import 'package:mart_dine/providers/loading_provider.dart';
 import 'package:mart_dine/providers/user_provider.dart';
+import 'package:mart_dine/providers/user_session_provider.dart';
 import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets/loading.dart';
 
@@ -40,7 +39,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
 
   //Hàm check email
   bool isValidEmail(String email) {
-    return EmailValidator.validate(email);
+    return RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email);
   }
 
   //Hàm sigin
@@ -63,10 +62,6 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
         .signInInfor(_emailController.text, _passwordController.text);
 
     if (user != null) {
-      print(
-        'User ID: ${user.id}, Role: ${user.role}, Status: ${user.statusId}',
-      );
-
       // Kiểm tra trạng thái tài khoản
       if (user.statusId == 3) {
         // Chờ duyệt
@@ -86,8 +81,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
         return;
       } else if (user.statusId == 1) {
         // Đã duyệt
-        print('role ${user.role}');
-        // Kiểm tra role và hiển thị thông tin
+                // Kiểm tra role và hiển thị thông tin
         String roleName = '';
         int? branchId;
         switch (user.role) {
@@ -121,13 +115,38 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
                 .getBranchIdByUserId(user.id as int);
         }
 
-        Constrats.showThongBao(
-          context,
-          'Đăng nhập thành công!\nVai trò: $roleName  ${roleName.isNotEmpty} ?  nhánh: ${branchId ?? "Chưa có"} : '
-          '',
+        // Lưu user session cho branch management
+        await ref.read(userSessionProvider.notifier).login(
+          userId: user.id ?? 0,
+          userName: user.fullName,
+          userRole: user.role ?? 3,
+          branchIds: branchId != null ? [branchId] : [],
+          defaultBranchId: branchId,
         );
 
-        if (user.role == 3) {
+        Constrats.showThongBao(
+          context,
+          'Đăng nhập thành công!\nVai trò: $roleName ${branchId != null ? "- Chi nhánh: $branchId" : ""}',
+        );
+
+        // Điều hướng dựa theo role
+        if (user.role == 2) {
+          // Manager -> Màn hình quản lý chi nhánh
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const BranchManagementNavigation(),
+            ),
+          );
+        } else if (user.role == 3) {
+          // Staff -> Màn hình chọn bàn (Tạm ẩn)
+          // TODO: Sẽ mở lại khi cần thiết
+          Constrats.showThongBao(
+            context,
+            'Chức năng nhân viên đang được phát triển.',
+          );
+          
+          /* Tạm comment phần chọn bàn
           // Try to resolve companyId from branchId if available
           int? companyId;
           if (branchId != null) {
@@ -145,6 +164,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
               companyId: companyId ?? 0,
             ),
           );
+          */
           // if (user.role == 1) {
           //   Routes.pushRightLeftConsumerFul(context, AdminHomeScreen());
           // } else if (user.role == 2) {

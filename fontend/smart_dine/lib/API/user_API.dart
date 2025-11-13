@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/user.dart';
 
+// Backend API endpoints
 final uri1 = 'https://spring-boot-smartdine.onrender.com/api/users';
 final uri2 = 'https://smartdine-backend-oq2x.onrender.com/api/users';
 
@@ -42,10 +43,7 @@ class UserAPI {
         headers: {'Content-Type': 'application/json'},
       );
 
-      print('SignIn Response Status: ${response.statusCode}');
-      print('SignIn Response Body: ${response.body}');
-
-      if (response.statusCode == 200) {
+                  if (response.statusCode == 200) {
         if (response.body.isEmpty) {
           print('Empty response body');
           return null;
@@ -55,8 +53,7 @@ class UserAPI {
       }
       return null;
     } catch (e) {
-      print('SignIn Error: $e');
-      return null;
+            return null;
     }
   }
 

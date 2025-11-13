@@ -28,8 +28,7 @@
 //       // );
 //       print('🔊 [SoundService] Playing completed sound');
 //     } catch (e) {
-//       print('❌ [SoundService] Error playing completed sound: $e');
-//     }
+//       //     }
 //   }
 
 //   /// Phát âm thanh khi hết món (Âm thanh cảnh báo)
@@ -47,8 +46,7 @@
 //       );
 //       print('🔊 [SoundService] Playing out of stock sound');
 //     } catch (e) {
-//       print('❌ [SoundService] Error playing out of stock sound: $e');
-//     }
+//       //     }
 //   }
 
 //   /// Stop âm thanh
@@ -153,9 +151,7 @@
 //           return o.id == orderId ? o.markAsCompleted() : o;
 //         }).toList();
 //     ref.read(ordersProvider.notifier).state = updatedOrders;
-//     print('✅ [CompleteOrder] Order updated to COMPLETED');
-
-//     // 2. TẠO notification "Món đã xong"
+//     //     // 2. TẠO notification "Món đã xong"
 //     final notification = OrderNotification.fromKitchenOrder(
 //       order: order.markAsCompleted(),
 //       type: NotificationType.orderReady,
@@ -166,9 +162,7 @@
 //       notification,
 //       ...notifications,
 //     ];
-//     print('✅ [CompleteOrder] Notification created');
-
-//     // 3. PHÁT ÂM THANH nếu bật
+//     //     // 3. PHÁT ÂM THANH nếu bật
 //     final settings = ref.read(settingsProvider);
 //     if (settings.soundEnabled) {
 //       final soundService = ref.read(soundServiceProvider);
@@ -197,9 +191,7 @@
 //           return o.id == orderId ? o.markAsOutOfStock() : o;
 //         }).toList();
 //     ref.read(ordersProvider.notifier).state = updatedOrders;
-//     print('✅ [OutOfStock] Order updated to OUT_OF_STOCK');
-
-//     // 2. TẠO notification "Món hết"
+//     //     // 2. TẠO notification "Món hết"
 //     final notification = OrderNotification.fromKitchenOrder(
 //       order: order.markAsOutOfStock(),
 //       type: NotificationType.orderOutOfStock,
@@ -210,9 +202,7 @@
 //       notification,
 //       ...notifications,
 //     ];
-//     print('✅ [OutOfStock] Notification created');
-
-//     // 3. PHÁT ÂM THANH nếu bật
+//     //     // 3. PHÁT ÂM THANH nếu bật
 //     final settings = ref.read(settingsProvider);
 //     if (settings.soundEnabled) {
 //       final soundService = ref.read(soundServiceProvider);

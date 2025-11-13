@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:mart_dine/models/order.dart';
-import 'package:mart_dine/models/order_item.dart';
 
 final uri1 = 'https://spring-boot-smartdine.onrender.com/api/orders';
 final uri2 = 'https://smartdine-backend-oq2x.onrender.com/api/orders';
@@ -28,8 +27,7 @@ class OrderAPI {
         return null;
       }
     } catch (e) {
-      print('Exception khi gửi yêu cầu thanh toán: $e');
-      return null;
+            return null;
     }
   }
 
@@ -46,8 +44,7 @@ class OrderAPI {
           .map((item) => Order.fromMap(item as Map<String, dynamic>))
           .toList();
     } else {
-      print("Loi lay order theo branchId hom nay: ${response.statusCode}");
-      return [];
+            return [];
     }
   }
 
@@ -64,8 +61,7 @@ class OrderAPI {
           .map((item) => Order.fromMap(item as Map<String, dynamic>))
           .toList();
     } else {
-      print("Loi lay order: ${response.statusCode}");
-      throw Exception('Lỗi lấy danh sách order');
+            throw Exception('Lỗi lấy danh sách order');
     }
   }
 
@@ -82,8 +78,7 @@ class OrderAPI {
           .map((item) => Order.fromMap(item as Map<String, dynamic>))
           .toList();
     } else {
-      print("Loi lay order theo tableId hom nay: ${response.statusCode}");
-      return []; // Trả về rỗng nếu không có hoặc lỗi
+            return []; // Trả về rỗng nếu không có hoặc lỗi
     }
   }
 
@@ -98,8 +93,7 @@ class OrderAPI {
       final List<dynamic> data = json.decode(response.body) as List<dynamic>;
       return data.map((item) => item as int).toList();
     } else {
-      print("Loi lay tableId chua thanh toan hom nay: ${response.statusCode}");
-      return [];
+            return [];
     }
   }
 
@@ -129,8 +123,7 @@ class OrderAPI {
           .map((item) => Order.fromMap(item as Map<String, dynamic>))
           .toList();
     } else {
-      print("Loi lay order theo branchId: ${response.statusCode}");
-      return [];
+            return [];
     }
   }
 
@@ -147,11 +140,9 @@ class OrderAPI {
         return Order.fromMap(data);
       }
 
-      print('Loi luu order: ${response.statusCode} - ${response.body}');
-      return null;
+            return null;
     } catch (e) {
-      print('Exception khi luu order: $e');
-      return null;
+            return null;
     }
   }
 
@@ -176,11 +167,9 @@ class OrderAPI {
             .toList();
       }
 
-      print('Loi luu order item: ${response.statusCode} - ${response.body}');
-      return [];
+            return [];
     } catch (e) {
-      print('Exception khi luu order item: $e');
-      return [];
+            return [];
     }
   }
 }

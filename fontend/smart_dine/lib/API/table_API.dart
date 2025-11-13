@@ -9,7 +9,7 @@ final uri2 = 'https://smartdine-backend-oq2x.onrender.com/api/tables';
 
 class TableApi {
   //Lấy tất cả table by branchId
-  Future<List<DiningTable>> getTablesByBranchId(int branchId) async {
+  Future<List<Table>> getTablesByBranchId(int branchId) async {
     final response = await http.get(
       Uri.parse('${uri2}/branch/$branchId'),
       headers: {'Content-Type': 'application/json'},
@@ -17,28 +17,26 @@ class TableApi {
     if (response.statusCode == 200 || response.statusCode == 201) {
       final List<dynamic> data = jsonDecode(response.body);
       return data
-          .map((table) => DiningTable.fromMap(table as Map<String, dynamic>))
+          .map((table) => Table.fromMap(table as Map<String, dynamic>))
           .toList();
     }
-    print("loi lấy table ids: ${response.statusCode}");
-    return [];
+        return [];
   }
 
   //Lấy table by id
-  Future<DiningTable?> getTableById(int tableId) async {
+  Future<Table?> getTableById(int tableId) async {
     final response = await http.get(
       Uri.parse('$uri2/$tableId'),
       headers: {'Content-Type': 'application/json'},
     );
     if (response.statusCode == 200 || response.statusCode == 201) {
       final Map<String, dynamic> data = jsonDecode(response.body);
-      return DiningTable.fromMap(data);
+      return Table.fromMap(data);
     }
-    print("loi lay table by id : ${response.statusCode}");
-    return null;
+        return null;
   }
 
-  Future<List<DiningTable>> fetchTables() async {
+  Future<List<Table>> fetchTables() async {
     final response = await http.get(
       Uri.parse(uri2),
       // !!! LỖI 400 BAD REQUEST XẢY RA Ở ĐÂY !!!
@@ -50,18 +48,16 @@ class TableApi {
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body) as List<dynamic>;
       return data
-          .map((item) => DiningTable.fromMap(item as Map<String, dynamic>))
+          .map((item) => Table.fromMap(item as Map<String, dynamic>))
           .toList();
     } else {
-      print("Loi lay table: ${response.statusCode}");
-      // In ra nội dung lỗi để xem chi tiết
-      print("Noi dung loi: ${response.body}");
-      return [];
+            // In ra nội dung lỗi để xem chi tiết
+            return [];
     }
   }
 
   //Lay table theo branch id
-  Future<List<DiningTable>> fetchTablesByBranchId(int branchId) async {
+  Future<List<Table>> fetchTablesByBranchId(int branchId) async {
     final response = await http.get(
       Uri.parse('$uri2/branch/$branchId'),
       headers: {'Content-Type': 'application/json'},
@@ -70,11 +66,10 @@ class TableApi {
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body) as List<dynamic>;
       return data
-          .map((item) => DiningTable.fromMap(item as Map<String, dynamic>))
+          .map((item) => Table.fromMap(item as Map<String, dynamic>))
           .toList();
     } else {
-      print("Loi lay table theo branchId: ${response.statusCode}");
-      return []; // Trả về rỗng nếu không có hoặc lỗi
+            return []; // Trả về rỗng nếu không có hoặc lỗi
     }
   }
 }
