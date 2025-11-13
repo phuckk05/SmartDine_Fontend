@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/providers/qlxacnhan_provider.dart';
 import 'package:mart_dine/models/company_item.dart';
-import 'package:mart_dine/models/company.dart';
 
 class ScreenQlXacNhan extends ConsumerWidget {
   const ScreenQlXacNhan({super.key});
@@ -16,7 +15,7 @@ class ScreenQlXacNhan extends ConsumerWidget {
       appBar: AppBar(
         title: const Text(
           'Quản lý xác nhận',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
         ),
         centerTitle: true,
         backgroundColor: Colors.blueAccent,
