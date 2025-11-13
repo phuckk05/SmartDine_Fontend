@@ -1,6 +1,8 @@
 package com.smartdine.controllers;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -16,12 +18,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.smartdine.models.Company;
 import com.smartdine.services.CompanyServices;
+import com.smartdine.services.BranchServices;
 
 @RestController
 @RequestMapping({ "/api/companys", "/api/company" })
 public class CompanyController {
     @Autowired
     CompanyServices companyServices;
+
+    @Autowired
+    BranchServices branchServices;
 
     @GetMapping("/all")
     public ResponseEntity<?> getAllCompanys() {
@@ -31,6 +37,18 @@ public class CompanyController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body("Loi " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/with-branches")
+    public ResponseEntity<?> getCompaniesWithBranches() {
+        try {
+            List<Map<String, Object>> data = companyServices.getCompaniesWithBranches(branchServices);
+            return ResponseEntity.ok(Collections.singletonMap("companies", data));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body("Lỗi lấy danh sách công ty kèm chi nhánh: " + e.getMessage());
         }
     }
 
@@ -118,7 +136,7 @@ public class CompanyController {
         }
     }
 
-    //Quản lý cửa hàng
+    // Quản lý cửa hàng
     // ✅ Danh sách công ty đã duyệt (active)
     @GetMapping("/active")
     public ResponseEntity<?> getActiveCompanies() {
