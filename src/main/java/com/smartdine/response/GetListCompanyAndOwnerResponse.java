@@ -5,29 +5,56 @@ public class GetListCompanyAndOwnerResponse {
     private String ownerName;
     private String phoneNumber;
     private Integer userId;
+    private Integer statusId;
     private Long totalBranches;
 
     public GetListCompanyAndOwnerResponse() {
     }
 
-    public GetListCompanyAndOwnerResponse(String companyName, Integer userId, String fullName, String phone, Long totalBranches) {
+    // Constructor đầy đủ (với statusId)
+    public GetListCompanyAndOwnerResponse(
+            String companyName,
+            Integer userId,
+            String fullName,
+            String phone,
+            Long totalBranches,
+            Integer statusId
+    ) {
         this.companyName = companyName;
         this.userId = userId;
         this.ownerName = fullName;
         this.phoneNumber = phone;
-        this.totalBranches = totalBranches; // ép sang int nếu cần
+        this.totalBranches = totalBranches;
+        this.statusId = statusId;
     }
 
-    // accept primitive long (JPA may pass primitive long)
-    public GetListCompanyAndOwnerResponse(String companyName, Integer userId, String fullName, String phone, long totalBranches) {
-        this(companyName, userId, fullName, phone, Long.valueOf(totalBranches));
+    // Overload để tương thích JPA (primitive long)
+    public GetListCompanyAndOwnerResponse(
+            String companyName,
+            Integer userId,
+            String fullName,
+            String phone,
+            long totalBranches,
+            Integer statusId
+    ) {
+        this(companyName, userId, fullName, phone, Long.valueOf(totalBranches), statusId);
     }
 
-    // optional: accept int (in case JPA returns int)
-    public GetListCompanyAndOwnerResponse(String companyName, Integer userId, String fullName, String phone, int totalBranches) {
-        this(companyName, userId, fullName, phone, Long.valueOf(totalBranches));
+    // Overload để tương thích JPA (primitive int)
+    public GetListCompanyAndOwnerResponse(
+            String companyName,
+            Integer userId,
+            String fullName,
+            String phone,
+            int totalBranches,
+            Integer statusId
+    ) {
+        this(companyName, userId, fullName, phone, Long.valueOf(totalBranches), statusId);
     }
 
+    // ========================
+    // Getter & Setter
+    // ========================
     public String getCompanyName() {
         return companyName;
     }
@@ -66,5 +93,13 @@ public class GetListCompanyAndOwnerResponse {
 
     public void setTotalBranches(Long totalBranches) {
         this.totalBranches = totalBranches;
+    }
+
+    public Integer getStatusId() {
+        return statusId;
+    }
+
+    public void setStatusId(Integer statusId) {
+        this.statusId = statusId;
     }
 }
