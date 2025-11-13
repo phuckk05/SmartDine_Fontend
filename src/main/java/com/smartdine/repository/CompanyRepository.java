@@ -16,6 +16,7 @@ public interface CompanyRepository extends JpaRepository<Company, Integer> {
 
     @Query("""
     SELECT new com.smartdine.response.GetListCompanyAndOwnerResponse(
+        c.id,
         c.name,
         u.id,
         u.fullName,
