@@ -119,16 +119,7 @@ public class CompanyController {
         }
     }
 
-    //Quản lý cửa hàng
-    // ✅ Danh sách công ty đã duyệt (active)
-    @GetMapping("/active")
-    public ResponseEntity<?> getActiveCompanies() {
-        try {
-            return ResponseEntity.ok(companyServices.getActiveCompanies());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Lỗi khi lấy danh sách công ty đã duyệt");
-        }
-    }
+
 
     @GetMapping("/get-list-company-and-owner")
     public ResponseEntity<List<GetListCompanyAndOwnerResponse>> getListCompanyAndOwner() {
@@ -138,6 +129,28 @@ public class CompanyController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PutMapping("/active/{id}")
+    public ResponseEntity<?> activateCompany(@PathVariable Integer id) {
+        try {
+            Company activated = companyServices.updateCompanyStatus(id, 1);
+            return ResponseEntity.ok(activated);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Lỗi khi kích hoạt công ty: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/inactive/{id}")
+    public ResponseEntity<?> deactivateCompany(@PathVariable Integer id) {
+        try {
+            Company deactivated = companyServices.updateCompanyStatus(id, 2);
+            return ResponseEntity.ok(deactivated);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Lỗi khi vô hiệu hóa công ty: " + e.getMessage());
         }
     }
 
