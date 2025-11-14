@@ -43,17 +43,25 @@ class UserAPI {
         headers: {'Content-Type': 'application/json'},
       );
 
+      print('🔍 [API] Login response status: ${response.statusCode}');
+      print('🔍 [API] Login response body: ${response.body}');
+
                   if (response.statusCode == 200) {
         if (response.body.isEmpty) {
           print('Empty response body');
           return null;
         }
         final Map<String, dynamic> data = jsonDecode(response.body);
-        return User.fromMap(data);
+        print('🔍 [API] Parsed user data: $data');
+        
+        final user = User.fromMap(data);
+        print('🔍 [API] User object - id: ${user.id}, name: ${user.fullName}');
+        return user;
       }
       return null;
     } catch (e) {
-            return null;
+      print('🔍 [API] Login error: $e');
+      return null;
     }
   }
 

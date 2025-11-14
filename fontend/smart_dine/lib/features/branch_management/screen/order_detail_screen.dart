@@ -3,6 +3,7 @@ import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/widgets/appbar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/order_management_provider.dart';
+import '../../../providers/user_session_provider.dart';
 
 class OrderDetailScreen extends ConsumerWidget {
   final int orderId;
@@ -65,7 +66,7 @@ class OrderDetailScreen extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Chi nhánh ${order.branchId ?? 1}',
+                              'Chi nhánh ${order.branchId ?? ref.read(currentBranchIdProvider) ?? "N/A"}',
                               style: Style.fontTitleMini.copyWith(color: textColor),
                             ),
                           Container(

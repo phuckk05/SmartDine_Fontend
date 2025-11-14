@@ -48,7 +48,7 @@ class BranchNotifier extends StateNotifier<Branch?> {
     return 0;
   }
 
-  // Lấy branchId theo userId
+  // Lấy branchId theo userId (cho Staff, Chef từ user_branches)
   Future<int?> getBranchIdByUserId(int userId) async {
     try {
       final userBranchData = await userBranchAPI.getBranchByUserId(userId);
@@ -58,6 +58,20 @@ class BranchNotifier extends StateNotifier<Branch?> {
             return null;
     } catch (e) {
             return null;
+    }
+  }
+
+  // Lấy branchId theo managerId (cho Manager từ bảng branches)
+  Future<int?> getBranchIdByManagerId(int managerId) async {
+    try {
+      final branch = await branchAPI.getBranchByManagerId(managerId);
+      if (branch != null) {
+        return branch.id;
+      }
+      return null;
+    } catch (e) {
+      print('Error getting branch by manager ID: $e');
+      return null;
     }
   }
 

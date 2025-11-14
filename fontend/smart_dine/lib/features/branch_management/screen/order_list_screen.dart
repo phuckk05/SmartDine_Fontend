@@ -26,11 +26,8 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
     final currentBranchId = ref.watch(currentBranchIdProvider);
     final isAuthenticated = ref.watch(isAuthenticatedProvider);
     
-    // Nếu chưa có session, tự động tạo mock session
-    if (!isAuthenticated || currentBranchId == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(userSessionProvider.notifier).mockLogin(branchId: 1);
-      });
+    // Yêu cầu user phải đăng nhập
+    if (!isAuthenticated) {
       
       return Scaffold(
         appBar: AppBar(title: const Text('Danh sách đơn hàng')),
@@ -48,9 +45,32 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
     }
     
     final branchIdInt = currentBranchId;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    if (branchIdInt == null) {
+      return Scaffold(
+        backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
+        appBar: AppBar(
+          title: const Text('Danh sách đơn hàng'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+        ),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.warning, size: 64, color: Colors.orange),
+              SizedBox(height: 16),
+              Text('Không tìm thấy thông tin chi nhánh'),
+              Text('Vui lòng đăng nhập lại'),
+            ],
+          ),
+        ),
+      );
+    }
     final ordersAsyncValue = ref.watch(ordersWithItemsByBranchProvider(branchIdInt));
     final statusesAsyncValue = ref.watch(orderStatusProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
@@ -85,7 +105,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
-                        final sessionBranchId = ref.read(currentBranchIdProvider) ?? 1;
+                        final sessionBranchId = ref.read(currentBranchIdProvider)!;
                         // ignore: unused_result
                         ref.refresh(ordersByBranchProvider(sessionBranchId));
                       },
@@ -224,7 +244,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
 
     return RefreshIndicator(
       onRefresh: () async {
-        final sessionBranchId = ref.read(currentBranchIdProvider) ?? 1;
+        final sessionBranchId = ref.read(currentBranchIdProvider)!;
         return ref.refresh(ordersByBranchProvider(sessionBranchId));
       },
       child: ListView.builder(

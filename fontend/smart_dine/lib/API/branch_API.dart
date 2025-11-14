@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:mart_dine/models/branch.dart';
 import 'dart:convert';
 
-final _uri = 'https://spring-boot-smartdine.onrender.com/api/branches';
+final _uri = 'https://smartdine-backend-oq2x.onrender.com/api/branches';
 
 class BranchAPI {
   // Tạo branch
@@ -68,6 +68,25 @@ class BranchAPI {
       return Branch.fromMap(data);
     }
     return null;
+  }
+
+  // Lấy chi nhánh theo manager ID (cho role Manager)
+  // Filter từ danh sách tất cả branches để tìm branch có managerId khớp
+  Future<Branch?> getBranchByManagerId(int managerId) async {
+    try {
+      final allBranches = await getAllBranches();
+      
+      // Tìm branch có managerId trùng với userId
+      for (final branch in allBranches) {
+        if (branch.managerId != 0 && branch.managerId == managerId) {
+          return branch;
+        }
+      }
+      
+      return null;
+    } catch (e) {
+      return null;
+    }
   }
 
   // Lấy thống kê branch
