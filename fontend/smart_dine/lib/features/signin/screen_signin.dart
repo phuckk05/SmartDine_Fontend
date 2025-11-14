@@ -1,9 +1,12 @@
 // import 'package:email_validator/email_validator.dart';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
+import 'package:mart_dine/features/bottom_Navigation/bottom_navigation.dart';
 import 'package:mart_dine/features/forgot_passwork/screens/screen_findaccuont.dart';
 import 'package:mart_dine/features/signup/screen_select_signup.dart';
 // import 'package:mart_dine/features/staff/screen_choose_table.dart'; // Tạm ẩn
@@ -81,7 +84,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
         return;
       } else if (user.statusId == 1) {
         // Đã duyệt
-                // Kiểm tra role và hiển thị thông tin
+        // Kiểm tra role và hiển thị thông tin
         String roleName = '';
         int? branchId;
         switch (user.role) {
@@ -116,13 +119,15 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
         }
 
         // Lưu user session cho branch management
-        await ref.read(userSessionProvider.notifier).login(
-          userId: user.id ?? 0,
-          userName: user.fullName,
-          userRole: user.role ?? 3,
-          branchIds: branchId != null ? [branchId] : [],
-          defaultBranchId: branchId,
-        );
+        await ref
+            .read(userSessionProvider.notifier)
+            .login(
+              userId: user.id ?? 0,
+              userName: user.fullName,
+              userRole: user.role ?? 3,
+              branchIds: branchId != null ? [branchId] : [],
+              defaultBranchId: branchId,
+            );
 
         Constrats.showThongBao(
           context,
@@ -130,7 +135,9 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
         );
 
         // Điều hướng dựa theo role
-        if (user.role == 2) {
+        if (user.role == 1) {
+          // Admin
+        } else if (user.role == 2) {
           // Manager -> Màn hình quản lý chi nhánh
           Navigator.pushReplacement(
             context,
@@ -145,7 +152,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
             context,
             'Chức năng nhân viên đang được phát triển.',
           );
-          
+
           /* Tạm comment phần chọn bàn
           // Try to resolve companyId from branchId if available
           int? companyId;
@@ -176,6 +183,15 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
           // } else if (user.role == 5) {
           //   Routes.pushRightLeftConsumerFul(context, OwnerHomeScreen());
           // }
+        } else if (user.role == 4) {
+          // Chef
+          //Chuyển qua chef
+          Routes.pushRightLeftConsumerFul(
+            context,
+            const ScreenBottomNavigation(index: 1),
+          );
+        } else if (user.role == 5) {
+          // Owner
         }
       } else {
         Constrats.showThongBao(
