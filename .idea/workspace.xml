@@ -5,56 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d309e5cc-7a4e-4f4c-ab75-cd5462f20589" name="Changes" comment="fix conflict">
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/assets/sounds/completed.mp3" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/assets/sounds/out_of_stock.mp3" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/firebase.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/features/admin/screen_dashboard.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/features/admin/screen_hoso.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/features/admin/screen_qlcuahang.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/features/admin/screen_qlxacnhan.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/features/kitchen/screen_caidat.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/features/kitchen/screen_lichsu.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/features/kitchen/screen_phongbep.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/features/kitchen/screen_thongbao.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/features/service/amthanh_service.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/features/service/dashboard_service.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/firebase_options.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/dashboard_model.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/item.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/kitchen_data.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/kitchen_order.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/kitchen_order_tinhtrang.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/lichsu_data.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/lichsu_order.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/menu_item_status.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/models.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/order_item.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/order_item_action.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/order_item_status.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/settings_data.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/settings_model.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/thongbao_data.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/thongbao_model.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/user_profile_model.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/user_status.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/providers/caidat_provider.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/providers/dashboard_provider.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/providers/kitchen_amthanh_providers.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/providers/lichsu_provider.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/providers/thongbao_provider.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fontend/smart_dine/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/backend" beforeDir="false" afterPath="$PROJECT_DIR$/backend/backend" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fontend/smart_dine/android/app/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/android/app/build.gradle.kts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fontend/smart_dine/android/app/google-services.json" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/android/app/google-services.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fontend/smart_dine/android/settings.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/android/settings.gradle.kts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fontend/smart_dine/lib/features/bottom_Navigation/screen/bottom_navigation.dart" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/features/bottom_Navigation/screen/bottom_navigation.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/fontend/smart_dine/lib/features/kitchen/screen_caidat.dart" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/features/kitchen/screen_caidat.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/fontend/smart_dine/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/main.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fontend/smart_dine/linux/flutter/generated_plugin_registrant.cc" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/linux/flutter/generated_plugin_registrant.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fontend/smart_dine/linux/flutter/generated_plugins.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/linux/flutter/generated_plugins.cmake" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fontend/smart_dine/macos/Flutter/GeneratedPluginRegistrant.swift" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/macos/Flutter/GeneratedPluginRegistrant.swift" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fontend/smart_dine/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/pubspec.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fontend/smart_dine/windows/flutter/generated_plugin_registrant.cc" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/windows/flutter/generated_plugin_registrant.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fontend/smart_dine/windows/flutter/generated_plugins.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/windows/flutter/generated_plugins.cmake" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -75,22 +28,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;Merging main&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/flutter/SmartDine_Fontend&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "dart.analysis.tool.window.visible": "false",
+    "git-widget-placeholder": "kitchen-3",
+    "last_opened_file_path": "C:/flutter/SmartDine_Fontend",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "show.migrate.to.gradle.popup": "false"
   }
-}</component>
+}]]></component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="d309e5cc-7a4e-4f4c-ab75-cd5462f20589" name="Changes" comment="" />
