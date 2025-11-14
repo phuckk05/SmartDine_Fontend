@@ -141,7 +141,11 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
 
       // Cập nhật trạng thái order thành đã thanh toán (statusId = 3)
       final orderApi = ref.read(orderApiProvider);
-      await orderApi.updateOrderStatusAlt(widget.order.id, 3);
+      final updatedOrder = await orderApi.updateOrderStatusAlt(
+        widget.order.id,
+        3,
+      );
+      print('Updated order status: ${updatedOrder?.statusId}');
 
       if (mounted) {
         // Hiển thị dialog thành công

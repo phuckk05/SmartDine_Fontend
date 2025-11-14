@@ -85,9 +85,14 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
   final TextEditingController _searchController = TextEditingController();
   String _searchKeyword = '';
 
+  // Controllers for item notes
+  final Map<int, TextEditingController> _itemNoteControllers = {};
+
   @override
   void dispose() {
     _searchController.dispose();
+    // Dispose all item note controllers
+    _itemNoteControllers.values.forEach((controller) => controller.dispose());
     super.dispose();
   }
 
@@ -159,10 +164,10 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
 
     orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-    // Choose the most recent active order (status 2 or 4). If none, clear current order.
+    // Choose the most recent active order (status 2 only). If none, clear current order.
     Order? current;
     for (final order in orders) {
-      if (order.statusId == 2 || order.statusId == 4) {
+      if (order.statusId == 2) {
         current = order;
         break;
       }
@@ -184,9 +189,16 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
       _currentOrder = current;
       _existingOrderItems = items;
     });
+
+    // Debug: Print order info
+    print('Current order ID: ${current.id}, Status: ${current.statusId}');
+    print('Total orders for table: ${orders.length}');
+    for (var order in orders) {
+      print('Order ${order.id}: status ${order.statusId}');
+    }
   }
 
-  //Hàm lưu (ĐÃ HOÀN THIỆN)
+  //Hàm lưu (ĐÃ HOÀN THIỆN - FIX DUPLICATE ORDER)
   Future<void> _saveOrder() async {
     if (ref.watch(_isSavingProvider)) return;
 
@@ -214,29 +226,43 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
 
       late final Order targetOrder;
       if (_currentOrder == null) {
-        final newOrder = Order(
-          tableId: widget.tableId,
-          companyId: widget.companyId!,
-          branchId: widget.branchId!,
-          userId: widget.userId!,
-          promotionId: null,
-          note:
-              ref.read(_orderNoteProvider).isEmpty
-                  ? null
-                  : ref.read(_orderNoteProvider),
-          statusId: 2, // Đang phục vụ
+        // Kiểm tra lại xem có order nào đang active cho bàn này không
+        final existingOrders = await orderApi.fetchOrdersByTableIdToday(
+          widget.tableId,
         );
+        final activeOrder =
+            existingOrders.where((order) => order.statusId == 2).toList();
 
-        final savedOrder = await orderApi.saveOrder(newOrder);
-        if (savedOrder == null || savedOrder.id == 0) {
-          Constrats.showThongBao(
-            context,
-            'Không thể tạo order. Vui lòng thử lại.',
+        if (activeOrder.isNotEmpty) {
+          // Nếu có order active, sử dụng order đó thay vì tạo mới
+          targetOrder = activeOrder.first;
+          _currentOrder = targetOrder;
+        } else {
+          // Chỉ tạo order mới khi thực sự không có order active
+          final newOrder = Order(
+            tableId: widget.tableId,
+            companyId: widget.companyId!,
+            branchId: widget.branchId!,
+            userId: widget.userId!,
+            promotionId: null,
+            note:
+                ref.read(_orderNoteProvider).isEmpty
+                    ? null
+                    : ref.read(_orderNoteProvider),
+            statusId: 2, // Đang phục vụ
           );
-          return;
+
+          final savedOrder = await orderApi.saveOrder(newOrder);
+          if (savedOrder == null || savedOrder.id == 0) {
+            Constrats.showThongBao(
+              context,
+              'Không thể tạo order. Vui lòng thử lại.',
+            );
+            return;
+          }
+          targetOrder = savedOrder;
+          _currentOrder = savedOrder;
         }
-        targetOrder = savedOrder;
-        _currentOrder = savedOrder;
       } else {
         targetOrder = _currentOrder!;
       }
@@ -293,6 +319,18 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
     ref.read(_isRequestingPaymentProvider.notifier).state = true;
 
     try {
+      // Update order status to 4 (requesting payment) before navigating
+      final orderApi = ref.read(orderApiProvider);
+      final updatedOrder = await orderApi.updateOrderStatusAlt(
+        _currentOrder!.id,
+        4,
+      );
+
+      // Update local state
+      setState(() {
+        _currentOrder = updatedOrder;
+      });
+
       // Thanh toán ngay lập tức - chuyển trực tiếp đến màn hình thanh toán
       if (mounted) {
         // Đóng drawer nếu đang mở
@@ -437,6 +475,15 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
     final currentNote = ref.watch(_itemNotesProvider)[itemId] ?? '';
     final isExpanded = ref.watch(_expandedNotesProvider).contains(itemId);
 
+    // Get or create controller for this item
+    if (!_itemNoteControllers.containsKey(itemId)) {
+      _itemNoteControllers[itemId] = TextEditingController(text: currentNote);
+    }
+    TextEditingController controller = _itemNoteControllers[itemId]!;
+    if (controller.text != currentNote) {
+      controller.text = currentNote;
+    }
+
     return Column(
       children: [
         ListTile(
@@ -526,7 +573,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                 ),
               ),
               maxLines: 1,
-              controller: TextEditingController(text: currentNote),
+              controller: controller,
               onChanged: (value) {
                 final currentNotes = ref.read(_itemNotesProvider);
                 final updatedNotes = Map<int, String>.from(currentNotes);
@@ -617,121 +664,127 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                         child: Text('Chưa có món nào cho bàn này.'),
                       );
                     }
-
-                    return ListView(
-                      padding: EdgeInsets.zero,
-                      children: [
-                        if (existingDisplay.isNotEmpty) ...[
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  LucideIcons.checkCircle,
-                                  size: 16,
-                                  color: theme.colorScheme.primary,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Món đã order hôm nay',
-                                  style: Style.fontNormal.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          ...existingDisplay.map(
-                            (entry) => Container(
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 4,
+                    return RefreshIndicator(
+                      onRefresh: () async {
+                        if (_currentOrder != null) {
+                          await _reloadExistingOrder(_currentOrder!);
+                        }
+                      },
+                      child: ListView(
+                        padding: EdgeInsets.zero,
+                        children: [
+                          if (existingDisplay.isNotEmpty) ...[
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
                               ),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.secondaryContainer,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: ListTile(
-                                dense: true,
-                                title: Text(
-                                  entry.item.name,
-                                  style: Style.fontNormal.copyWith(
-                                    fontWeight: FontWeight.w600,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    LucideIcons.checkCircle,
+                                    size: 16,
+                                    color: theme.colorScheme.primary,
                                   ),
-                                ),
-                                subtitle: Text(
-                                  '${entry.item.price.toStringAsFixed(3)} đ',
-                                  style: Style.fontCaption,
-                                ),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'x${entry.quantity}',
-                                      style: Style.fontNormal.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: theme.colorScheme.primary,
-                                      ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Món đã order hôm nay',
+                                    style: Style.fontNormal.copyWith(
+                                      fontWeight: FontWeight.w600,
                                     ),
-                                    const SizedBox(width: 8),
-                                    IconButton(
-                                      icon: Icon(
-                                        LucideIcons.plusCircle,
-                                        size: 20,
-                                        color: theme.colorScheme.primary,
-                                      ),
-                                      tooltip: 'Thêm 1 phần',
-                                      onPressed: () => _addItem(entry.item),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ...existingDisplay.map(
+                              (entry) => Container(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.secondaryContainer,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: ListTile(
+                                  dense: true,
+                                  title: Text(
+                                    entry.item.name,
+                                    style: Style.fontNormal.copyWith(
+                                      fontWeight: FontWeight.w600,
                                     ),
-                                  ],
+                                  ),
+                                  subtitle: Text(
+                                    '${entry.item.price.toStringAsFixed(3)} đ',
+                                    style: Style.fontCaption,
+                                  ),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'x${entry.quantity}',
+                                        style: Style.fontNormal.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      IconButton(
+                                        icon: Icon(
+                                          LucideIcons.plusCircle,
+                                          size: 20,
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                        tooltip: 'Thêm 1 phần',
+                                        onPressed: () => _addItem(entry.item),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          const Divider(height: 16),
-                        ],
-                        if (cartDisplay.isNotEmpty) ...[
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  LucideIcons.shoppingCart,
-                                  size: 16,
-                                  color: theme.colorScheme.primary,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Món đang chọn',
-                                  style: Style.fontNormal.copyWith(
-                                    fontWeight: FontWeight.w600,
+                            const Divider(height: 16),
+                          ],
+                          if (cartDisplay.isNotEmpty) ...[
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    LucideIcons.shoppingCart,
+                                    size: 16,
+                                    color: theme.colorScheme.primary,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Món đang chọn',
+                                    style: Style.fontNormal.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          ...cartDisplay.map(
-                            (entry) => _buildCartListTile(entry, theme),
-                          ),
-                        ] else if (existingDisplay.isNotEmpty) ...[
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
+                            ...cartDisplay.map(
+                              (entry) => _buildCartListTile(entry, theme),
                             ),
-                            child: Text(
-                              'Chưa chọn thêm món mới.',
-                              style: Style.fontCaption,
+                          ] else if (existingDisplay.isNotEmpty) ...[
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              child: Text(
+                                'Chưa chọn thêm món mới.',
+                                style: Style.fontCaption,
+                              ),
                             ),
-                          ),
+                          ],
                         ],
-                      ],
+                      ),
                     );
                   },
                 ),
