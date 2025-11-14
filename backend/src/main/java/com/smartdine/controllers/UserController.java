@@ -1,0 +1,139 @@
+package com.smartdine.controllers;
+
+import com.smartdine.services.UserService;
+import com.smartdine.models.User;
+import org.springframework.http.ResponseEntity;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    // Lấy all user
+    @GetMapping("/all")
+    public List<User> getUsers() {
+        return userService.getAllUsers();
+    }
+
+    // Lấy user hiện tại (tạm thời dựa trên token dạng "Bearer {userId}" hoặc query
+    // param)
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @RequestParam(value = "userId", required = false) Integer userId) {
+        try {
+            Integer id = userId != null ? userId : extractUserId(authorization);
+            if (id == null) {
+                return ResponseEntity.badRequest().body("Không tìm thấy thông tin userId trong token");
+            }
+            User user = userService.getUserById(id);
+            if (user == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+
+    // Lấy user theo email
+    @GetMapping("/email/{email}")
+    public User getUserByEmail(@PathVariable String email) {
+        return userService.getUserByEmail(email);
+    }
+
+    // Tạo user
+    @PostMapping
+    public ResponseEntity<?> createUser(@RequestBody User user) {
+        try {
+            User createUser = userService.createUser(user);
+            return ResponseEntity.ok(createUser);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // lấy user theo id
+    @GetMapping("/get/{id}")
+    public User getUser(@PathVariable Integer id) {
+        return userService.getUserById(id);
+    }
+
+    // Xoa User
+    @DeleteMapping("/delete/{id}")
+    public boolean deleteUser(@PathVariable Integer id) {
+        return userService.deleteUser(id);
+    }
+
+    // Cập nhật mật khẩu
+    @PutMapping("/password/{id}")
+    public ResponseEntity<?> updatePassword(@PathVariable Integer id, @RequestParam String newPassword) {
+        try {
+            User updatedUser = userService.updatePassword(id, newPassword);
+            return ResponseEntity.ok(updatedUser);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // Cập nhật user
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody User userDetails) {
+        try {
+            User updatedUser = userService.updateUser(id, userDetails);
+            return ResponseEntity.ok(updatedUser);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // Cập nhật companyId cho user
+    @PutMapping("/{id}/company/{companyId}")
+    public ResponseEntity<?> updateUserCompanyId(@PathVariable Integer id, @PathVariable Integer companyId) {
+        try {
+            User user = userService.getUserById(id);
+            if (user == null) {
+                return ResponseEntity.notFound().build();
+            }
+            user.setCompanyId(companyId);
+            User updatedUser = userService.updateUser(id, user);
+            return ResponseEntity.ok(updatedUser);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    private Integer extractUserId(String authorization) {
+        if (authorization == null || authorization.isBlank()) {
+            return null;
+        }
+        String token = authorization.replace("Bearer", "").trim();
+        if (token.isEmpty()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(token);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+}

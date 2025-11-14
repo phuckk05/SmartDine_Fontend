@@ -1,0 +1,115 @@
+name: mart_dine
+description: "Hệ thống quản lý nhà hàng & phuc vụ khách hành"
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.0-323.0.dev
+
+dependencies:
+  flutter:
+    sdk: flutter
+    # Firebase Core - Bắt buộc
+  firebase_core: ^2.30.0
+
+  # Firebase Auth - Đăng nhập bằng SĐT, Google, Email...
+  firebase_auth: ^4.18.0
+
+  # Firestore - Lưu người dùng, bài viết, comment, like...
+  cloud_firestore: ^4.16.0
+
+  # Firebase Storage - Lưu ảnh, video...
+  firebase_storage: ^11.7.0
+
+  # Firebase Messaging - Thông báo đẩy
+  firebase_messaging: ^14.7.5
+
+  # Firebase Realtime Database 
+  firebase_database: ^10.5.1
+
+  # Firebase Analytics 
+  firebase_analytics: ^10.10.0
+
+  #icon app
+  flutter_launcher_icons: ^0.14.2
+  
+  #hash pw
+  crypto: ^3.0.3
+  bcrypt: ^1.1.3
+
+  #lưu trữ local
+  shared_preferences: ^2.3.2
+
+  #internationalization
+  intl: ^0.19.0
+
+  #thư viện wbsocket để làm realtieme
+  stomp_dart_client: ^1.0.0
+
+  # Các plugin phụ trợ
+  image_picker: ^1.1.0            # Chọn ảnh từ máy
+  file_picker: ^8.0.0             # Chọn file
+  path_provider: ^2.1.3           # Lưu tạm ảnh/video
+  uuid: ^4.3.3                    # Tạo ID ngẫu nhiên
+  cupertino_icons: ^1.0.8
+
+  # Thư viện quản lý trạng thái riverpod
+  flutter_riverpod: ^2.3.6
+  riverpod_annotation: ^2.6.1
+  http: ^1.1.0
+  path: ^1.8.3
+  # Thư viện hỗ trợ UI
+  google_fonts: ^6.1.0
+  fluentui_system_icons: ^1.1.273
+  lucide_icons: ^0.257.0
+  lottie: ^3.3.0
+  dotted_border: ^2.1.0
+  fl_chart: ^1.1.1
+  
+  # Email validation
+  email_validator: ^2.1.17
+  mailer: ^6.6.0
+  
+  # Dropdown with search
+  dropdown_button2: ^2.3.9
+  
+  # Connectivity check
+  connectivity_plus: ^5.0.2
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  riverpod_generator: ^2.6.5
+  build_runner: ^2.4.14
+  custom_lint: ^0.7.5
+  riverpod_lint: ^2.6.5
+
+# The following section is specific to Flutter packages.
+flutter:
+  uses-material-design: true
+  #font chữ
+  fonts:
+    - family: Lobster
+      fonts:
+        - asset: assets/fonts/Lobster-Regular.ttf
+  #Ảnh
+  assets:
+   - assets/images/logoApp.png
+   - assets/images/LogoApp2.png
+   - assets/images/daidien.jpg
+  # fonts:
+  #   - family: Schyler
+  #     fonts:
+  #       - asset: fonts/Schyler-Regular.ttf
+  #       - asset: fonts/Schyler-Italic.ttf
+  #         style: italic
+  #   - family: Trajan Pro
+  #     fonts:
+  #       - asset: fonts/TrajanPro.ttf
+  #       - asset: fonts/TrajanPro_Bold.ttf
+  #         weight: 700
+  #
+  # For details regarding fonts from package dependencies,
+  # see https://flutter.dev/to/font-from-package

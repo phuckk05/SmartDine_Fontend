@@ -1,0 +1,28 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "smart_dine",
+            "cwd": "fontend\\smart_dine",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "smart_dine (profile mode)",
+            "cwd": "fontend\\smart_dine",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "smart_dine (release mode)",
+            "cwd": "fontend\\smart_dine",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}
