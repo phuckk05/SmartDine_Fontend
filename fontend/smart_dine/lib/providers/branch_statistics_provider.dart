@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../API/branch_statistics_API.dart';
 import '../API/payment_statistics_API.dart';
-import '../API/demo_data_helper.dart';
+
 import '../models/statistics.dart';
 
 // Provider cho branch statistics API
@@ -176,25 +176,26 @@ class BranchStatisticsNotifier extends StateNotifier<AsyncValue<BranchMetrics?>>
       
       print('📈 ORDERS API RESULT for $period: $ordersData');
       
-      // If real API fails, use demo data as fallback
+      // If real API fails, show error instead of demo data
       if (revenue == null || ordersData == null) {
-        print('⚠️ API failed, using demo data for $period');
-        final demoData = DemoDataHelper.generatePeriodStatistics(period, _branchId);
+        print('🚨 [DASHBOARD ERROR] API failed for period $period');
+        print('   - Revenue API result: $revenue');
+        print('   - Orders API result: $ordersData');
         
-        final metrics = BranchMetrics(
-          period: period,
-          dateRange: _getDateRangeForPeriod(period),
-          totalRevenue: (demoData['revenue'] as double).round(),
-          totalOrders: demoData['totalOrders'] as int,
-          avgOrderValue: demoData['totalOrders'] > 0 
-              ? ((demoData['revenue'] as double) / (demoData['totalOrders'] as int)).round()
-              : 0,
-          newCustomers: ((demoData['totalOrders'] as int) * 0.3).round(),
-          customerSatisfaction: 4.2 + (DateTime.now().millisecond % 600 / 1000), // 4.2-4.8
-          growthRates: _calculateGrowthForPeriod(period),
+        state = AsyncValue.error(
+          Exception('Không có dữ liệu thống kê cho $period. API chưa trả về dữ liệu thực tế cho chi nhánh $_branchId.'),
+          StackTrace.current,
         );
-        
-        state = AsyncValue.data(metrics);
+        return;
+      }
+      
+      // Check if API returned valid data
+      if (revenue <= 0 && (ordersData['totalOrders'] ?? 0) <= 0) {
+        print('🚨 [DASHBOARD ERROR] API returned empty/zero data for period $period');
+        state = AsyncValue.error(
+          Exception('Không có doanh thu và đơn hàng nào cho $period tại chi nhánh $_branchId.'),
+          StackTrace.current,
+        );
         return;
       }
       
@@ -237,17 +238,7 @@ class BranchStatisticsNotifier extends StateNotifier<AsyncValue<BranchMetrics?>>
     }
   }
   
-  GrowthRates _calculateGrowthForPeriod(String period) {
-    final multiplier = period == 'Tháng này' ? 2.0 : 1.0;
-    final base = DateTime.now().millisecond;
-    return GrowthRates(
-      revenue: (8.5 + (base % 15)) * multiplier,
-      orders: (5.2 + (base % 12)) * multiplier,
-      avgOrderValue: (-2.1 + (base % 8)) * multiplier,
-      newCustomers: (12.3 + (base % 18)) * multiplier,
-      satisfaction: 2.1 + (base % 4),
-    );
-  }
+
   
   Map<String, String> _calculateDateRangeForPeriod(String period) {
     final now = DateTime.now();

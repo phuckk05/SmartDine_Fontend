@@ -59,21 +59,46 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
         child: statisticsAsyncValue.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stackTrace) => Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error, size: 64, color: Colors.red),
-                const SizedBox(height: 16),
-                Text('Lỗi tải dữ liệu: $error'),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    // ignore: unused_result
-                    ref.refresh(branchStatisticsProvider(branchIdInt));
-                  },
-                  child: const Text('Thử lại'),
-                ),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.analytics_outlined, size: 80, color: Colors.orange),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Chưa có dữ liệu thống kê',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    error.toString().contains('Không có dữ liệu') 
+                        ? 'Hệ thống chưa ghi nhận được dữ liệu thống kê cho chi nhánh này.\nVui lòng thực hiện một số giao dịch trước.'
+                        : 'Không thể kết nối với máy chủ.\nVui lòng kiểm tra kết nối internet.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      // ignore: unused_result
+                      ref.refresh(branchStatisticsProvider(branchIdInt));
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Tải lại dữ liệu'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           data: (statistics) => RefreshIndicator(
