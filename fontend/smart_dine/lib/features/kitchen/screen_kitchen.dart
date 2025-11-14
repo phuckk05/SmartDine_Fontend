@@ -165,15 +165,6 @@ class _ScreenKitchenState extends ConsumerState<ScreenKitchen>
             ),
           ],
         ),
-        centerTitle: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: const [
-          Icon(Icons.notifications),
-          SizedBox(width: 16),
-          Icon(Icons.settings),
-          SizedBox(width: 16),
-        ],
       ),
       body: SafeArea(
         child: Stack(
@@ -250,6 +241,7 @@ class _ScreenKitchenState extends ConsumerState<ScreenKitchen>
     }
 
     /// Sắp xếp giảm dần theo thời gian tạo (mới nhất lên đầu):
+    //Sắp xếp giảm dần theo thời gian tạo (mới nhất lên đầu)
     orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     return ListView.separated(

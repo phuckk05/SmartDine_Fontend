@@ -116,18 +116,18 @@ class User {
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'id': id,
-      'full_name': fullName,
+      'fullName': fullName,
       'email': email,
       'phone': phone,
-      'passwork_hash': passworkHash,
-      'font_image': fontImage,
-      'back_image': backImage,
-      'status_id': statusId,
+      'passworkHash': passworkHash,
+      'fontImage': fontImage,
+      'backImage': backImage,
+      'statusId': statusId,
       'role': role,
-      'company_id': companyId,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
-      'deleted_at': deletedAt?.toIso8601String(),
+      'companyId': companyId,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'deletedAt': deletedAt?.toIso8601String(),
     };
   }
 
@@ -145,17 +145,22 @@ class User {
       companyId: map['company_id'] != null ? map['company_id'] as int : null,
       createdAt: DateTime.parse(map['created_at']),
       updatedAt: DateTime.parse(map['updated_at']),
-      deletedAt: map['deleted_at'] != null ? DateTime.parse(map['deleted_at']) : null,
+      deletedAt:
+          map['deleted_at'] != null ? DateTime.parse(map['deleted_at']) : null,
       roleName: map['role_name'] != null ? map['role_name'] as String : null,
-      statusName: map['status_name'] != null ? map['status_name'] as String : null,
-      companyName: map['company_name'] != null ? map['company_name'] as String : null,
-      branchIds: map['branch_ids'] != null ? List<int>.from(map['branch_ids']) : null,
+      statusName:
+          map['status_name'] != null ? map['status_name'] as String : null,
+      companyName:
+          map['company_name'] != null ? map['company_name'] as String : null,
+      branchIds:
+          map['branch_ids'] != null ? List<int>.from(map['branch_ids']) : null,
     );
   }
 
   String toJson() => json.encode(toMap());
 
-  factory User.fromJson(String source) => User.fromMap(json.decode(source) as Map<String, dynamic>);
+  factory User.fromJson(String source) =>
+      User.fromMap(json.decode(source) as Map<String, dynamic>);
 
   @override
   String toString() {
@@ -165,38 +170,37 @@ class User {
   @override
   bool operator ==(covariant User other) {
     if (identical(this, other)) return true;
-  
-    return 
-      other.id == id &&
-      other.fullName == fullName &&
-      other.email == email &&
-      other.phone == phone &&
-      other.passworkHash == passworkHash &&
-      other.fontImage == fontImage &&
-      other.backImage == backImage &&
-      other.statusId == statusId &&
-      other.role == role &&
-      other.companyId == companyId &&
-      other.createdAt == createdAt &&
-      other.updatedAt == updatedAt &&
-      other.deletedAt == deletedAt;
+
+    return other.id == id &&
+        other.fullName == fullName &&
+        other.email == email &&
+        other.phone == phone &&
+        other.passworkHash == passworkHash &&
+        other.fontImage == fontImage &&
+        other.backImage == backImage &&
+        other.statusId == statusId &&
+        other.role == role &&
+        other.companyId == companyId &&
+        other.createdAt == createdAt &&
+        other.updatedAt == updatedAt &&
+        other.deletedAt == deletedAt;
   }
 
   @override
   int get hashCode {
     return id.hashCode ^
-      fullName.hashCode ^
-      email.hashCode ^
-      phone.hashCode ^
-      passworkHash.hashCode ^
-      fontImage.hashCode ^
-      backImage.hashCode ^
-      statusId.hashCode ^
-      role.hashCode ^
-      companyId.hashCode ^
-      createdAt.hashCode ^
-      updatedAt.hashCode ^
-      deletedAt.hashCode;
+        fullName.hashCode ^
+        email.hashCode ^
+        phone.hashCode ^
+        passworkHash.hashCode ^
+        fontImage.hashCode ^
+        backImage.hashCode ^
+        statusId.hashCode ^
+        role.hashCode ^
+        companyId.hashCode ^
+        createdAt.hashCode ^
+        updatedAt.hashCode ^
+        deletedAt.hashCode;
   }
 
   // Utility methods cho branch management

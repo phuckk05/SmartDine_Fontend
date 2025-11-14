@@ -25,18 +25,16 @@ import 'package:mart_dine/widgets/loading.dart';
 import 'package:image_picker/image_picker.dart';
 
 //Các state provider
-final _isCanPop = StateProvider.autoDispose<bool>((ref) => true);
-final _isLoadingProvider = StateProvider.autoDispose<bool>((ref) => false);
-final _obscureText1Provider = StateProvider.autoDispose<bool>((ref) => true);
-final _obscureText2Provider = StateProvider.autoDispose<bool>((ref) => true);
-final _fontImageProvider = StateProvider.autoDispose<File?>((ref) => null);
-final _backImageProvider = StateProvider.autoDispose<File?>((ref) => null);
-final _fontImageUrlProvider = StateProvider.autoDispose<String?>((ref) => null);
-final _backImageUrlProvider = StateProvider.autoDispose<String?>((ref) => null);
+final _isCanPop = StateProvider<bool>((ref) => true);
+final _isLoadingProvider = StateProvider<bool>((ref) => false);
+final _obscureText1Provider = StateProvider<bool>((ref) => true);
+final _obscureText2Provider = StateProvider<bool>((ref) => true);
+final _fontImageProvider = StateProvider<File?>((ref) => null);
+final _backImageProvider = StateProvider<File?>((ref) => null);
+final _fontImageUrlProvider = StateProvider<String?>((ref) => null);
+final _backImageUrlProvider = StateProvider<String?>((ref) => null);
 //selected branch
-final _selectedBranchProvider = StateProvider.autoDispose<Branch?>(
-  (ref) => null,
-);
+final _selectedBranchProvider = StateProvider<Branch?>((ref) => null);
 
 //Giao diện đăng kí thông tin cá nhân
 // ignore: must_be_immutable
@@ -284,8 +282,8 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
 
   //Hàm lấy ảnh
   Future<void> _getCCCDImage(
-    AutoDisposeStateProvider<File?> image,
-    AutoDisposeStateProvider<String?> imageUrl,
+    StateProvider<File?> image,
+    StateProvider<String?> imageUrl,
     BuildContext context,
     ImageSource source,
   ) async {
@@ -323,8 +321,8 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
   }
 
   Future<void> _selectImageSource(
-    AutoDisposeStateProvider<File?> image,
-    AutoDisposeStateProvider<String?> imageUrl,
+    StateProvider<File?> image,
+    StateProvider<String?> imageUrl,
     BuildContext context,
   ) async {
     final ImageSource? source = await showModalBottomSheet<ImageSource>(
@@ -361,7 +359,7 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
 
   //Chuyển đổi ành
   Future<void> _changeUrl(
-    AutoDisposeStateProvider<String?> image,
+    StateProvider<String?> image,
     File? file,
     WidgetRef ref,
     BuildContext context,
@@ -372,7 +370,7 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
 
     if (result != "0") {
       ref.read(image.notifier).state = result;
-          } else {
+    } else {
       Constrats.showThongBao(context, "Lỗi chọn ảnh");
     }
   }

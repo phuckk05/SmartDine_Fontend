@@ -116,18 +116,18 @@ class User {
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'id': id,
-      'full_name': fullName,
+      'fullName': fullName,
       'email': email,
       'phone': phone,
-      'passwork_hash': passworkHash,
-      'font_image': fontImage,
-      'back_image': backImage,
-      'status_id': statusId,
+      'passworkHash': passworkHash,
+      'fontImage': fontImage,
+      'backImage': backImage,
+      'statusId': statusId,
       'role': role,
-      'company_id': companyId,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
-      'deleted_at': deletedAt?.toIso8601String(),
+      'companyId': companyId,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'deletedAt': deletedAt?.toIso8601String(),
     };
   }
 
@@ -137,25 +137,39 @@ class User {
       fullName: (map['fullName'] ?? map['full_name'] ?? '') as String,
       email: (map['email'] ?? '') as String,
       phone: (map['phone'] ?? '') as String,
-      passworkHash: (map['passworkHash'] ?? map['passwork_hash'] ?? '') as String,
+      passworkHash:
+          (map['passworkHash'] ?? map['passwork_hash'] ?? '') as String,
       fontImage: (map['fontImage'] ?? map['font_image']) as String?,
       backImage: (map['backImage'] ?? map['back_image']) as String?,
       statusId: (map['statusId'] ?? map['status_id']) as int?,
       role: map['role'] as int?,
       companyId: (map['companyId'] ?? map['company_id']) as int?,
-      createdAt: DateTime.parse((map['createdAt'] ?? map['created_at']) ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse((map['updatedAt'] ?? map['updated_at']) ?? DateTime.now().toIso8601String()),
-      deletedAt: (map['deletedAt'] ?? map['deleted_at']) != null ? DateTime.parse(map['deletedAt'] ?? map['deleted_at']) : null,
+      createdAt: DateTime.parse(
+        (map['createdAt'] ?? map['created_at']) ??
+            DateTime.now().toIso8601String(),
+      ),
+      updatedAt: DateTime.parse(
+        (map['updatedAt'] ?? map['updated_at']) ??
+            DateTime.now().toIso8601String(),
+      ),
+      deletedAt:
+          (map['deletedAt'] ?? map['deleted_at']) != null
+              ? DateTime.parse(map['deletedAt'] ?? map['deleted_at'])
+              : null,
       roleName: (map['roleName'] ?? map['role_name']) as String?,
       statusName: (map['statusName'] ?? map['status_name']) as String?,
       companyName: (map['companyName'] ?? map['company_name']) as String?,
-      branchIds: (map['branchIds'] ?? map['branch_ids']) != null ? List<int>.from(map['branchIds'] ?? map['branch_ids']) : null,
+      branchIds:
+          (map['branchIds'] ?? map['branch_ids']) != null
+              ? List<int>.from(map['branchIds'] ?? map['branch_ids'])
+              : null,
     );
   }
 
   String toJson() => json.encode(toMap());
 
-  factory User.fromJson(String source) => User.fromMap(json.decode(source) as Map<String, dynamic>);
+  factory User.fromJson(String source) =>
+      User.fromMap(json.decode(source) as Map<String, dynamic>);
 
   @override
   String toString() {
@@ -165,38 +179,37 @@ class User {
   @override
   bool operator ==(covariant User other) {
     if (identical(this, other)) return true;
-  
-    return 
-      other.id == id &&
-      other.fullName == fullName &&
-      other.email == email &&
-      other.phone == phone &&
-      other.passworkHash == passworkHash &&
-      other.fontImage == fontImage &&
-      other.backImage == backImage &&
-      other.statusId == statusId &&
-      other.role == role &&
-      other.companyId == companyId &&
-      other.createdAt == createdAt &&
-      other.updatedAt == updatedAt &&
-      other.deletedAt == deletedAt;
+
+    return other.id == id &&
+        other.fullName == fullName &&
+        other.email == email &&
+        other.phone == phone &&
+        other.passworkHash == passworkHash &&
+        other.fontImage == fontImage &&
+        other.backImage == backImage &&
+        other.statusId == statusId &&
+        other.role == role &&
+        other.companyId == companyId &&
+        other.createdAt == createdAt &&
+        other.updatedAt == updatedAt &&
+        other.deletedAt == deletedAt;
   }
 
   @override
   int get hashCode {
     return id.hashCode ^
-      fullName.hashCode ^
-      email.hashCode ^
-      phone.hashCode ^
-      passworkHash.hashCode ^
-      fontImage.hashCode ^
-      backImage.hashCode ^
-      statusId.hashCode ^
-      role.hashCode ^
-      companyId.hashCode ^
-      createdAt.hashCode ^
-      updatedAt.hashCode ^
-      deletedAt.hashCode;
+        fullName.hashCode ^
+        email.hashCode ^
+        phone.hashCode ^
+        passworkHash.hashCode ^
+        fontImage.hashCode ^
+        backImage.hashCode ^
+        statusId.hashCode ^
+        role.hashCode ^
+        companyId.hashCode ^
+        createdAt.hashCode ^
+        updatedAt.hashCode ^
+        deletedAt.hashCode;
   }
 
   // Utility methods cho branch management

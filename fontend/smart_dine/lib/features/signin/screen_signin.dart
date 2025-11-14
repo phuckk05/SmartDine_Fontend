@@ -137,6 +137,10 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
         // Điều hướng dựa theo role
         if (user.role == 1) {
           // Admin
+          Routes.pushRightLeftConsumerFul(
+            context,
+            const ScreenBottomNavigation(index: 2),
+          );
         } else if (user.role == 2) {
           // Manager -> Màn hình quản lý chi nhánh
           Navigator.pushReplacement(
