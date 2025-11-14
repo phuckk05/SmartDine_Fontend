@@ -6,19 +6,21 @@ import 'package:mart_dine/features/branch_management/screen/branch_reports_scree
 
 class BranchManagementNavigation extends StatefulWidget {
   const BranchManagementNavigation({super.key});
-  
+
   @override
-  State<BranchManagementNavigation> createState() => _BranchManagementNavigationState();
+  State<BranchManagementNavigation> createState() =>
+      _BranchManagementNavigationState();
 }
 
-class _BranchManagementNavigationState extends State<BranchManagementNavigation> {
+class _BranchManagementNavigationState
+    extends State<BranchManagementNavigation> {
   int _selectedIndex = 0;
-  
+
   // Các màn hình của Branch Management - 4 tabs chính
   final List<Widget> _screens = [
     const BranchDashboardScreen(),
     const EmployeeManagementScreen(showBackButton: false),
-              const TableManagementScreen(showBackButton: false),
+    const TableManagementScreen(showBackButton: false),
     const BranchReportsScreen(showBackButton: false),
   ];
 
@@ -31,11 +33,9 @@ class _BranchManagementNavigationState extends State<BranchManagementNavigation>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
-      body: SafeArea(
-        child: _screens[_selectedIndex],
-      ),
+      body: SafeArea(child: _screens[_selectedIndex]),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
