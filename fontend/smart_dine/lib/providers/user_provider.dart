@@ -26,7 +26,7 @@ class UserNotifier extends StateNotifier<User?> {
 
   // Đăng ký user
   Future<int> signUpInfor(User user, String branchCode, int index) async {
-        // Gọi API để tìm chi nhánh
+    // Gọi API để tìm chi nhánh
     final Branch? branch;
     bool check = false;
 
@@ -43,7 +43,7 @@ class UserNotifier extends StateNotifier<User?> {
         }
       } catch (e) {
         // ignore: avoid_print
-              }
+      }
     } else {
       try {
         branch = await branchAPI.findBranchByBranchCode(branchCode);
@@ -61,33 +61,32 @@ class UserNotifier extends StateNotifier<User?> {
               try {
                 final responseUserBranch = await userBranchAPI.create(
                   registerSuccess.id!,
-                  branch.id,
+                  branch.id!,
                 );
                 if (responseUserBranch == true) {
                   return 2;
                 }
                 return 4;
-              } catch (e) {
-                              }
+              } catch (e) {}
             } else {
               return 3;
             }
           } catch (e) {
             // ignore: avoid_print
-                      }
+          }
         }
       } catch (e) {
         // ignore: avoid_print
-              }
+      }
     }
     return 0;
   }
 
   Future<User?> signInInfor(String email, String password) async {
-        try {
+    try {
       final user = await userAPI.signIn2(email);
-            if (user != null) {
-                // Cập nhật state sau khi đăng nhập thành công
+      if (user != null) {
+        // Cập nhật state sau khi đăng nhập thành công
         final isPasswordCorrect = BCrypt.checkpw(password, user.passworkHash);
         if (isPasswordCorrect) {
           state = user;
@@ -99,7 +98,7 @@ class UserNotifier extends StateNotifier<User?> {
         return null;
       }
     } catch (e) {
-            return null;
+      return null;
     }
   }
 
@@ -116,7 +115,7 @@ class UserNotifier extends StateNotifier<User?> {
         return false;
       }
     } catch (e) {
-            return false;
+      return false;
     }
   }
 
