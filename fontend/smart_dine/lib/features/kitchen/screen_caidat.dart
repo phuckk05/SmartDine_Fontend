@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../models/user.dart';
 
 final settingProvider = StateNotifierProvider<SettingNotifier, SettingState>(
   (ref) => SettingNotifier(),
@@ -46,30 +48,46 @@ class SettingState {
 class SettingNotifier extends StateNotifier<SettingState> {
   SettingNotifier() : super(SettingState());
 
-  Future<void> fetchUserData(String email) async {
+  Future<void> fetchUserData() async {
     try {
       state = state.copyWith(isLoading: true);
 
-      final userRes = await http.get(
-        Uri.parse(
-          'https://smartdine-backend-oq2x.onrender.com/api/users/email/$email', //https://smartdine-backend-oq2x.onrender.com/api/users/email/hadl@gmail.com
-        ),
-      );
-      final userData = json.decode(userRes.body);
+      // Lấy user từ SharedPreferences
+      final savedUser = await getSavedUser();
 
-      // Gọi API roles để lấy tên vai trò
+      if (savedUser == null) {
+        print('Không tìm thấy user trong SharedPreferences');
+        state = state.copyWith(isLoading: false);
+        return;
+      }
+
+      // Gọi API lấy danh sách roles
       final rolesRes = await http.get(
         Uri.parse('https://smartdine-backend-oq2x.onrender.com/api/roles/all'),
       );
+
       final List<dynamic> roles = json.decode(rolesRes.body);
 
+      // Tìm roleName tương ứng từ roleId của user
       final roleMatch = roles.firstWhere(
-        (r) => r['id'] == userData['role'],
+        (r) => r['id'] == savedUser.role,
         orElse: () => {'name': 'Unknown'},
       );
 
+      // Cập nhật state
       state = state.copyWith(
-        user: userData,
+        user: {
+          "id": savedUser.id,
+          "fullName": savedUser.fullName,
+          "email": savedUser.email,
+          "phone": savedUser.phone,
+          "fontImage": savedUser.fontImage,
+          "backImage": savedUser.backImage,
+          "statusId": savedUser.statusId,
+          "role": savedUser.role,
+          "companyId": savedUser.companyId,
+          "createdAt": savedUser.createdAt,
+        },
         roleName: roleMatch['name'],
         isLoading: false,
       );
@@ -77,6 +95,16 @@ class SettingNotifier extends StateNotifier<SettingState> {
       print('Lỗi khi fetch dữ liệu: $e');
       state = state.copyWith(isLoading: false);
     }
+  }
+
+  Future<User?> getSavedUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString('user');
+
+    if (jsonString == null) return null;
+
+    final Map<String, dynamic> data = jsonDecode(jsonString);
+    return User.fromMap(data);
   }
 
   void toggleVibration(bool value) =>
@@ -103,9 +131,7 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(settingProvider.notifier)
-          .fetchUserData('hadl@gmail.com'); // Gọi API
+      ref.read(settingProvider.notifier).fetchUserData(); // Gọi API
     });
   }
 
@@ -121,7 +147,11 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Cài đặt'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('Cài đặt'),
+        centerTitle: true,
+        automaticallyImplyLeading: false,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child:
@@ -184,11 +214,6 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
                     ),
                     const SizedBox(height: 10),
 
-                    SwitchListTile(
-                      title: const Text('Rung khi có món mới'),
-                      value: state.vibrationEnabled,
-                      onChanged: notifier.toggleVibration,
-                    ),
                     SwitchListTile(
                       title: const Text('Chế độ tối'),
                       value: state.darkModeEnabled,
