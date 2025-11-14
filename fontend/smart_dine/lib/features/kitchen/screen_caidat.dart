@@ -52,7 +52,7 @@ class SettingNotifier extends StateNotifier<SettingState> {
 
       final userRes = await http.get(
         Uri.parse(
-          'https://smartdine-backend-oq2x.onrender.com/api/users/email/$email', //https://smartdine-backend-oq2x.onrender.com/api/users/email/hadl@gmail.com
+          'https://smartdine-backend-oq2x.onrender.com/api/users/email/$email',
         ),
       );
       final userData = json.decode(userRes.body);
