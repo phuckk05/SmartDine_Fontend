@@ -1,12 +1,15 @@
 package com.smartdine.controllers;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -484,6 +487,50 @@ public class OrderController {
         try {
             List<Map<String, Object>> hourlyRevenue = orderServices.getHourlyRevenueByBranch(branchId);
             return ResponseEntity.ok(hourlyRevenue);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+        }
+    }
+
+    // ENDPOINT MỚI: Thống kê đơn hàng theo khoảng thời gian (period)
+    @GetMapping("/statistics/period/{branchId}")
+    public ResponseEntity<?> getOrderStatisticsByPeriod(
+            @PathVariable Integer branchId,
+            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        try {
+            LocalDateTime start = startDate.atStartOfDay();
+            LocalDateTime end = endDate.atTime(LocalTime.MAX);
+
+            List<Order> allOrders = orderServices.getAll();
+
+            // Filter orders theo branchId và time period
+            List<Order> periodOrders = allOrders.stream()
+                    .filter(order -> order.getBranchId() != null && order.getBranchId().equals(branchId))
+                    .filter(order -> order.getCreatedAt().isAfter(start.minusSeconds(1))
+                            && order.getCreatedAt().isBefore(end.plusSeconds(1)))
+                    .toList();
+
+            long totalOrders = periodOrders.size();
+            long completedOrders = periodOrders.stream()
+                    .mapToLong(order -> order.getStatusId() == 2 ? 1 : 0)
+                    .sum();
+            long pendingOrders = periodOrders.stream()
+                    .mapToLong(order -> order.getStatusId() == 1 ? 1 : 0)
+                    .sum();
+
+            Map<String, Object> statistics = new HashMap<>();
+            statistics.put("branchId", branchId);
+            statistics.put("startDate", startDate.toString());
+            statistics.put("endDate", endDate.toString());
+            statistics.put("period", startDate.toString() + " to " + endDate.toString());
+            statistics.put("totalOrders", totalOrders);
+            statistics.put("completedOrders", completedOrders);
+            statistics.put("pendingOrders", pendingOrders);
+            statistics.put("completionRate", 
+                    totalOrders > 0 ? (double) completedOrders / totalOrders : 0.0);
+
+            return ResponseEntity.ok(statistics);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
         }

@@ -66,6 +66,26 @@ public class PaymentService {
         return paymentRepository.sumFinalAmountBetween(start, end, branchId, companyId);
     }
 
+    // PHƯƠNG THỨC MỚI: Lấy doanh thu theo khoảng thời gian (period)
+    public BigDecimal getRevenueByPeriod(Integer branchId, LocalDate startDate, LocalDate endDate) {
+        if (branchId == null) {
+            throw new IllegalArgumentException("branchId must not be null");
+        }
+        if (startDate == null) {
+            throw new IllegalArgumentException("startDate must not be null");
+        }
+        if (endDate == null) {
+            throw new IllegalArgumentException("endDate must not be null");
+        }
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("startDate must not be after endDate");
+        }
+
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end = endDate.atTime(LocalTime.MAX);
+        return sumWithinRange(start, end, branchId, null);
+    }
+
     // Tạo payment mới
     public Payment createPayment(Payment payment) {
         if (payment.getOrderId() == null) {

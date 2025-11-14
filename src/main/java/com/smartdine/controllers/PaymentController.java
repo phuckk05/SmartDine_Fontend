@@ -418,4 +418,19 @@ public class PaymentController {
             return ResponseEntity.badRequest().body("Lỗi lấy payments: " + ex.getMessage());
         }
     }
+
+    // ENDPOINT MỚI: Lấy doanh thu theo khoảng thời gian (period)
+    @GetMapping("/revenue/period")
+    public ResponseEntity<BigDecimal> getRevenueByPeriod(
+            @RequestParam("branchId") Integer branchId,
+            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        
+        try {
+            BigDecimal revenue = paymentService.getRevenueByPeriod(branchId, startDate, endDate);
+            return ResponseEntity.ok(revenue != null ? revenue : BigDecimal.ZERO);
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body(BigDecimal.ZERO);
+        }
+    }
 }

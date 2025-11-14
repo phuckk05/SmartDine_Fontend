@@ -84,8 +84,15 @@ public class EmployeeController {
             employee.setFullName((String) request.get("fullName"));
             employee.setEmail((String) request.get("email"));
             employee.setPhone((String) request.get("phone"));
-            // Nhận password đã được hash từ frontend
-            employee.setPassworkHash((String) request.get("passworkHash"));
+            
+            // Nhận raw password và để UserService tự hash
+            String password = (String) request.get("password");
+            if (password == null) {
+                // Fallback: nếu frontend gửi passworkHash thì dùng đó
+                password = (String) request.get("passworkHash");
+            }
+            employee.setPassworkHash(password); // UserService sẽ tự hash nếu chưa được hash
+            
             employee.setRole((Integer) request.get("role"));
             employee.setCompanyId((Integer) request.get("companyId"));
             employee.setStatusId(1); // Active by default
