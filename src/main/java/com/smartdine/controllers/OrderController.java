@@ -111,7 +111,7 @@ public class OrderController {
             List<Order> orders = orderServices.getOrdersByBranchIdToday(branchId);
             return ResponseEntity.ok(orders);
         } catch (Exception ex) {
-            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+            return ResponseEntity.internalServerError().body("Lỗi lấy đơn hàng hôm nay: " + ex.getMessage());
         }
     }
 
@@ -154,8 +154,7 @@ public class OrderController {
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());
         } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+            return ResponseEntity.internalServerError().body("Lỗi thống kê đơn hàng chi nhánh: " + ex.getMessage());
         }
     }
 
@@ -282,6 +281,13 @@ public class OrderController {
             statistics.put("pendingOrdersToday", pendingOrdersToday);
             statistics.put("completionRate",
                     totalOrdersToday > 0 ? (double) completedOrdersToday / totalOrdersToday * 100 : 0);
+            
+            // Thêm thông tin chi tiết về món ăn (sử dụng các biến đã tạo)
+            statistics.put("dishesAnalysis", Map.of(
+                "totalDishTypes", soldDishes.size(),
+                "cancelledDishTypes", cancelledDishes.size(),
+                "extraDishTypes", extraDishes.size()
+            ));
 
             return ResponseEntity.ok(statistics);
         } catch (Exception ex) {

@@ -1,5 +1,6 @@
 package com.smartdine.controllers;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -95,7 +96,7 @@ public class EmployeeController {
             
             employee.setRole((Integer) request.get("role"));
             employee.setCompanyId((Integer) request.get("companyId"));
-            employee.setStatusId(1); // Active by default
+            employee.setStatusId(0); // Chờ duyệt by default
             
             // Tạo user
             User createdEmployee = userService.createUser(employee);
@@ -200,5 +201,51 @@ public class EmployeeController {
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
         }
+    }
+
+
+
+    // Cập nhật trạng thái nhân viên hàng loạt
+    @PutMapping("/batch-status")
+    public ResponseEntity<?> updateEmployeeStatusBatch(@RequestBody Map<String, Object> request) {
+        try {
+            @SuppressWarnings("unchecked")
+            List<Integer> employeeIds = (List<Integer>) request.get("employeeIds");
+            Integer statusId = (Integer) request.get("statusId");
+            
+            if (employeeIds == null || statusId == null) {
+                return ResponseEntity.badRequest().body("employeeIds và statusId là bắt buộc");
+            }
+            
+            List<User> updatedEmployees = new ArrayList<>();
+            for (Integer employeeId : employeeIds) {
+                User employee = userService.getUserById(employeeId);
+                if (employee != null) {
+                    employee.setStatusId(statusId);
+                    User updated = userService.updateUser(employeeId, employee);
+                    if (updated != null) {
+                        updatedEmployees.add(updated);
+                    }
+                }
+            }
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("updatedCount", updatedEmployees.size());
+            result.put("employees", updatedEmployees);
+            
+            return ResponseEntity.ok(result);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+        }
+    }
+
+    // Helper method để lấy employees theo branchId
+    private List<User> getEmployeesByBranchId(Integer branchId) {
+        List<UserBranch> userBranches = userBranchServices.getByBranchId(branchId);
+        
+        return userBranches.stream()
+            .map(ub -> userService.getUserById(ub.getUserId()))
+            .filter(user -> user != null && user.getDeletedAt() == null)
+            .collect(java.util.stream.Collectors.toList());
     }
 }

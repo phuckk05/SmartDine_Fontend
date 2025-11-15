@@ -2,6 +2,7 @@ package com.smartdine.controllers;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.smartdine.models.RestaurantTable;
@@ -153,7 +155,7 @@ public class RestaurantTableController {
                         todayOrders.stream().anyMatch(order -> order.getStatusId() == 2)); // SERVING status
                     
                     // Tính thời gian sử dụng trung bình (giả định)
-                    double avgUsageHours = todayOrders.size() > 0 ? todayOrders.size() * 1.5 : 0; // Giả định mỗi order 1.5h
+                    double avgUsageHours = !todayOrders.isEmpty() ? todayOrders.size() * 1.5 : 0; // Giả định mỗi order 1.5h
                     utilization.put("averageUsageHours", avgUsageHours);
                     utilization.put("utilizationScore", Math.min(avgUsageHours / 8.0 * 100, 100)); // % sử dụng trong 8h làm việc
                     
@@ -175,6 +177,43 @@ public class RestaurantTableController {
             result.put("timestamp", LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).toString());
             
             return ResponseEntity.ok(result);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+        }
+    }
+
+    // Thống kê bàn tổng quan theo chi nhánh
+    @GetMapping("/statistics/branch/{branchId}")
+    public ResponseEntity<?> getTableStatisticsByBranch(@PathVariable Integer branchId) {
+        try {
+            List<RestaurantTable> allTables = restaurantTableServices.getByBranchId(branchId);
+            List<Integer> unpaidTableIds = orderServices.getUnpaidOrderTableIdsToday();
+            
+            int totalTables = allTables.size();
+            int occupiedTables = (int) allTables.stream()
+                .filter(table -> unpaidTableIds.contains(table.getId()))
+                .count();
+            int availableTables = totalTables - occupiedTables;
+            
+            double occupancyRate = totalTables > 0 ? (double) occupiedTables / totalTables * 100 : 0;
+            
+            // Thống kê theo loại bàn (nếu có typeId)
+            Map<String, Integer> tablesByType = new HashMap<>();
+            for (RestaurantTable table : allTables) {
+                String type = table.getTypeId() != null ? "Type_" + table.getTypeId() : "Unknown";
+                tablesByType.put(type, tablesByType.getOrDefault(type, 0) + 1);
+            }
+            
+            Map<String, Object> statistics = new HashMap<>();
+            statistics.put("branchId", branchId);
+            statistics.put("totalTables", totalTables);
+            statistics.put("occupiedTables", occupiedTables);
+            statistics.put("availableTables", availableTables);
+            statistics.put("occupancyRate", Math.round(occupancyRate * 100.0) / 100.0);
+            statistics.put("tablesByType", tablesByType);
+            statistics.put("lastUpdated", LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).toString());
+            
+            return ResponseEntity.ok(statistics);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
         }
@@ -227,12 +266,71 @@ public class RestaurantTableController {
                 "totalTables", allTables.size(),
                 "availableCount", availableTables.size(),
                 "occupiedCount", occupiedTables.size(),
-                "availabilityRate", allTables.size() > 0 ? 
+                "availabilityRate", !allTables.isEmpty() ?
                     Math.round((double) availableTables.size() / allTables.size() * 10000.0) / 100.0 : 0
             ));
             result.put("availableTables", availableTables);
             result.put("occupiedTables", occupiedTables);
             result.put("timestamp", LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).toString());
+            
+            return ResponseEntity.ok(result);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+        }
+    }
+
+    // Cập nhật trạng thái bàn hàng loạt
+    @PutMapping("/batch-status")
+    public ResponseEntity<?> updateTableStatusBatch(@RequestBody Map<String, Object> request) {
+        try {
+            @SuppressWarnings("unchecked")
+            List<Integer> tableIds = (List<Integer>) request.get("tableIds");
+            Integer statusId = (Integer) request.get("statusId");
+            
+            if (tableIds == null || statusId == null) {
+                return ResponseEntity.badRequest().body("tableIds và statusId là bắt buộc");
+            }
+            
+            List<RestaurantTable> updatedTables = new ArrayList<>();
+            for (Integer tableId : tableIds) {
+                RestaurantTable table = restaurantTableServices.getById(tableId);
+                if (table != null) {
+                    table.setStatusId(statusId);
+                    RestaurantTable updated = restaurantTableServices.update(tableId, table);
+                    if (updated != null) {
+                        updatedTables.add(updated);
+                    }
+                }
+            }
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("updatedCount", updatedTables.size());
+            result.put("tables", updatedTables);
+            
+            return ResponseEntity.ok(result);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+        }
+    }
+
+    // Lấy danh sách bàn trống theo chi nhánh và số người
+    @GetMapping("/available/branch/{branchId}")
+    public ResponseEntity<?> getAvailableTablesByCapacity(@PathVariable Integer branchId, 
+                                                         @RequestParam(value = "minCapacity", defaultValue = "1") int minCapacity) {
+        try {
+            List<RestaurantTable> allTables = restaurantTableServices.getByBranchId(branchId);
+            List<Integer> unpaidTableIds = orderServices.getUnpaidOrderTableIdsToday();
+            
+            List<RestaurantTable> availableTables = allTables.stream()
+                .filter(table -> !unpaidTableIds.contains(table.getId()))
+                .sorted((t1, t2) -> t1.getName().compareTo(t2.getName())) // Sắp xếp theo tên bàn
+                .toList();
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("branchId", branchId);
+            result.put("minCapacity", minCapacity);
+            result.put("availableCount", availableTables.size());
+            result.put("tables", availableTables);
             
             return ResponseEntity.ok(result);
         } catch (Exception ex) {

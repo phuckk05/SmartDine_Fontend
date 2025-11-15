@@ -46,6 +46,17 @@ public class UserApprovalController {
         }
     }
 
+    // Lấy danh sách user bị khóa (status = 0) theo branchId  
+    @GetMapping("/locked/branch/{branchId}")
+    public ResponseEntity<List<User>> getLockedUsersByBranch(@PathVariable Integer branchId) {
+        try {
+            List<User> lockedUsers = userApprovalService.getLockedUsersByBranch(branchId);
+            return ResponseEntity.ok(lockedUsers);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     // Duyệt user (chuyển statusId từ 3 -> 1)
     @PutMapping("/approve/{userId}")
     public ResponseEntity<Map<String, String>> approveUser(@PathVariable Integer userId) {

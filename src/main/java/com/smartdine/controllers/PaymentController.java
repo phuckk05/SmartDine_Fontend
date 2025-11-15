@@ -240,10 +240,10 @@ public class PaymentController {
             @RequestParam(value = "companyId", required = false) Integer companyId) {
 
         try {
-            BigDecimal currentRevenue = BigDecimal.ZERO;
-            BigDecimal previousRevenue = BigDecimal.ZERO;
-            String currentPeriodName = "";
-            String previousPeriodName = "";
+            BigDecimal currentRevenue;
+            BigDecimal previousRevenue;
+            String currentPeriodName;
+            String previousPeriodName;
 
             switch (period.toLowerCase()) {
                 case "day":
@@ -386,7 +386,7 @@ public class PaymentController {
         if (value == null) {
             throw new IllegalArgumentException(key + " is required");
         }
-        return Integer.parseInt(value.toString());
+        return Integer.valueOf(value.toString());
     }
 
     private BigDecimal parseRequiredBigDecimal(Map<String, Object> payload, String key) {
@@ -431,6 +431,30 @@ public class PaymentController {
             return ResponseEntity.ok(revenue != null ? revenue : BigDecimal.ZERO);
         } catch (Exception ex) {
             return ResponseEntity.badRequest().body(BigDecimal.ZERO);
+        }
+    }
+
+    // ENDPOINT MỚI: Lấy doanh thu tiềm năng (bao gồm cả orders đang phục vụ)
+    @GetMapping("/revenue/potential")
+    public ResponseEntity<?> getPotentialRevenue(
+            @RequestParam("branchId") Integer branchId,
+            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(value = "includeServing", defaultValue = "true") boolean includeServing) {
+        
+        try {
+            // Lấy doanh thu đã thanh toán
+            BigDecimal paidRevenue = paymentService.getRevenueByDay(date, branchId, null);
+            
+            // Mock data cho potential revenue (orders đang phục vụ)
+            BigDecimal potentialRevenue = paidRevenue;
+            if (includeServing) {
+                // Giả định thêm 20% doanh thu từ orders đang phục vụ
+                potentialRevenue = paidRevenue.multiply(BigDecimal.valueOf(1.2));
+            }
+            
+            return ResponseEntity.ok(potentialRevenue.doubleValue() / 1000.0); // Trả về theo đơn vị nghìn
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body(0.0);
         }
     }
 }

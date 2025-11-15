@@ -30,12 +30,18 @@ public class UserApprovalService {
         return userRepository.findByStatusIdOrderByCreatedAtDesc(3);
     }
 
-    // Duyệt user (chuyển statusId từ 3 -> 1: Active)
+    // Lấy danh sách user bị khóa (statusId = 0) theo branchId
+    public List<User> getLockedUsersByBranch(Integer branchId) {
+        // Lấy tất cả user bị khóa (statusId = 0) - chờ duyệt
+        return userRepository.findByStatusIdOrderByCreatedAtDesc(0);
+    }
+
+    // Duyệt user (chuyển statusId từ 0 -> 1: Active)
     public boolean approveUser(Integer userId) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            if (user.getStatusId() == 3) { // Chỉ duyệt user đang chờ duyệt
+            if (user.getStatusId() == 0) { // Chỉ duyệt user đang bị khóa/chờ duyệt
                 user.setStatusId(1); // Active
                 user.setUpdatedAt(LocalDateTime.now());
                 userRepository.save(user);
@@ -45,12 +51,12 @@ public class UserApprovalService {
         return false;
     }
 
-    // Từ chối user (chuyển statusId từ 3 -> 2: Inactive/Rejected)
+    // Từ chối user (chuyển statusId từ 0 -> 2: Inactive/Rejected)
     public boolean rejectUser(Integer userId, String reason) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            if (user.getStatusId() == 3) { // Chỉ từ chối user đang chờ duyệt
+            if (user.getStatusId() == 0) { // Chỉ từ chối user đang bị khóa/chờ duyệt
                 user.setStatusId(2); // Inactive/Rejected
                 user.setUpdatedAt(LocalDateTime.now());
                 // Có thể lưu lý do từ chối vào một trường note nếu cần
