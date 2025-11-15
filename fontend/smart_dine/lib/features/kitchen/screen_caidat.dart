@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:mart_dine/features/signin/screen_signin.dart';
+import 'package:mart_dine/services/auth_service.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/user.dart';
@@ -46,8 +48,10 @@ class SettingState {
 }
 
 class SettingNotifier extends StateNotifier<SettingState> {
-  SettingNotifier() : super(SettingState());
+  final AuthService _authService = AuthService();
 
+  SettingNotifier() : super(SettingState());
+  // Lấy dữ liệu user và role từ API
   Future<void> fetchUserData() async {
     try {
       state = state.copyWith(isLoading: true);
@@ -57,7 +61,10 @@ class SettingNotifier extends StateNotifier<SettingState> {
 
       if (savedUser == null) {
         print('Không tìm thấy user trong SharedPreferences');
-        state = state.copyWith(isLoading: false);
+        state = state.copyWith(
+          isLoading: false,
+          isLoggedOut: true,
+        ); // nếu muốn logout
         return;
       }
 
@@ -90,13 +97,15 @@ class SettingNotifier extends StateNotifier<SettingState> {
         },
         roleName: roleMatch['name'],
         isLoading: false,
+        isLoggedOut: false,
       );
     } catch (e) {
       print('Lỗi khi fetch dữ liệu: $e');
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(isLoading: false, isLoggedOut: false);
     }
   }
 
+  // Lấy user đã lưu từ SharedPreferences
   Future<User?> getSavedUser() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString('user');
@@ -107,15 +116,30 @@ class SettingNotifier extends StateNotifier<SettingState> {
     return User.fromMap(data);
   }
 
+  // Đăng xuất
+  Future<bool> logout() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("token");
+
+      if (token != null) {
+        await _authService.logout(token); // nếu lỗi nhảy xuống catch
+      }
+
+      await prefs.remove("token");
+      await prefs.remove("user");
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   void toggleVibration(bool value) =>
       state = state.copyWith(vibrationEnabled: value);
 
   void toggleDarkMode(bool value) =>
       state = state.copyWith(darkModeEnabled: value);
-
-  void logout() {
-    state = state.copyWith(isLoggedOut: true);
-  }
 }
 
 class ScreenSetting extends ConsumerStatefulWidget {
@@ -139,12 +163,6 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
   Widget build(BuildContext context) {
     final state = ref.watch(settingProvider);
     final notifier = ref.read(settingProvider.notifier);
-
-    if (state.isLoggedOut) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.of(context).pushReplacementNamed('/login');
-      });
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -225,7 +243,35 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: notifier.logout,
+                        onPressed: () async {
+                          final success = await notifier.logout();
+
+                          if (success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Đăng xuất thành công"),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ScreenSignIn(),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  "Đăng xuất thất bại, vui lòng thử lại.",
+                                ),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           padding: const EdgeInsets.symmetric(vertical: 14),

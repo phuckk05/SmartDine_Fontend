@@ -3,21 +3,19 @@ import '../models/user_session.dart';
 
 class AuthService {
   final HttpService _httpService = HttpService();
-  static const String baseUrl = 'https://smartdine-backend-oq2x.onrender.com/api';
+  static const String baseUrl =
+      'https://smartdine-backend-oq2x.onrender.com/api';
 
   // 🔐 Login API - Sẵn sàng tích hợp khi có backend endpoint
   Future<UserSession> login(String username, String password) async {
     try {
       final response = await _httpService.post(
         '$baseUrl/auth/login',
-        body: {
-          'username': username,
-          'password': password,
-        },
+        body: {'username': username, 'password': password},
       );
 
       final data = _httpService.handleResponse(response);
-      
+
       // Parse response to UserSession
       return UserSession.fromMap(data);
     } catch (e) {
@@ -33,7 +31,7 @@ class AuthService {
         headers: {'Authorization': 'Bearer $token'},
       );
     } catch (e) {
-            // Không throw error vì logout luôn thành công ở client
+      print("Lỗi đăng xuất API: $e");
     }
   }
 
@@ -104,7 +102,7 @@ class AuthService {
   }) async {
     // Simulate API delay
     await Future.delayed(const Duration(milliseconds: 500));
-    
+
     return UserSession(
       userId: 1,
       userName: username,
