@@ -46,10 +46,15 @@ class CategoryAPI {
   }
 
   Future<Category> updateCategory(int id, Category category) async {
+    // SỬA: Chỉ gửi những trường cần thiết để cập nhật (name, companyId)
+    final Map<String, dynamic> requestBody = {
+      'name': category.name,
+      'companyId': category.companyId,
+    };
     final response = await http.put(
       Uri.parse('$_uri/$id'),
       headers: {'Content-Type': 'application/json; charset=UTF-8'},
-      body: jsonEncode(category.toMap()),
+      body: jsonEncode(requestBody),
     );
     if (response.statusCode == 200) {
       return Category.fromMap(jsonDecode(utf8.decode(response.bodyBytes)));

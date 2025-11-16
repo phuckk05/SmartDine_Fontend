@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/models_owner/branch.dart';
 import 'package:mart_dine/models_owner/user.dart'; // Cần cho mock provider
 
+import 'package:mart_dine/providers_owner/branch_provider.dart';
 // Import providers
 import 'package:mart_dine/providers_owner/mock_user_provider.dart'; // Tạm dùng để lấy tên QL
 import 'package:mart_dine/providers_owner/target_provider.dart'; // Chứa branchListProvider
@@ -86,16 +87,16 @@ class _ScreenEditRestaurantInfoState extends ConsumerState<ScreenEditRestaurantI
          // Gọi API update (Lưu ý: Backend CẦN có endpoint PUT /api/branches/{id})
          await apiService.updateBranch(widget.branchToEdit.id, updatedBranch);
 
-         // Refresh lại FutureProvider để danh sách ở ScreenManagement cập nhật
-         ref.refresh(branchListProvider);
+         // SỬA: Dùng refresh để tải lại ngay và invalidate provider chi tiết
+         ref.refresh(branchListProvider.future);
+         ref.invalidate(branchDetailProvider(widget.branchToEdit.id));
 
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Cập nhật thông tin chi nhánh thành công!"))
             );
             // Pop 2 lần để quay về ScreenManagement (bỏ qua ScreenRestaurantDetail)
-            int count = 0;
-            Navigator.of(context).popUntil((_) => count++ >= 2);
+            Navigator.of(context).pop(); // SỬA: Chỉ pop 1 lần để quay về màn hình chi tiết
           }
 
      } catch (e) {

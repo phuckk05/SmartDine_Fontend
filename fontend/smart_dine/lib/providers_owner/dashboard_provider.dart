@@ -27,8 +27,8 @@ import 'package:mart_dine/providers_owner/system_stats_provider.dart';
 // Provider cho Top 4 Chi nhánh (Gọi API)
 final topBranchesProvider = FutureProvider<List<BranchRevenueComparison>>((ref) async {
   final api = ref.watch(paymentApiProvider);
-  // SỬA: Lấy companyId động
-  final companyId = await ref.watch(ownerCompanyIdProvider.future);
+  // SỬA: Lấy companyId động từ owner profile
+  final companyId = (await ref.watch(ownerProfileProvider.future)).companyId;
 
   if (companyId == null) {
     // Nếu không có companyId (ví dụ: owner chưa được gán), trả về danh sách rỗng
@@ -52,8 +52,8 @@ final topBranchesProvider = FutureProvider<List<BranchRevenueComparison>>((ref) 
 // Provider cho Biểu đồ Doanh thu (Line Chart)
 final revenueChartProvider = FutureProvider.family<List<ChartData>, ChartFilter>((ref, filter) async {
   final api = ref.watch(paymentApiProvider);
-  // SỬA: Lấy companyId động
-  final companyId = await ref.watch(ownerCompanyIdProvider.future);
+  // SỬA: Lấy companyId động từ owner profile
+  final companyId = (await ref.watch(ownerProfileProvider.future)).companyId;
 
   if (companyId == null) {
     return [];
@@ -104,8 +104,8 @@ final revenueChartProvider = FutureProvider.family<List<ChartData>, ChartFilter>
 // Provider cho Biểu đồ Đơn hàng (Bar Chart)
 final orderChartProvider = FutureProvider.family<List<OrderCountData>, ChartFilter>((ref, filter) async {
   final api = ref.watch(orderApiProvider);
-  // SỬA: Lấy companyId động
-  final companyId = await ref.watch(ownerCompanyIdProvider.future);
+  // SỬA: Lấy companyId động từ owner profile
+  final companyId = (await ref.watch(ownerProfileProvider.future)).companyId;
   if (companyId == null) {
     return [];
   }

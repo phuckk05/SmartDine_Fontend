@@ -86,7 +86,7 @@ class _ScreenMenuManagementState extends ConsumerState<ScreenMenuManagement> {
           (context) => EditDeleteCategoryModal(
             categoryName: category.name,
             onSave: (newName) {
-              Navigator.of(context).pop(); // Đóng modal sau khi lưu
+               // Đóng modal sau khi lưu
               ref
                   .read(categoryUpdateNotifierProvider.notifier)
                   .editCategory(category, newName);
@@ -146,12 +146,15 @@ class _ScreenMenuManagementState extends ConsumerState<ScreenMenuManagement> {
   }
 
   // SỬA: Kích hoạt lại Modal Thêm
-  void _showAddModal() {
-    final companyId = ref.read(ownerCompanyIdProvider).value;
+  void _showAddModal() async {
+    // SỬA: Lấy companyId bất đồng bộ từ ownerProfileProvider
+    final companyId = (await ref.read(ownerProfileProvider.future)).companyId;
     if (companyId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Lỗi: Không tìm thấy thông tin công ty.")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Lỗi: Không tìm thấy thông tin công ty.")),
+        );
+      }
       return;
     }
     showDialog(

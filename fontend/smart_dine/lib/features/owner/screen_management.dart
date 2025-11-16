@@ -116,7 +116,7 @@ class _ScreenManagementState extends ConsumerState<ScreenManagement> {
             final owner = ref.read(ownerProfileProvider).value;
             if (owner?.companyId != null) {
               // Invalidate các provider để chúng tự tải lại dữ liệu mới
-              ref.invalidate(branchesByCompanyProvider(owner!.companyId!));
+              ref.invalidate(branchListProvider);
               ref.invalidate(pendingBranchesProvider);
             }
           },

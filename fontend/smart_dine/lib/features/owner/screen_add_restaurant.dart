@@ -40,7 +40,8 @@ class _ScreenAddRestaurantState extends ConsumerState<ScreenAddRestaurant> {
     if (_formKey.currentState!.validate() && !_isLoading) {
       setState(() => _isLoading = true);
 
-      final companyId = await ref.read(ownerCompanyIdProvider.future);
+      // SỬA: Lấy companyId trực tiếp từ owner profile
+      final companyId = (await ref.read(ownerProfileProvider.future)).companyId;
 
       if (companyId == null || _selectedManagerId == null) {
         ScaffoldMessenger.of(context).showSnackBar(

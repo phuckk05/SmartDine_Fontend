@@ -10,7 +10,8 @@ import 'package:mart_dine/providers_owner/target_provider.dart'; // Để invali
 // Provider lấy danh sách chi nhánh đang chờ duyệt (statusId = 3)
 final pendingBranchesProvider = FutureProvider<List<Branch>>((ref) async {
   final branchApi = ref.watch(branchApiProvider);
-  final companyId = await ref.watch(ownerCompanyIdProvider.future);
+  // SỬA: Lấy companyId trực tiếp từ owner profile
+  final companyId = (await ref.watch(ownerProfileProvider.future)).companyId;
 
   if (companyId == null) {
     return []; // Không có công ty thì không có chi nhánh
@@ -19,6 +20,13 @@ final pendingBranchesProvider = FutureProvider<List<Branch>>((ref) async {
   final allBranches = await branchApi.fetchBranchesByCompanyId(companyId);
   // Lọc những chi nhánh có statusId = 3
   return allBranches.where((branch) => branch.statusId == 3).toList();
+});
+
+// THÊM: Provider để lấy thông tin chi tiết của một chi nhánh
+final branchDetailProvider = FutureProvider.family<Branch, int>((ref, branchId) async {
+  final branchApi = ref.watch(branchApiProvider);
+  // Giả định API có hàm fetchBranchById
+  return await branchApi.fetchBranchById(branchId);
 });
 
 // StateNotifier để xử lý các hành động cập nhật chi nhánh

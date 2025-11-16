@@ -348,9 +348,6 @@ class ScreenProfile extends ConsumerWidget {
       ),
       child: MaterialButton(
         onPressed: () async {
-          // 1. Đặt lại ID của Owner đã đăng nhập về null
-          ref.read(loggedInOwnerIdProvider.notifier).state = null;
-
           // 2. Xóa phiên làm việc của người dùng (nếu có)
           await ref.read(userSessionProvider.notifier).logout();
 

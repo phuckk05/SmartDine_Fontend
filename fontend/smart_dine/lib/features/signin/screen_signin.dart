@@ -207,8 +207,6 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
           );
         } else if (user.role == 5) {
           // Owner -> Chuyển về Bottom Navigation với quyền admin
-          // Cập nhật ID của owner đã đăng nhập vào provider
-          ref.read(loggedInOwnerIdProvider.notifier).state = user.id ?? 0;
           
           // SỬA: Điều hướng đến ScreenDashboard và thay thế màn hình đăng nhập
           Navigator.pushReplacement(

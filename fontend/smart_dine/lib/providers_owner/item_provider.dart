@@ -8,7 +8,8 @@ import 'package:mart_dine/providers_owner/menu_item_relation_provider.dart';
 final itemsByCategoryProvider =
     FutureProvider.family<List<Item>, int>((ref, categoryId) async {
   final api = ref.watch(itemApiProvider);
-  final companyId = await ref.watch(ownerCompanyIdProvider.future);
+  // SỬA: Lấy companyId trực tiếp từ owner profile
+  final companyId = (await ref.watch(ownerProfileProvider.future)).companyId;
   if (companyId == null) {
     throw Exception('Company ID not available');
   }
@@ -18,7 +19,8 @@ final itemsByCategoryProvider =
 // Provider để đọc (allItemsProvider) - Giữ nguyên
 final allItemsProvider = FutureProvider<List<Item>>((ref) async {
   final api = ref.watch(itemApiProvider);
-  final companyId = await ref.watch(ownerCompanyIdProvider.future);
+  // SỬA: Lấy companyId trực tiếp từ owner profile
+  final companyId = (await ref.watch(ownerProfileProvider.future)).companyId;
   if (companyId == null) {
     throw Exception('Company ID not available');
   }

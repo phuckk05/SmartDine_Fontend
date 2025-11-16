@@ -92,8 +92,9 @@ final branchesByCompanyProvider = FutureProvider.family<List<Branch>, int>((ref,
 // SỬA: Provider này sẽ lấy danh sách chi nhánh cho công ty hiện tại của người dùng.
 final branchListProvider = FutureProvider<List<Branch>>((ref) async {
   // 1. Lấy companyId của owner đang đăng nhập.
-  final companyId = await ref.watch(ownerCompanyIdProvider.future);
-
+  // SỬA: Lấy trực tiếp từ ownerProfileProvider
+  final owner = await ref.watch(ownerProfileProvider.future);
+  final companyId = owner.companyId;
   // 2. Nếu không có companyId, trả về danh sách rỗng.
   if (companyId == null) {
     return [];

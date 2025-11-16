@@ -77,8 +77,8 @@ class _ScreenDishManagementState extends ConsumerState<ScreenDishManagement> {
 
   // Modal Thêm (Đã đúng)
   void _showAddDishModal() async {
-    // SỬA: Lấy companyId bất đồng bộ từ provider
-    final companyId = await ref.read(ownerCompanyIdProvider.future);
+    // SỬA: Lấy companyId trực tiếp từ owner profile provider
+    final companyId = (await ref.read(ownerProfileProvider.future)).companyId;
     if (companyId == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -105,8 +105,7 @@ class _ScreenDishManagementState extends ConsumerState<ScreenDishManagement> {
       context: context,
       builder: (context) => EditDeleteDishModal( 
         initialDish: dish,
-        onSave: (newName, newPriceString) {
-          Navigator.of(context).pop(); // Đóng modal sau khi lưu
+        onSave: (newName, newPriceString) { // Đóng modal sau khi lưu
           final newPrice = double.tryParse(newPriceString) ?? 0.0;
           ref.read(itemUpdateNotifierProvider.notifier).editItem(dish, newName, newPrice, widget.categoryId);
         },

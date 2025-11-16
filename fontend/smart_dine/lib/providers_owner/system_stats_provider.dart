@@ -1,18 +1,16 @@
 // file: providers/system_stats_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/models_owner/user.dart';
-import 'package:mart_dine/API_owner/company_API.dart';
 import 'package:mart_dine/API_owner/user_API.dart';
 import 'package:mart_dine/providers_owner/target_provider.dart';
 import 'package:mart_dine/providers_owner/staff_profile_provider.dart';
-import 'package:mart_dine/providers_owner/role_provider.dart'; // <<< SỬA: Thêm import
+import 'package:mart_dine/providers/user_session_provider.dart'; // SỬA: Import user session
 
-// Provider để lưu trữ ID của người dùng đã đăng nhập.
-// Giá trị này sẽ được cập nhật từ màn hình đăng nhập.
-final loggedInOwnerIdProvider = StateProvider<int?>((ref) => null);
+// SỬA: Loại bỏ loggedInOwnerIdProvider, sẽ dùng userSessionProvider
 
 final ownerProfileProvider = FutureProvider<User>((ref) async {
-  final loggedInUserId = ref.watch(loggedInOwnerIdProvider);
+  // SỬA: Lấy userId từ userSessionProvider
+  final loggedInUserId = ref.watch(userSessionProvider).userId;
 
   if (loggedInUserId == null) {
     // Ném lỗi nếu không có Owner nào đăng nhập, ngăn việc gọi API không cần thiết.
@@ -32,27 +30,26 @@ final ownerProfileProvider = FutureProvider<User>((ref) async {
   throw Exception("Người dùng đăng nhập (ID: $loggedInUserId) không phải là Owner.");
 });
 
-// Provider mới: Chỉ lấy companyId của owner
-// Giúp companyProvider không cần phụ thuộc vào toàn bộ User object
-final ownerCompanyIdProvider = FutureProvider<int?>((ref) async {
-  // Chờ ownerProfileProvider hoàn thành
-  final owner = await ref.watch(ownerProfileProvider.future);
-  // Trả về companyId của owner
-  return owner.companyId;
-});
+// SỬA: Loại bỏ ownerCompanyIdProvider
 
 // Provider này tính toán các thống kê hệ thống
 // Nó phụ thuộc vào các provider khác để lấy dữ liệu
 final systemStatsProvider = Provider<Map<String, String>>((ref) {
- // Lấy companyId động từ owner
- final companyIdAsync = ref.watch(ownerCompanyIdProvider);
+ // SỬA: Lấy owner profile trực tiếp
+ final ownerAsync = ref.watch(ownerProfileProvider);
+ final companyId = ownerAsync.value?.companyId;
 
  // Mặc định là 0 nếu chưa có companyId
- final branchCount = companyIdAsync.when(
-  data: (id) => id != null ? (ref.watch(branchesByCompanyProvider(id)).value?.length ?? 0) : 0,
-  loading: () => 0,
-  error: (_, __) => 0,
- );
+ int branchCount = 0;
+ if (companyId != null) {
+    // Dùng watch để lắng nghe sự thay đổi của branchesByCompanyProvider
+    final branchesAsync = ref.watch(branchesByCompanyProvider(companyId));
+    branchCount = branchesAsync.when(
+      data: (branches) => branches.length,
+      loading: () => 0, // Hoặc giá trị mặc định khác khi đang tải
+      error: (_, __) => 0, // Xử lý lỗi
+    );
+ }
 
  final staffListAsync = ref.watch(staffProfileProvider);
  final staffCount = staffListAsync.value?.length ?? 0;

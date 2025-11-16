@@ -138,6 +138,28 @@ Future<List<Branch>> fetchBranchesByCompanyId(int companyId) async {
       throw Exception('Lỗi tải danh sách chi nhánh (Mã: ${response.statusCode})');
     }
   }
+
+  // THÊM: Lấy chi nhánh theo ID (GET /api/branches/get/{id})
+  Future<Branch> fetchBranchById(int branchId) async {
+    // Giả định endpoint là /get/{id} tương tự Company API
+    final response = await http.get(Uri.parse('$_uri/get/$branchId'),
+        headers: {'Accept': 'application/json'});
+
+    if (response.statusCode == 200) {
+      try {
+        final Map<String, dynamic> data =
+            jsonDecode(utf8.decode(response.bodyBytes));
+        return Branch.fromMap(data);
+      } catch (e) {
+        print(
+            "Lỗi decode branch by id: $e \nResponse body: ${utf8.decode(response.bodyBytes)}");
+        throw Exception('Lỗi giải mã dữ liệu chi nhánh.');
+      }
+    } else {
+      print("Lỗi tải branch by id. Status: ${response.statusCode} \nBody: ${utf8.decode(response.bodyBytes)}");
+      throw Exception('Không tìm thấy chi nhánh với ID: $branchId (Mã: ${response.statusCode})');
+    }
+  }
 }
 
 // Riverpod provider cho BranchAPI

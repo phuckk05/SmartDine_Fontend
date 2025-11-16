@@ -8,9 +8,10 @@ import 'package:mart_dine/models_owner/company.dart'; // Đảm bảo đường 
 final companyProvider = FutureProvider<Company?>((ref) async {
   final apiService = ref.read(companyApiProvider);
 
-  // 1. Lấy companyId từ ownerCompanyIdProvider.
-  // Provider này sẽ tự động xử lý trạng thái loading/error từ ownerProfileProvider.
-  final companyId = await ref.watch(ownerCompanyIdProvider.future);
+  // 1. Lấy thông tin owner để có companyId.
+  // .future sẽ đảm bảo chúng ta đợi cho đến khi có dữ liệu owner.
+  final owner = await ref.watch(ownerProfileProvider.future);
+  final companyId = owner.companyId;
 
   // 2. Nếu không có companyId, không cần làm gì thêm.
   if (companyId == null) {
