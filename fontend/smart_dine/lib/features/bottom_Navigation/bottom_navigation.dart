@@ -7,9 +7,6 @@ import 'package:mart_dine/features/kitchen/screen_lichsu.dart';
 import 'package:mart_dine/features/admin/screen_dashboard.dart';
 import 'package:mart_dine/features/admin/screen_qlcuahang.dart';
 import 'package:mart_dine/features/admin/screen_qlxacnhan.dart';
-import 'package:mart_dine/features/kitchen/screen_caidat.dart';
-import 'package:mart_dine/features/kitchen/screen_kitchen.dart';
-import 'package:mart_dine/features/kitchen/screen_lichsu.dart';
 import 'package:mart_dine/providers/branch_provider.dart';
 
 // // Các state provider
@@ -92,7 +89,7 @@ class _BottomNavigationState extends ConsumerState<ScreenBottomNavigation> {
 
   //   // Danh sách các màn hình cho Admin (index = 2)
   final List<Widget> _adminScreens = [
-    const ScreenDashboard(),
+    const ScreenAdminDashboard(),
     const ScreenQlXacNhan(),
     const ScreenQlCuaHang(),
     const ScreenSettingDashboard(),

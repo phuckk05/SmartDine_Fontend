@@ -20,6 +20,7 @@ class ScreenQlXacNhan extends ConsumerWidget {
         centerTitle: true,
         backgroundColor: Colors.blueAccent,
         elevation: 0,
+        automaticallyImplyLeading: false,
       ),
       body: companiesAsync.when(
         data: (companies) {
@@ -32,7 +33,22 @@ class ScreenQlXacNhan extends ConsumerWidget {
               },
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                children: const [
+
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
+                    child: Text(
+                      'Danh sách cửa hàng chờ duyệt',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
                   SizedBox(height: 200),
                   Center(
                     child: Column(

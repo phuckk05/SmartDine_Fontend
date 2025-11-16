@@ -18,10 +18,11 @@ class ScreenQlCuaHang extends ConsumerWidget {
         ),
         centerTitle: true,
         backgroundColor: Colors.blueAccent,
+        automaticallyImplyLeading: false,
       ),
       body: asyncList.when(
+        // Dữ liệu
         data: (list) {
-          // 🔥 TRƯỜNG HỢP LIST RỖNG → VẪN CHO REFRESH
           if (list.isEmpty) {
             return RefreshIndicator(
               onRefresh: () async {
@@ -29,6 +30,16 @@ class ScreenQlCuaHang extends ConsumerWidget {
               },
               child: ListView(
                 children: const [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      'Danh sách hoạt động cửa hàng đã duyệt',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                   SizedBox(height: 250),
                   Center(
                     child: Text(
