@@ -144,17 +144,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
                   .getCompanyIdByBranchId(branchId);
             }
             break;
-          case 6:
-            roleName = 'Cashier';
-            branchId = await ref
-                .read(branchNotifierProvider.notifier)
-                .getBranchIdByUserId(user.id as int);
-            if (branchId != null) {
-              companyId = await ref
-                  .read(branchNotifierProvider.notifier)
-                  .getCompanyIdByBranchId(branchId);
-            }
-            break;
+
           default:
             roleName = 'Staff';
             branchId = await ref
@@ -206,37 +196,6 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
             context,
             'Chức năng nhân viên đang được phát triển.',
           );
-
-          /* Tạm comment phần chọn bàn
-          // Try to resolve companyId from branchId if available
-          int? companyId;
-          if (branchId != null) {
-            final cid = await ref
-                .read(branchNotifierProvider.notifier)
-                .getCompanyIdByBranchId(branchId);
-            if (cid != null) companyId = cid;
-          }
-
-          Routes.pushRightLeftConsumerFul(
-            context,
-            ScreenChooseTable(
-              branchId: branchId ?? 0,
-              userId: user.id ?? 0,
-              companyId: companyId ?? 0,
-            ),
-          );
-          */
-          // if (user.role == 1) {
-          //   Routes.pushRightLeftConsumerFul(context, AdminHomeScreen());
-          // } else if (user.role == 2) {
-          //   Routes.pushRightLeftConsumerFul(context, ManagerHomeScreen());
-          // } else if (user.role == 3) {
-          //   Routes.pushRightLeftConsumerFul(context, StaffHomeScreen());
-          // } else if (user.role == 4) {
-          //   Routes.pushRightLeftConsumerFul(context, ChefHomeScreen());
-          // } else if (user.role == 5) {
-          //   Routes.pushRightLeftConsumerFul(context, OwnerHomeScreen());
-          // }
         } else if (user.role == 4) {
           // Chef
           Routes.pushRightLeftConsumerFul(
