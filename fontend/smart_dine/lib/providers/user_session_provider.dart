@@ -23,6 +23,18 @@ final isAuthenticatedProvider = Provider<bool>((ref) {
   return session.isAuthenticated;
 });
 
+// Provider để lấy userId hiện tại
+final currentUserIdProvider = Provider<int?>((ref) {
+  final session = ref.watch(userSessionProvider);
+  return session.userId;
+});
+
+// Provider để lấy companyId hiện tại
+final currentCompanyIdProvider = Provider<int?>((ref) {
+  final session = ref.watch(userSessionProvider);
+  return session.companyId;
+});
+
 class UserSessionNotifier extends StateNotifier<UserSession> {
   static const String _sessionKey = 'user_session';
   final AuthService _authService = AuthService();
@@ -62,6 +74,7 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
     required int userRole,
     required List<int> branchIds,
     int? defaultBranchId,
+    int? companyId,
   }) async {
     // Chọn branch mặc định
     final currentBranchId =
@@ -71,10 +84,11 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
       userId: userId,
       userName: userName,
       userRole: userRole,
-      branchIds: branchIds,
+      companyId: companyId,
       currentBranchId: currentBranchId,
-      loginTime: DateTime.now(),
+      branchIds: branchIds,
       isAuthenticated: true,
+      loginTime: DateTime.now(),
     );
 
     await _saveSession();

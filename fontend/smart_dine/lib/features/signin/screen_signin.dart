@@ -91,20 +91,24 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
         switch (user.role) {
           case 1:
             roleName = 'Administrator';
+            // Admin không cần branchId cụ thể
             break;
           case 2:
             roleName = 'Manager';
+            // Manager: tìm chi nhánh mà user này là manager (manager_id trong bảng branches)
             branchId = await ref
                 .read(branchNotifierProvider.notifier)
-                .getBranchIdByUserId(user.id as int);
+                .getBranchIdByManagerId(user.id as int);
             if (branchId != null) {
               companyId = await ref
                   .read(branchNotifierProvider.notifier)
                   .getCompanyIdByBranchId(branchId);
             }
+
             break;
           case 3:
             roleName = 'Staff';
+            // Staff: tìm trong bảng user_branches
             branchId = await ref
                 .read(branchNotifierProvider.notifier)
                 .getBranchIdByUserId(user.id as int);
@@ -115,6 +119,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
             }
           case 4:
             roleName = 'Chef';
+            // Chef: tìm trong bảng user_branches
             branchId = await ref
                 .read(branchNotifierProvider.notifier)
                 .getBranchIdByUserId(user.id as int);
@@ -126,6 +131,18 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
             break;
           case 5:
             roleName = 'Owner';
+            // Owner không cần branchId cụ thể hoặc có thể truy cập tất cả
+            break;
+          case 6:
+            roleName = 'Cashier';
+            branchId = await ref
+                .read(branchNotifierProvider.notifier)
+                .getBranchIdByUserId(user.id as int);
+            if (branchId != null) {
+              companyId = await ref
+                  .read(branchNotifierProvider.notifier)
+                  .getCompanyIdByBranchId(branchId);
+            }
             break;
           case 6:
             roleName = 'Cashier';
@@ -157,6 +174,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
               userId: user.id ?? 0,
               userName: user.fullName,
               userRole: user.role ?? 3,
+              companyId: user.companyId,
               branchIds: branchId != null ? [branchId] : [],
               defaultBranchId: branchId,
             );
@@ -183,9 +201,44 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
           );
         } else if (user.role == 3) {
           // Staff -> Màn hình chọn bàn (Tạm ẩn)
+          // TODO: Sẽ mở lại khi cần thiết
+          Constrats.showThongBao(
+            context,
+            'Chức năng nhân viên đang được phát triển.',
+          );
+
+          /* Tạm comment phần chọn bàn
+          // Try to resolve companyId from branchId if available
+          int? companyId;
+          if (branchId != null) {
+            final cid = await ref
+                .read(branchNotifierProvider.notifier)
+                .getCompanyIdByBranchId(branchId);
+            if (cid != null) companyId = cid;
+          }
+
+          Routes.pushRightLeftConsumerFul(
+            context,
+            ScreenChooseTable(
+              branchId: branchId ?? 0,
+              userId: user.id ?? 0,
+              companyId: companyId ?? 0,
+            ),
+          );
+          */
+          // if (user.role == 1) {
+          //   Routes.pushRightLeftConsumerFul(context, AdminHomeScreen());
+          // } else if (user.role == 2) {
+          //   Routes.pushRightLeftConsumerFul(context, ManagerHomeScreen());
+          // } else if (user.role == 3) {
+          //   Routes.pushRightLeftConsumerFul(context, StaffHomeScreen());
+          // } else if (user.role == 4) {
+          //   Routes.pushRightLeftConsumerFul(context, ChefHomeScreen());
+          // } else if (user.role == 5) {
+          //   Routes.pushRightLeftConsumerFul(context, OwnerHomeScreen());
+          // }
         } else if (user.role == 4) {
           // Chef
-          //Chuyển qua chef
           Routes.pushRightLeftConsumerFul(
             context,
             ScreenBottomNavigation(

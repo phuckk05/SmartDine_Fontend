@@ -149,6 +149,7 @@ class _ScreenKitchenState extends ConsumerState<ScreenKitchen>
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Row(
           children: [
             Text(

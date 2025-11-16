@@ -108,7 +108,7 @@ class _ScreenHistoryState extends ConsumerState<ScreenHistory> {
         centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        // actions: const [Icon(Icons.settings), SizedBox(width: 16)],
+        automaticallyImplyLeading: false,
       ),
       body: SafeArea(
         child: orderState.when(

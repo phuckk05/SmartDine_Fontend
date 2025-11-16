@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:mart_dine/features/signin/screen_signin.dart';
+import 'package:mart_dine/services/auth_service.dart';
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../models/user.dart';
 
 final settingProvider = StateNotifierProvider<SettingNotifier, SettingState>(
   (ref) => SettingNotifier(),
@@ -44,38 +48,90 @@ class SettingState {
 }
 
 class SettingNotifier extends StateNotifier<SettingState> {
-  SettingNotifier() : super(SettingState());
+  final AuthService _authService = AuthService();
 
-  Future<void> fetchUserData(String email) async {
+  SettingNotifier() : super(SettingState());
+  // Lấy dữ liệu user và role từ API
+  Future<void> fetchUserData() async {
     try {
       state = state.copyWith(isLoading: true);
 
-      final userRes = await http.get(
-        Uri.parse(
-          'https://smartdine-backend-oq2x.onrender.com/api/users/email/$email',
-        ),
-      );
-      final userData = json.decode(userRes.body);
+      // Lấy user từ SharedPreferences
+      final savedUser = await getSavedUser();
 
-      // Gọi API roles để lấy tên vai trò
+      if (savedUser == null) {
+        print('Không tìm thấy user trong SharedPreferences');
+        state = state.copyWith(
+          isLoading: false,
+          isLoggedOut: true,
+        ); // nếu muốn logout
+        return;
+      }
+
+      // Gọi API lấy danh sách roles
       final rolesRes = await http.get(
         Uri.parse('https://smartdine-backend-oq2x.onrender.com/api/roles/all'),
       );
+
       final List<dynamic> roles = json.decode(rolesRes.body);
 
+      // Tìm roleName tương ứng từ roleId của user
       final roleMatch = roles.firstWhere(
-        (r) => r['id'] == userData['role'],
+        (r) => r['id'] == savedUser.role,
         orElse: () => {'name': 'Unknown'},
       );
 
+      // Cập nhật state
       state = state.copyWith(
-        user: userData,
+        user: {
+          "id": savedUser.id,
+          "fullName": savedUser.fullName,
+          "email": savedUser.email,
+          "phone": savedUser.phone,
+          "fontImage": savedUser.fontImage,
+          "backImage": savedUser.backImage,
+          "statusId": savedUser.statusId,
+          "role": savedUser.role,
+          "companyId": savedUser.companyId,
+          "createdAt": savedUser.createdAt,
+        },
         roleName: roleMatch['name'],
         isLoading: false,
+        isLoggedOut: false,
       );
     } catch (e) {
       print('Lỗi khi fetch dữ liệu: $e');
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(isLoading: false, isLoggedOut: false);
+    }
+  }
+
+  // Lấy user đã lưu từ SharedPreferences
+  Future<User?> getSavedUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString('user');
+
+    if (jsonString == null) return null;
+
+    final Map<String, dynamic> data = jsonDecode(jsonString);
+    return User.fromMap(data);
+  }
+
+  // Đăng xuất
+  Future<bool> logout() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("token");
+
+      if (token != null) {
+        await _authService.logout(token); // nếu lỗi nhảy xuống catch
+      }
+
+      await prefs.remove("token");
+      await prefs.remove("user");
+
+      return true;
+    } catch (e) {
+      return false;
     }
   }
 
@@ -84,10 +140,6 @@ class SettingNotifier extends StateNotifier<SettingState> {
 
   void toggleDarkMode(bool value) =>
       state = state.copyWith(darkModeEnabled: value);
-
-  void logout() {
-    state = state.copyWith(isLoggedOut: true);
-  }
 }
 
 class ScreenSetting extends ConsumerStatefulWidget {
@@ -103,9 +155,7 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(settingProvider.notifier)
-          .fetchUserData('hadl@gmail.com'); // Gọi API
+      ref.read(settingProvider.notifier).fetchUserData(); // Gọi API
     });
   }
 
@@ -114,14 +164,12 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
     final state = ref.watch(settingProvider);
     final notifier = ref.read(settingProvider.notifier);
 
-    if (state.isLoggedOut) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.of(context).pushReplacementNamed('/login');
-      });
-    }
-
     return Scaffold(
-      appBar: AppBar(title: const Text('Cài đặt'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('Cài đặt'),
+        centerTitle: true,
+        automaticallyImplyLeading: false,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child:
@@ -185,11 +233,6 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
                     const SizedBox(height: 10),
 
                     SwitchListTile(
-                      title: const Text('Rung khi có món mới'),
-                      value: state.vibrationEnabled,
-                      onChanged: notifier.toggleVibration,
-                    ),
-                    SwitchListTile(
                       title: const Text('Chế độ tối'),
                       value: state.darkModeEnabled,
                       onChanged: notifier.toggleDarkMode,
@@ -200,7 +243,35 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: notifier.logout,
+                        onPressed: () async {
+                          final success = await notifier.logout();
+
+                          if (success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Đăng xuất thành công"),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ScreenSignIn(),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  "Đăng xuất thất bại, vui lòng thử lại.",
+                                ),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           padding: const EdgeInsets.symmetric(vertical: 14),
