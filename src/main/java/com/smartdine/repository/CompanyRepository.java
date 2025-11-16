@@ -21,7 +21,7 @@ public interface CompanyRepository extends JpaRepository<Company, Integer> {
         u.id,
         u.fullName,
         u.phone,
-        (SELECT COUNT(ub.branchId) FROM UserBranch ub WHERE ub.userId = u.id),
+        (SELECT COUNT(b.id) FROM Branch b WHERE b.companyId = c.id),
         c.statusId
     )
     FROM Company c
@@ -29,7 +29,5 @@ public interface CompanyRepository extends JpaRepository<Company, Integer> {
     WHERE (c.statusId = 1 OR c.statusId = 2) AND u.role = 5
 """)
     List<GetListCompanyAndOwnerResponse> getListCompanyAndOwner();
-
-
 
 }
