@@ -11,6 +11,7 @@ class User {
   final String backImage;
   final int statusId;
   final int? role;
+  final int? companyId;
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? deletedAt;
@@ -24,6 +25,7 @@ class User {
     required this.backImage,
     required this.statusId,
     this.role,
+    this.companyId,
     required this.createdAt,
     required this.updatedAt,
     required this.deletedAt,
@@ -66,6 +68,7 @@ class User {
     String? passworkHash,
     int? statusId,
     int? role,
+    int? companyId,
     String? fontImage,
     String? backImage,
     DateTime? createdAt,
@@ -80,6 +83,7 @@ class User {
       passworkHash: passworkHash ?? this.passworkHash,
       statusId: statusId ?? this.statusId,
       role: role ?? this.role,
+      companyId: companyId ?? this.companyId,
       fontImage: fontImage ?? this.fontImage,
       backImage: backImage ?? this.backImage,
       createdAt: createdAt ?? this.createdAt,
@@ -97,6 +101,7 @@ class User {
       'passworkHash': passworkHash,
       'statusId': statusId,
       'role': role,
+      'companyId': companyId,
       'fontImage': fontImage,
       'backImage': backImage,
       'createdAt': createdAt.toIso8601String(),
@@ -148,6 +153,7 @@ class User {
       passworkHash: map['passworkHash'] ?? '',
       statusId: _parseInt(map['statusId']) ?? 0,
       role: _parseInt(map['role']) ?? 0,
+      companyId: _parseInt(map['companyId']),
       fontImage: map['fontImage'] ?? '',
       backImage: map['backImage'] ?? '',
       createdAt: _parseDate(map['createdAt']),

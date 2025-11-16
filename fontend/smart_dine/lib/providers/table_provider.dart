@@ -34,18 +34,19 @@ final tableNotifierProvider =
     StateNotifierProvider<TableNotifier, List<DiningTable>>((ref) {
       return TableNotifier(ref.read(tableApiProvider));
     });
-final unpaidTablesByBranchProvider = FutureProvider.family<Set<int>, int>((
+final unpaidTablesByBranchProvider = FutureProvider.family<Map<int, int>, int>((
   ref,
   branchId,
 ) async {
   final orderApi = ref.watch(orderApiProvider);
   final orders = await orderApi.fetchOrdersByBranchIdToday(branchId);
-  final activeTableIds =
-      orders
-          .where((order) => order.statusId == 2 || order.statusId == 4)
-          .map((order) => order.tableId)
-          .toSet();
-  return activeTableIds;
+  final activeTableStatus = <int, int>{};
+  for (final order in orders) {
+    if (order.statusId == 2 || order.statusId == 4) {
+      activeTableStatus[order.tableId] = order.statusId;
+    }
+  }
+  return activeTableStatus;
 });
 final reservedTablesByBranchProvider =
     FutureProvider.family<Map<String, dynamic>, int>((ref, branchId) async {

@@ -68,13 +68,17 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
       }
     }
 
-    return widget.orderItems.fold(0.0, (sum, item) {
+    double total = 0.0;
+    for (final item in widget.orderItems) {
       final menuItem = menuMap[item.itemId];
       if (menuItem != null) {
-        return sum + (item.quantity * menuItem.price);
+        total += item.quantity * menuItem.price;
       }
-      return sum;
-    });
+    }
+
+    // Debug: In ra tổng tiền tính được
+    print('Calculated total: $total');
+    return total;
   }
 
   Future<void> _processPayment() async {
@@ -96,6 +100,23 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
               'Không thể thanh toán! Còn ${unservedItems.length} món chưa được phục vụ.',
             ),
             backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Kiểm tra xem đã có payment cho order này chưa
+    final paymentApi = ref.read(paymentApiProvider);
+    final existingPayments = await paymentApi.getPaymentsByOrderId(
+      widget.order.id,
+    );
+    if (existingPayments.isNotEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Đơn hàng này đã được thanh toán rồi!'),
+            backgroundColor: Colors.orange,
           ),
         );
       }
@@ -127,6 +148,14 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
         cashierId: cashierId,
       );
 
+      print('Creating payment with data:');
+      print('orderId: ${payment.orderId}');
+      print('amount: ${payment.amount}');
+      print('paymentMethod: ${payment.paymentMethod}');
+      print('branchId: ${payment.branchId}');
+      print('companyId: ${payment.companyId}');
+      print('cashierId: ${payment.cashierId}');
+
       final paymentApi = ref.read(paymentApiProvider);
       final createdPayment = await paymentApi.createPayment(payment);
 
@@ -138,6 +167,8 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
         }
         return;
       }
+
+      print('Payment created successfully: ${createdPayment.orderId}');
 
       // Cập nhật trạng thái order thành đã thanh toán (statusId = 3)
       final orderApi = ref.read(orderApiProvider);
@@ -186,9 +217,6 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
                     onPressed: () {
                       Navigator.of(context).pop(); // Đóng dialog
                       Navigator.of(context).pop(); // Quay về màn hình chọn bàn
-                      Navigator.of(
-                        context,
-                      ).pop(); // Quay về màn hình chọn bàn (thêm một lần nữa để đảm bảo quay về đúng màn hình)
                     },
                     child: const Text('Đóng'),
                   ),

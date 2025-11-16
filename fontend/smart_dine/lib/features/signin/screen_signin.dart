@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -9,6 +7,7 @@ import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/forgot_passwork/screens/screen_findaccuont.dart';
 import 'package:mart_dine/features/signup/screen_select_signup.dart';
+import 'package:mart_dine/features/staff/screen_choose_table.dart';
 import 'package:mart_dine/providers/branch_provider.dart';
 import 'package:mart_dine/providers/loading_provider.dart';
 import 'package:mart_dine/providers/user_provider.dart';
@@ -44,15 +43,19 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
 
   //Hàm sigin
   void toSignIn() async {
+    if (!mounted) return;
+
     // if (isValidEmail(_emailController.text) == false) {
     //   Constrats.showThongBao(context, 'Vui lòng nhập đúng định dạng email.');
     //   return;
     // }
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      Constrats.showThongBao(
-        context,
-        'Vui lòng nhập đầy đủ thông tin đăng nhập.',
-      );
+      if (mounted) {
+        Constrats.showThongBao(
+          context,
+          'Vui lòng nhập đầy đủ thông tin đăng nhập.',
+        );
+      }
       return;
     }
 
@@ -69,18 +72,22 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
       // Kiểm tra trạng thái tài khoản
       if (user.statusId == 3) {
         // Chờ duyệt
-        Constrats.showThongBao(
-          context,
-          'Tài khoản của bạn chưa được duyệt. Vui lòng chờ admin phê duyệt.',
-        );
+        if (mounted) {
+          Constrats.showThongBao(
+            context,
+            'Tài khoản của bạn chưa được duyệt. Vui lòng chờ admin phê duyệt.',
+          );
+        }
         ref.read(isLoadingNotifierProvider.notifier).toggle(false);
         return;
       } else if (user.statusId == 2) {
         //Không hoạt động
-        Constrats.showThongBao(
-          context,
-          'Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ admin.',
-        );
+        if (mounted) {
+          Constrats.showThongBao(
+            context,
+            'Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ admin.',
+          );
+        }
         ref.read(isLoadingNotifierProvider.notifier).toggle(false);
         return;
       } else if (user.statusId == 1) {
@@ -120,31 +127,40 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
                 .getBranchIdByUserId(user.id as int);
         }
 
-        Constrats.showThongBao(
-          context,
-          'Đăng nhập thành công!\nVai trò: $roleName  ${roleName.isNotEmpty} ?  nhánh: ${branchId ?? "Chưa có"} : '
-          '',
-        );
+        if (mounted) {
+          Constrats.showThongBao(
+            context,
+            'Đăng nhập thành công!\nVai trò: $roleName  ${roleName.isNotEmpty} ?  nhánh: ${branchId ?? "Chưa có"} : '
+            '',
+          );
+        }
 
-        // if (user.role == 1) {
-        //   Routes.pushRightLeftConsumerFul(context, AdminHomeScreen());
-        // } else if (user.role == 2) {
-        //   Routes.pushRightLeftConsumerFul(context, ManagerHomeScreen());
-        // } else if (user.role == 3) {
-        //   Routes.pushRightLeftConsumerFul(context, StaffHomeScreen());
-        // } else if (user.role == 4) {
-        //   Routes.pushRightLeftConsumerFul(context, ChefHomeScreen());
-        // } else if (user.role == 5) {
-        //   Routes.pushRightLeftConsumerFul(context, OwnerHomeScreen());
-        // }
+        // Navigate to table selection screen for all supported roles
+        if (user.role == 3 || user.role == 4) {
+          if (mounted) {
+            Routes.pushRightLeftConsumerFul(context, const ScreenChooseTable());
+          }
+        } else {
+          // For other roles, show message that they are not supported yet
+          if (mounted) {
+            Constrats.showThongBao(
+              context,
+              'Vai trò này chưa được hỗ trợ trong ứng dụng di động.',
+            );
+          }
+        }
       } else {
-        Constrats.showThongBao(context, 'Trạng thái tài khoản không hợp lệ.');
+        if (mounted) {
+          Constrats.showThongBao(context, 'Trạng thái tài khoản không hợp lệ.');
+        }
       }
     } else {
-      Constrats.showThongBao(
-        context,
-        'Đăng nhập không thành công. Vui lòng kiểm tra lại email và mật khẩu.',
-      );
+      if (mounted) {
+        Constrats.showThongBao(
+          context,
+          'Đăng nhập không thành công. Vui lòng kiểm tra lại email và mật khẩu.',
+        );
+      }
     }
     ref.read(isLoadingNotifierProvider.notifier).toggle(false);
   }

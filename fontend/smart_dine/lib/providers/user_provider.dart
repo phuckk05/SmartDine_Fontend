@@ -133,6 +133,11 @@ class UserNotifier extends StateNotifier<User?> {
   int? getCurrentUserRole() {
     return state?.role;
   }
+
+  // Đăng xuất
+  void signOut() {
+    state = null;
+  }
 }
 
 final userNotifierProvider = StateNotifierProvider<UserNotifier, User?>((ref) {

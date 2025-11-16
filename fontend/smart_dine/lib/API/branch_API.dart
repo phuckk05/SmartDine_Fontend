@@ -32,6 +32,18 @@ class BranchAPI {
     }
     return null;
   }
+
+  Future<List<Branch>?> getBranchesByCompanyId(int companyId) async {
+    final response = await http.get(
+      Uri.parse('$uri2/company/$companyId'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((item) => Branch.fromMap(item)).toList();
+    }
+    return null;
+  }
 }
 
 //userApiProvider

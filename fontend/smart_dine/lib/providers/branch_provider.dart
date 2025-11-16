@@ -4,15 +4,26 @@ import 'package:mart_dine/API/company_API.dart';
 import 'package:mart_dine/API/user_branch_API.dart';
 import 'package:mart_dine/models/branch.dart';
 
-class BranchNotifier extends StateNotifier<Branch?> {
+class BranchNotifier extends StateNotifier<AsyncValue<List<Branch>>> {
   final BranchAPI branchAPI;
   final CompanyAPI companyAPI;
   final UserBranchAPI userBranchAPI;
   BranchNotifier(this.branchAPI, this.companyAPI, this.userBranchAPI)
-    : super(null);
+    : super(const AsyncValue.loading());
 
   Set<Branch> build() {
     return const {};
+  }
+
+  // Load branches by company ID
+  Future<void> loadBranchesByCompanyId(int companyId) async {
+    state = const AsyncValue.loading();
+    try {
+      final branches = await branchAPI.getBranchesByCompanyId(companyId);
+      state = AsyncValue.data(branches ?? []);
+    } catch (e) {
+      state = AsyncValue.error(e, StackTrace.current);
+    }
   }
 
   //Đăng kí chi nhánh
@@ -28,7 +39,7 @@ class BranchNotifier extends StateNotifier<Branch?> {
         final response = await branchAPI.create(branchPayload);
         if (response != null) {
           //Cập nhạt state
-          state = response;
+          state = AsyncValue.data([response]);
           return 1;
         }
       } else {
@@ -56,9 +67,7 @@ class BranchNotifier extends StateNotifier<Branch?> {
   }
 }
 
-final branchNotifierProvider = StateNotifierProvider<BranchNotifier, Branch?>((
-  ref,
-) {
+final branchNotifierProvider = StateNotifierProvider<BranchNotifier, AsyncValue<List<Branch>>>((ref) {
   return BranchNotifier(
     ref.watch(branchApiProvider),
     ref.watch(companyApiProvider),

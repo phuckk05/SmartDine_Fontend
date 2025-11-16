@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +13,7 @@ import 'package:mart_dine/models/order_item.dart';
 import 'package:mart_dine/providers/cart_provider.dart';
 import 'package:mart_dine/providers/menu_item_provider.dart';
 import 'package:mart_dine/providers/table_provider.dart';
+import 'package:mart_dine/providers/user_provider.dart';
 import 'package:mart_dine/API/order_API.dart';
 import 'package:mart_dine/API/order_item_API.dart';
 import 'package:mart_dine/routes.dart';
@@ -61,9 +64,10 @@ final _isRequestingPaymentProvider = StateProvider<bool>((ref) => false);
 final _orderNoteProvider = StateProvider<String>((ref) => '');
 final _itemNotesProvider = StateProvider<Map<int, String>>((ref) => {});
 final _expandedNotesProvider = StateProvider<Set<int>>((ref) => {});
+final _currentOrderProvider = StateProvider<Order?>((ref) => null);
+final _existingOrderItemsProvider = StateProvider<List<OrderItem>>((ref) => []);
 
 class _ScreenMenuState extends ConsumerState<ScreenMenu> {
-  bool _showSearchBar = false;
   // Loại bỏ dấu tiếng Việt cho tìm kiếm
   String _removeVietnameseDiacritics(String str) {
     const vietnamese =
@@ -78,21 +82,27 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
   }
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  Order? _currentOrder;
-  List<OrderItem> _existingOrderItems = [];
 
   // Search
   final TextEditingController _searchController = TextEditingController();
-  String _searchKeyword = '';
 
   // Controllers for item notes
   final Map<int, TextEditingController> _itemNoteControllers = {};
 
+  // Timer for navigation delay
+  Timer? _navigationTimer;
+
+  bool _showSearchBar = false;
+  bool _isDisposed = false;
+
   @override
   void dispose() {
+    _isDisposed = true;
     _searchController.dispose();
     // Dispose all item note controllers
     _itemNoteControllers.values.forEach((controller) => controller.dispose());
+    // Cancel navigation timer if active
+    _navigationTimer?.cancel();
     super.dispose();
   }
 
@@ -117,11 +127,12 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
   @override
   void initState() {
     super.initState();
-    _currentOrder = widget.initialOrder;
-    _existingOrderItems = List<OrderItem>.from(
-      widget.initialOrderItems ?? const <OrderItem>[],
-    );
-    Future.microtask(_initializeData);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(_currentOrderProvider.notifier).state = widget.initialOrder;
+      ref.read(_existingOrderItemsProvider.notifier).state =
+          List<OrderItem>.from(widget.initialOrderItems ?? const <OrderItem>[]);
+      _initializeData();
+    });
   }
 
   Future<void> _initializeData() async {
@@ -155,10 +166,8 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
     final orders = await orderApi.fetchOrdersByTableIdToday(widget.tableId);
     if (orders.isEmpty) {
       if (!mounted) return;
-      setState(() {
-        _currentOrder = null;
-        _existingOrderItems = [];
-      });
+      ref.read(_currentOrderProvider.notifier).state = null;
+      ref.read(_existingOrderItemsProvider.notifier).state = [];
       return;
     }
 
@@ -175,20 +184,16 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
 
     if (current == null) {
       if (!mounted) return;
-      setState(() {
-        _currentOrder = null;
-        _existingOrderItems = [];
-      });
+      ref.read(_currentOrderProvider.notifier).state = null;
+      ref.read(_existingOrderItemsProvider.notifier).state = [];
       return;
     }
 
     final items = await orderItemApi.getOrderItemsByOrderId(current.id);
     if (!mounted) return;
 
-    setState(() {
-      _currentOrder = current;
-      _existingOrderItems = items;
-    });
+    ref.read(_currentOrderProvider.notifier).state = current;
+    ref.read(_existingOrderItemsProvider.notifier).state = items;
 
     // Debug: Print order info
     print('Current order ID: ${current.id}, Status: ${current.statusId}');
@@ -222,10 +227,11 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
 
     try {
       final orderApi = ref.read(orderApiProvider);
-      final bool isUpdate = _currentOrder != null;
+      final currentOrder = ref.watch(_currentOrderProvider);
+      final bool isUpdate = currentOrder != null;
 
       late final Order targetOrder;
-      if (_currentOrder == null) {
+      if (currentOrder == null) {
         // Kiểm tra lại xem có order nào đang active cho bàn này không
         final existingOrders = await orderApi.fetchOrdersByTableIdToday(
           widget.tableId,
@@ -236,7 +242,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
         if (activeOrder.isNotEmpty) {
           // Nếu có order active, sử dụng order đó thay vì tạo mới
           targetOrder = activeOrder.first;
-          _currentOrder = targetOrder;
+          ref.read(_currentOrderProvider.notifier).state = targetOrder;
         } else {
           // Chỉ tạo order mới khi thực sự không có order active
           final newOrder = Order(
@@ -261,10 +267,10 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
             return;
           }
           targetOrder = savedOrder;
-          _currentOrder = savedOrder;
+          ref.read(_currentOrderProvider.notifier).state = savedOrder;
         }
       } else {
-        targetOrder = _currentOrder!;
+        targetOrder = currentOrder;
       }
 
       final Map<int, int> quantityByItem = {};
@@ -312,42 +318,56 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
   }
 
   Future<void> _requestPayment() async {
-    if (_currentOrder == null || ref.watch(_isRequestingPaymentProvider)) {
+    if (!mounted) return;
+    final currentOrder = ref.watch(_currentOrderProvider);
+    if (currentOrder == null || ref.watch(_isRequestingPaymentProvider)) {
       return;
     }
 
     ref.read(_isRequestingPaymentProvider.notifier).state = true;
 
     try {
-      // Update order status to 4 (requesting payment) before navigating
+      // Update order status to 4 (requesting payment)
       final orderApi = ref.read(orderApiProvider);
       final updatedOrder = await orderApi.updateOrderStatusAlt(
-        _currentOrder!.id,
+        currentOrder.id,
         4,
       );
 
       // Update local state
-      setState(() {
-        _currentOrder = updatedOrder;
-      });
-
-      // Thanh toán ngay lập tức - chuyển trực tiếp đến màn hình thanh toán
       if (mounted) {
-        // Đóng drawer nếu đang mở
-        if (_scaffoldKey.currentState?.isEndDrawerOpen ?? false) {
-          Navigator.of(context).pop();
+        ref.read(_currentOrderProvider.notifier).state = updatedOrder;
+      }
+
+      // Đóng drawer nếu đang mở
+      if (_scaffoldKey.currentState?.isEndDrawerOpen ?? false) {
+        _scaffoldKey.currentState?.closeEndDrawer();
+      }
+
+      // Quay về màn hình chọn bàn thay vì chuyển đến thanh toán
+      if (mounted) {
+        try {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Đã gửi yêu cầu thanh toán cho bàn ${widget.tableName}',
+              ),
+            ),
+          );
+        } catch (e) {
+          // ignore if context is invalid
         }
 
-        // Chuyển đến màn hình thanh toán
-        Routes.pushRightLeftConsumerFul(
-          context,
-          ScreenPayment(
-            tableId: widget.tableId,
-            tableName: widget.tableName,
-            order: _currentOrder!,
-            orderItems: _existingOrderItems,
-          ),
-        );
+        // Use Timer to delay navigation after SnackBar is shown
+        _navigationTimer = Timer(const Duration(seconds: 2), () {
+          if (mounted && !_isDisposed) {
+            try {
+              Navigator.of(context).pop(); // Quay về màn hình chọn bàn
+            } catch (e) {
+              // ignore if navigation fails
+            }
+          }
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -362,23 +382,45 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
     }
   }
 
+  Future<void> _processPayment() async {
+    if (!mounted) return;
+    final currentOrder = ref.watch(_currentOrderProvider);
+    if (currentOrder == null || ref.watch(_isRequestingPaymentProvider)) {
+      return;
+    }
+
+    // Đóng drawer nếu đang mở
+    if (_scaffoldKey.currentState?.isEndDrawerOpen ?? false) {
+      _scaffoldKey.currentState?.closeEndDrawer();
+    }
+
+    // Chuyển đến màn hình thanh toán
+    if (mounted) {
+      try {
+        final existingOrderItems = ref.watch(_existingOrderItemsProvider);
+        Routes.pushRightLeftConsumerFul(
+          context,
+          ScreenPayment(
+            tableId: widget.tableId,
+            tableName: widget.tableName,
+            order: currentOrder,
+            orderItems: existingOrderItems,
+            companyId: currentOrder.companyId,
+          ),
+        );
+      } catch (e) {
+        // ignore if navigation fails
+      }
+    }
+  }
+
   Future<void> _reloadExistingOrder(Order order) async {
     try {
       final orderItemApi = ref.read(orderItemApiProvider);
       final items = await orderItemApi.getOrderItemsByOrderId(order.id);
       if (!mounted) return;
-      setState(() {
-        _currentOrder = order;
-        _existingOrderItems = items;
-      });
-
-      // Check if all order items are served (statusId == 3) and order is not already requesting payment
-      if (_existingOrderItems.isNotEmpty &&
-          _existingOrderItems.every((item) => item.statusId == 3) &&
-          _currentOrder?.statusId != 4) {
-        // Automatically request payment when all items are served
-        await _requestPayment();
-      }
+      ref.read(_currentOrderProvider.notifier).state = order;
+      ref.read(_existingOrderItemsProvider.notifier).state = items;
     } catch (e) {
       // ignore: avoid_print
       print('Lỗi tải lại order item: $e');
@@ -386,7 +428,8 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
   }
 
   List<_DisplayOrderItem> _buildExistingDisplay(List<Item> menuItems) {
-    if (_existingOrderItems.isEmpty) return <_DisplayOrderItem>[];
+    final existingOrderItems = ref.watch(_existingOrderItemsProvider);
+    if (existingOrderItems.isEmpty) return <_DisplayOrderItem>[];
 
     final menuMap = <int, Item>{};
     for (final menuItem in menuItems) {
@@ -397,7 +440,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
     }
 
     final Map<int, int> counts = {};
-    for (final orderItem in _existingOrderItems) {
+    for (final orderItem in existingOrderItems) {
       counts.update(
         orderItem.itemId,
         (value) => value + orderItem.quantity,
@@ -611,12 +654,13 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
     final drawerWidth = MediaQuery.of(context).size.width * 0.82;
 
     // Lọc menu theo từ khóa tìm kiếm
+    final searchKeyword = _searchController.text;
     final List<Item> filteredMenuItems =
-        _searchKeyword.isEmpty
+        searchKeyword.isEmpty
             ? _menuItems
             : _menuItems.where((item) {
               final itemName = _removeVietnameseDiacritics(item.name);
-              final keyword = _removeVietnameseDiacritics(_searchKeyword);
+              final keyword = _removeVietnameseDiacritics(searchKeyword);
               return itemName.contains(keyword);
             }).toList();
 
@@ -666,8 +710,9 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                     }
                     return RefreshIndicator(
                       onRefresh: () async {
-                        if (_currentOrder != null) {
-                          await _reloadExistingOrder(_currentOrder!);
+                        final currentOrder = ref.watch(_currentOrderProvider);
+                        if (currentOrder != null) {
+                          await _reloadExistingOrder(currentOrder);
                         }
                       },
                       child: ListView(
@@ -878,15 +923,28 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                         Expanded(
                           child: ElevatedButton(
                             onPressed:
-                                _currentOrder == null ||
+                                ref.watch(_currentOrderProvider) == null ||
                                         ref.watch(_isRequestingPaymentProvider)
                                     ? null
-                                    : _requestPayment,
+                                    : () {
+                                      // Kiểm tra role của user hiện tại
+                                      final user = ref.read(
+                                        userNotifierProvider,
+                                      );
+                                      if (user != null && user.role == 2) {
+                                        // Role 2 là thu ngân - chuyển đến thanh toán
+                                        _processPayment();
+                                      } else {
+                                        // Role khác (nhân viên) - yêu cầu thanh toán
+                                        _requestPayment();
+                                      }
+                                    },
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
-                                  _currentOrder?.statusId == 4
-                                      ? Colors.green
-                                      : Colors.orange,
+                                  ref.watch(_currentOrderProvider)?.statusId ==
+                                          4
+                                      ? Colors.orange
+                                      : Colors.green,
                             ),
                             child:
                                 ref.watch(_isRequestingPaymentProvider)
@@ -902,9 +960,23 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                                       ),
                                     )
                                     : Text(
-                                      _currentOrder?.statusId == 3
-                                          ? 'Đã yêu cầu'
-                                          : 'THANH TOÁN',
+                                      ref
+                                                  .watch(_currentOrderProvider)
+                                                  ?.statusId ==
+                                              4
+                                          ? 'Đã yêu cầu thanh toán'
+                                          : () {
+                                            // Kiểm tra role để hiển thị text phù hợp
+                                            final user = ref.read(
+                                              userNotifierProvider,
+                                            );
+                                            if (user != null &&
+                                                user.role == 2) {
+                                              return 'THANH TOÁN';
+                                            } else {
+                                              return 'YÊU CẦU THANH TOÁN';
+                                            }
+                                          }(),
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -942,9 +1014,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                     fontSize: 18,
                   ),
                   onChanged: (value) {
-                    setState(() {
-                      _searchKeyword = value;
-                    });
+                    // Trigger rebuild by using controller text directly in build
                   },
                 )
                 : Text(widget.tableName, style: Style.fontTitle),
@@ -966,7 +1036,6 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
               onPressed: () {
                 setState(() {
                   _showSearchBar = false;
-                  _searchKeyword = '';
                   _searchController.clear();
                 });
               },
@@ -1141,7 +1210,8 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
     final cartItems = ref.watch(cartNotifierProvider);
 
     // Highlight items that have already been ordered for this table
-    final orderedItemIds = _existingOrderItems.map((oi) => oi.itemId).toSet();
+    final existingOrderItems = ref.watch(_existingOrderItemsProvider);
+    final orderedItemIds = existingOrderItems.map((oi) => oi.itemId).toSet();
 
     return GridView.builder(
       padding: const EdgeInsets.only(bottom: 96),

@@ -175,11 +175,11 @@ class _ScreenReservationState extends ConsumerState<ScreenReservation> {
                 );
                 final allTables = ref.watch(tableNotifierProvider);
                 return unpaidTableIds.when(
-                  data: (unpaidIds) {
+                  data: (statusMap) {
                     // Bàn trống: tất cả bàn - bàn có khách
                     final availableTables =
                         allTables
-                            .where((table) => !unpaidIds.contains(table.id))
+                            .where((table) => !statusMap.containsKey(table.id))
                             .toList();
                     return Container(
                       padding: const EdgeInsets.all(12),

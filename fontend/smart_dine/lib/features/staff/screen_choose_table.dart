@@ -7,11 +7,13 @@ import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/cashier/screen_payment.dart';
 import 'package:mart_dine/features/revervation/screen_reservation.dart';
 import 'package:mart_dine/features/staff/screen_menu.dart';
+import 'package:mart_dine/features/staff/screen_notifications.dart';
 import 'package:mart_dine/features/staff/screen_settings.dart';
 import 'package:mart_dine/models/order.dart';
 import 'package:mart_dine/models/order_item.dart';
 import 'package:mart_dine/models/table.dart';
 import 'package:mart_dine/providers/table_provider.dart';
+import 'package:mart_dine/providers/user_provider.dart';
 import 'package:mart_dine/routes.dart';
 
 class ScreenChooseTable extends ConsumerStatefulWidget {
@@ -25,7 +27,8 @@ class ScreenChooseTable extends ConsumerStatefulWidget {
 class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
   // Search
   final TextEditingController _searchController = TextEditingController();
-  String _searchKeyword = '';
+
+  bool _isDisposed = false;
 
   // Loại bỏ dấu tiếng Việt cho tìm kiếm
   String _removeVietnameseDiacritics(String str) {
@@ -44,122 +47,228 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(_loadTables);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadTables();
+      }
+    });
   }
 
   //Load tables
   Future<void> _loadTables() async {
+    if (_isDisposed) return;
     final branchId = widget.branchId ?? 1;
-    await ref.read(tableNotifierProvider.notifier).loadTables(branchId);
-    ref.invalidate(unpaidTablesByBranchProvider(branchId));
+    try {
+      await ref.read(tableNotifierProvider.notifier).loadTables(branchId);
+      if (_isDisposed) return;
+      ref.invalidate(unpaidTablesByBranchProvider(branchId));
+    } catch (e) {
+      // Handle error silently
+      print('Error loading tables: $e');
+    }
   }
 
   // Thay thế phần _openTable trong screen_choose_table.dart
 
-Future<void> _openTable(DiningTable table, bool hasUnpaidOrders) async {
-  Order? initialOrder;
-  List<OrderItem> initialItems = const <OrderItem>[];
+  Future<void> _openTable(DiningTable table, bool hasUnpaidOrders) async {
+    if (!mounted) return;
 
-  if (hasUnpaidOrders) {
-    bool dialogOpened = false;
-    if (mounted) {
-      dialogOpened = true;
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Center(child: CircularProgressIndicator()),
-      );
+    // Kiểm tra trạng thái bàn để quyết định hành động
+    final unpaidTableStatus = ref.read(
+      unpaidTablesByBranchProvider(widget.branchId ?? 1),
+    );
+    final tableStatus = unpaidTableStatus.when(
+      data: (statusMap) => statusMap[table.id],
+      loading: () => null,
+      error: (_, __) => null,
+    );
+
+    // Nếu bàn có trạng thái yêu cầu thanh toán (status 4), kiểm tra role để quyết định hành động
+    if (tableStatus == 4) {
+      if (!mounted) return;
+
+      // Lấy thông tin user hiện tại để kiểm tra role
+      final user = ref.read(userNotifierProvider);
+      if (user != null && user.role == 2) {
+        // Role 2 là thu ngân - chuyển đến màn hình thanh toán
+        // Cần lấy thông tin order và orderItems trước
+        Order? currentOrder;
+        List<OrderItem> currentOrderItems = [];
+
+        try {
+          final orderApi = ref.read(orderApiProvider);
+          final orders = await orderApi.fetchOrdersByTableIdToday(table.id);
+
+          if (orders.isNotEmpty) {
+            orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+            // Find the most recent active order for this table.
+            for (final order in orders) {
+              if (order.statusId == 4) {
+                currentOrder = order;
+                break;
+              }
+            }
+
+            if (currentOrder != null) {
+              final orderItemApi = ref.read(orderItemApiProvider);
+              final items = await orderItemApi.getOrderItemsByOrderId(
+                currentOrder.id,
+              );
+              currentOrderItems = List<OrderItem>.from(items);
+
+              if (mounted) {
+                Routes.pushRightLeftConsumerFul(
+                  context,
+                  ScreenPayment(
+                    tableId: table.id,
+                    tableName: table.name,
+                    order: currentOrder,
+                    orderItems: currentOrderItems,
+                    companyId: currentOrder.companyId,
+                  ),
+                );
+              }
+            }
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Không thể tải thông tin order: $e')),
+            );
+          }
+        }
+      } else {
+        // Role khác (nhân viên) - hiển thị dialog thông báo thu ngân
+        try {
+          showDialog(
+            context: context,
+            builder: (BuildContext dialogContext) {
+              return AlertDialog(
+                title: Text('Thông báo thu ngân'),
+                content: Text(
+                  'Bàn ${table.name} đang yêu cầu thanh toán. Vui lòng thông báo cho thu ngân xử lý.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                    },
+                    child: const Text('Đóng'),
+                  ),
+                ],
+              );
+            },
+          );
+        } catch (e) {
+          // Widget unmounted, ignore
+        }
+      }
+      return;
     }
+
+    Order? initialOrder;
+    List<OrderItem> initialItems = const <OrderItem>[];
+
+    if (hasUnpaidOrders) {
+      bool dialogOpened = false;
+      if (mounted) {
+        dialogOpened = true;
+        try {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => const Center(child: CircularProgressIndicator()),
+          );
+        } catch (e) {
+          // Widget unmounted, ignore
+        }
+      }
+
+      try {
+        final orderApi = ref.read(orderApiProvider);
+        final orders = await orderApi.fetchOrdersByTableIdToday(table.id);
+
+        if (orders.isNotEmpty) {
+          orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+          // Find the most recent active order for this table.
+          // Active means statusId == 2 (being served) or statusId == 4 (requested payment).
+          Order? current;
+          for (final order in orders) {
+            if (order.statusId == 2 || order.statusId == 4) {
+              current = order;
+              break;
+            }
+          }
+
+          if (current != null) {
+            final orderItemApi = ref.read(orderItemApiProvider);
+            final items = await orderItemApi.getOrderItemsByOrderId(current.id);
+            initialOrder = current;
+            initialItems = List<OrderItem>.from(items);
+
+            // Không còn chuyển đến thanh toán cho status 4 ở đây nữa
+          } else {
+            // No active orders (e.g., all orders are paid - statusId == 3).
+            initialOrder = null;
+            initialItems = const <OrderItem>[];
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          try {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Không tải được order hiện tại: $e')),
+            );
+          } catch (e) {
+            // Widget unmounted, ignore
+          }
+        }
+      } finally {
+        if (mounted && dialogOpened) {
+          try {
+            Navigator.of(context, rootNavigator: true).pop();
+          } catch (e) {
+            // Widget unmounted, ignore
+          }
+        }
+      }
+    }
+
+    if (!mounted) return;
 
     try {
-      final orderApi = ref.read(orderApiProvider);
-      final orders = await orderApi.fetchOrdersByTableIdToday(table.id);
-
-      if (orders.isNotEmpty) {
-        orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-        // Find the most recent active order for this table.
-        // Active means statusId == 2 (being served) or statusId == 4 (requested payment).
-        Order? current;
-        for (final order in orders) {
-          if (order.statusId == 2 || order.statusId == 4) {
-            current = order;
-            break;
-          }
-        }
-
-        if (current != null) {
-          final orderItemApi = ref.read(orderItemApiProvider);
-          final items = await orderItemApi.getOrderItemsByOrderId(current.id);
-          initialOrder = current;
-          initialItems = List<OrderItem>.from(items);
-
-          // Nếu order có yêu cầu thanh toán (statusId == 4), chuyển đến màn hình thanh toán
-          if (current.statusId == 4) {
-            if (mounted && dialogOpened) {
-              Navigator.of(context, rootNavigator: true).pop();
-            }
-            
-            if (!mounted) return;
-            
-            Routes.pushRightLeftConsumerFul(
-              context,
-              ScreenPayment(
-                tableId: table.id,
-                tableName: table.name,
-                order: current,
-                orderItems: initialItems,
-              ),
-            );
-            return;
-          }
-        } else {
-          // No active orders (e.g., all orders are paid - statusId == 3).
-          initialOrder = null;
-          initialItems = const <OrderItem>[];
-        }
-      }
+      Routes.pushRightLeftConsumerFul(
+        context,
+        ScreenMenu(
+          tableId: table.id,
+          tableName: table.name,
+          branchId: widget.branchId ?? 1,
+          companyId: 1,
+          userId: 1,
+          initialOrder: initialOrder,
+          initialOrderItems: initialItems,
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Không tải được order hiện tại: $e')),
-        );
-      }
-    } finally {
-      if (mounted && dialogOpened) {
-        Navigator.of(context, rootNavigator: true).pop();
-      }
+      // Widget unmounted, ignore
     }
   }
-
-  if (!mounted) return;
-
-  Routes.pushRightLeftConsumerFul(
-    context,
-    ScreenMenu(
-      tableId: table.id,
-      tableName: table.name,
-      branchId: widget.branchId ?? 1,
-      companyId: 1,
-      userId: 1,
-      initialOrder: initialOrder,
-      initialOrderItems: initialItems,
-    ),
-  );
-}
 
   @override
   Widget build(BuildContext context) {
     final branchId = widget.branchId ?? 1;
-    final unpaidTableIds = ref.watch(unpaidTablesByBranchProvider(branchId));
+    final unpaidTableStatus = ref.watch(unpaidTablesByBranchProvider(branchId));
     final allTables = ref.watch(tableNotifierProvider);
+    final searchKeyword = _searchController.text;
     // Lọc bàn theo tên (không dấu, không phân biệt hoa thường)
     final List<DiningTable> tables =
-        _searchKeyword.isEmpty
+        searchKeyword.isEmpty
             ? allTables
             : allTables.where((table) {
               final tableName = _removeVietnameseDiacritics(table.name);
-              final keyword = _removeVietnameseDiacritics(_searchKeyword);
+              final keyword = _removeVietnameseDiacritics(searchKeyword);
               return tableName.contains(keyword);
             }).toList();
 
@@ -178,7 +287,12 @@ Future<void> _openTable(DiningTable table, bool hasUnpaidOrders) async {
             tooltip: 'Đặt bàn',
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              Routes.pushRightLeftConsumerFul(
+                context,
+                ScreenNotifications(branchId: widget.branchId),
+              );
+            },
             icon: const Icon(Icons.notifications_none),
             tooltip: 'Thông báo',
           ),
@@ -200,7 +314,7 @@ Future<void> _openTable(DiningTable table, bool hasUnpaidOrders) async {
             const SizedBox(height: 8),
             _search(context),
             const SizedBox(height: 16),
-            _buildTableGrid(context, tables, unpaidTableIds),
+            _buildTableGrid(context, tables, unpaidTableStatus),
             const SizedBox(height: 24),
           ],
         ),
@@ -235,9 +349,7 @@ Future<void> _openTable(DiningTable table, bool hasUnpaidOrders) async {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 0),
               ),
               onChanged: (value) {
-                setState(() {
-                  _searchKeyword = value;
-                });
+                // Trigger rebuild by using controller text directly in build
               },
             ),
           ),
@@ -255,7 +367,7 @@ Future<void> _openTable(DiningTable table, bool hasUnpaidOrders) async {
   Widget _buildTableGrid(
     BuildContext context,
     List<DiningTable> tables,
-    AsyncValue<Set<int>> unpaidTableIds,
+    AsyncValue<Map<int, int>> unpaidTableStatus,
   ) {
     return GridView.builder(
       shrinkWrap: true,
@@ -271,11 +383,14 @@ Future<void> _openTable(DiningTable table, bool hasUnpaidOrders) async {
       itemBuilder: (context, index) {
         final table = tables[index];
 
-        final bool hasUnpaidOrders = unpaidTableIds.when(
-          data: (ids) => ids.contains(table.id),
-          loading: () => false,
-          error: (_, __) => false,
+        final int? tableStatus = unpaidTableStatus.when(
+          data: (statusMap) => statusMap[table.id],
+          loading: () => null,
+          error: (_, __) => null,
         );
+
+        final bool hasUnpaidOrders = tableStatus != null;
+        final bool isPaymentRequested = tableStatus == 4;
 
         return InkWell(
           onTap: () => _openTable(table, hasUnpaidOrders),
@@ -285,12 +400,10 @@ Future<void> _openTable(DiningTable table, bool hasUnpaidOrders) async {
                 decoration: BoxDecoration(
                   color:
                       hasUnpaidOrders
-                          ? (Theme.of(context).brightness == Brightness.light
-                              ? Colors.green.shade400
-                              : Colors.green.shade500)
-                          : (Theme.of(context).brightness == Brightness.light
-                              ? Colors.grey.shade300
-                              : Colors.grey.shade700),
+                          ? (isPaymentRequested
+                              ? Colors.orange.shade400
+                              : Colors.green.shade400)
+                          : Colors.grey.shade300,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Padding(
