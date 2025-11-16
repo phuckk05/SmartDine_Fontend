@@ -23,20 +23,16 @@ class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
     final currentBranchId = ref.watch(currentBranchIdProvider);
     final isAuthenticated = ref.watch(isAuthenticatedProvider);
     
-    // Nếu chưa có session, tự động tạo mock session
-    if (!isAuthenticated || currentBranchId == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(userSessionProvider.notifier).mockLogin(branchId: 1);
-      });
-      
+    // Yêu cầu user phải đăng nhập
+    if (!isAuthenticated) {
       return const Scaffold(
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
+              Icon(Icons.login, size: 64, color: Colors.grey),
               SizedBox(height: 16),
-              Text('Đang khởi tạo phiên làm việc...'),
+              Text('Vui lòng đăng nhập để tiếp tục'),
             ],
           ),
         ),
@@ -44,8 +40,39 @@ class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
     }
 
     final branchIdInt = currentBranchId;
-    final statisticsAsyncValue = ref.watch(branchStatisticsProvider(branchIdInt));
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    if (branchIdInt == null) {
+      return Scaffold(
+        backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
+        appBar: widget.showBackButton
+          ? AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              title: Text('Báo cáo chi nhánh', style: Style.fontTitle),
+            )
+          : AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              title: Text('Báo cáo chi nhánh', style: Style.fontTitle),
+              automaticallyImplyLeading: false,
+            ),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.warning, size: 64, color: Colors.orange),
+              SizedBox(height: 16),
+              Text('Không tìm thấy thông tin chi nhánh'),
+              Text('Vui lòng đăng nhập lại'),
+            ],
+          ),
+        ),
+      );
+    }
+    final statisticsAsyncValue = ref.watch(branchStatisticsProvider(branchIdInt));
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
@@ -162,7 +189,7 @@ class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
                   _selectedPeriod = value!;
                 });
                 // Refresh data when period changes
-                final branchIdInt = ref.read(currentBranchIdProvider) ?? 1;
+                final branchIdInt = ref.read(currentBranchIdProvider)!;
                 // ignore: unused_result
                 ref.refresh(branchStatisticsProvider(branchIdInt));
               },

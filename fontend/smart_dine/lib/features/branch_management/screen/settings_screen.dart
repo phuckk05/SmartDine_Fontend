@@ -1,17 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/widgets/appbar.dart';
+import '../../../providers/employee_management_provider.dart';
+import '../../../providers/user_session_provider.dart';
+import '../../../API/branch_API.dart';
+import '../../../models/branch.dart';
+import '../../signin/screen_signin.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   final bool showBackButton;
   
   const SettingsScreen({super.key, this.showBackButton = true});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Style.colorLight : Style.colorDark;
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
+    
+    // Lấy thông tin user session
+    final userSession = ref.watch(userSessionProvider);
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
@@ -33,9 +42,9 @@ class SettingsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Hồ sơ nhà hàng
+            // Thông tin tài khoản đăng nhập
             Text(
-              'Hồ sơ nhà hàng',
+              'Thông tin tài khoản',
               style: Style.fontTitleMini.copyWith(color: textColor),
             ),
             const SizedBox(height: 12),
@@ -55,29 +64,151 @@ class SettingsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Thông tin chi nhánh',
-                    style: Style.fontNormal.copyWith(
-                      color: textColor,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  _buildInfoItem(
+                    Icons.person, 
+                    userSession.userName ?? 'Chưa có tên', 
+                    textColor, 
+                    label: 'Tên người dùng'
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Restaurant NHOM7 - Chi nhánh chính',
-                    style: Style.fontTitleMini.copyWith(color: textColor),
+                  const SizedBox(height: 8),
+                  _buildInfoItem(
+                    Icons.badge, 
+                    'ID: ${userSession.userId ?? 'N/A'}', 
+                    textColor, 
+                    label: 'Mã người dùng'
                   ),
-                  const SizedBox(height: 16),
-                  _buildInfoItem(Icons.email, 'luonghaha@gmail.com', textColor),
                   const SizedBox(height: 8),
-                  _buildInfoItem(Icons.phone, '0345245345', textColor),
+                  _buildInfoItem(
+                    Icons.business, 
+                    'Chi nhánh: ${userSession.currentBranchId ?? 'Chưa chọn'}', 
+                    textColor, 
+                    label: 'Chi nhánh hiện tại'
+                  ),
                   const SizedBox(height: 8),
-                  _buildInfoItem(Icons.location_on, 'USA 234234', textColor),
+                  _buildInfoItem(
+                    Icons.admin_panel_settings, 
+                    _getRoleName(userSession.userRole), 
+                    textColor, 
+                    label: 'Vai trò'
+                  ),
                   const SizedBox(height: 8),
-                  _buildInfoItem(Icons.calendar_today, '28-04-2025', textColor, label: 'Ngày thành lập'),
+                  _buildInfoItem(
+                    Icons.access_time, 
+                    userSession.loginTime?.toString().split('.')[0] ?? 'Chưa có', 
+                    textColor, 
+                    label: 'Thời gian đăng nhập'
+                  ),
+
                 ],
               ),
             ),
+            const SizedBox(height: 24),
+
+            // Hồ sơ nhà hàng
+            Text(
+              'Hồ sơ nhà hàng',
+              style: Style.fontTitleMini.copyWith(color: textColor),
+            ),
+            const SizedBox(height: 12),
+            
+            // Lấy thông tin branch thực tế
+            userSession.currentBranchId != null 
+              ? FutureBuilder<Branch?>(
+                  future: BranchAPI().getBranchById(userSession.currentBranchId.toString()),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: cardColor,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    
+                    final branch = snapshot.data;
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Thông tin chi nhánh',
+                            style: Style.fontNormal.copyWith(
+                              color: textColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            branch?.name ?? 'SmartDine - Chi nhánh ${userSession.currentBranchId}',
+                            style: Style.fontTitleMini.copyWith(color: textColor),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildInfoItem(Icons.business, branch?.branchCode ?? 'N/A', textColor, label: 'Mã chi nhánh'),
+                          const SizedBox(height: 8),
+                          _buildInfoItem(Icons.location_on, branch?.address ?? 'Chưa cập nhật', textColor),
+                          const SizedBox(height: 8),
+                          _buildInfoItem(Icons.calendar_today, branch?.createdAt.year.toString() ?? 'N/A', textColor, label: 'Năm thành lập'),
+                          const SizedBox(height: 8),
+                          _buildInfoItem(Icons.info, 'ID: ${branch?.id ?? userSession.currentBranchId}', textColor, label: 'Mã chi nhánh'),
+                          const SizedBox(height: 8),
+                          _buildInfoItem(Icons.apartment, 'ID: ${userSession.companyId ?? 'N/A'}', textColor, label: 'Công ty'),
+                        ],
+                      ),
+                    );
+                  },
+                )
+              : Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Thông tin chi nhánh',
+                        style: Style.fontNormal.copyWith(
+                          color: textColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Chưa có thông tin chi nhánh',
+                        style: Style.fontTitleMini.copyWith(color: Colors.orange),
+                      ),
+                    ],
+                  ),
+                ),
             const SizedBox(height: 24),
 
             // Hệ thống & hoạt động
@@ -100,17 +231,49 @@ class SettingsScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _buildSettingTile(
-                    'Tổng số nhân viên',
-                    '43',
-                    Icons.people,
-                    textColor,
-                    () {},
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final currentBranchId = ref.watch(currentBranchIdProvider);
+                      if (currentBranchId == null) {
+                        return _buildSettingTile(
+                          'Tổng số nhân viên',
+                          'Chưa có chi nhánh',
+                          Icons.people,
+                          textColor,
+                          () {},
+                        );
+                      }
+                      
+                      final employeesAsyncValue = ref.watch(employeeManagementProvider(currentBranchId));
+                      return employeesAsyncValue.when(
+                        loading: () => _buildSettingTile(
+                          'Tổng số nhân viên',
+                          'Đang tải...',
+                          Icons.people,
+                          textColor,
+                          () {},
+                        ),
+                        error: (error, stackTrace) => _buildSettingTile(
+                          'Tổng số nhân viên',
+                          'Lỗi tải dữ liệu',
+                          Icons.people,
+                          Colors.red,
+                          () {},
+                        ),
+                        data: (employees) => _buildSettingTile(
+                          'Tổng số nhân viên',
+                          '${employees.length}',
+                          Icons.people,
+                          textColor,
+                          () {},
+                        ),
+                      );
+                    },
                   ),
                   const Divider(height: 1),
                   _buildSettingTile(
-                    'Đơn dịch vụ đang vận hành',
-                    'free',
+                    'Dịch vụ đang sử dụng',
+                    'SmartDine Pro',
                     Icons.workspace_premium,
                     textColor,
                     () {},
@@ -127,7 +290,7 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Giấy phép kinh doanh của nhánh G6M',
+              'Giấy phép kinh doanh của chi nhánh ${userSession.currentBranchId ?? 'N/A'}',
               style: Style.fontCaption.copyWith(color: Style.textColorGray),
             ),
             const SizedBox(height: 12),
@@ -192,7 +355,7 @@ class SettingsScreen extends StatelessWidget {
               height: 50,
               child: ElevatedButton(
                 onPressed: () {
-                  _showLogoutDialog(context);
+                  _showLogoutDialog(context, ref);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
@@ -286,7 +449,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  void _showLogoutDialog(BuildContext context) {
+  void _showLogoutDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -298,16 +461,53 @@ class SettingsScreen extends StatelessWidget {
             child: const Text('Hủy'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Đã đăng xuất')),
-              );
+              
+              // Thực hiện đăng xuất
+              await ref.read(userSessionProvider.notifier).logout();
+              
+              // Hiển thị thông báo
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Đã đăng xuất thành công'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                
+                // Chuyển về màn hình đăng nhập
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ScreenSignIn(),
+                  ),
+                  (route) => false, // Xóa tất cả các route trước đó
+                );
+              }
             },
-            child: const Text('Đăng xuất'),
+            child: const Text('Đăng xuất', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
+  }
+
+  // Helper method để lấy tên vai trò
+  String _getRoleName(int? role) {
+    switch (role) {
+      case 1:
+        return 'Quản trị viên';
+      case 2:
+        return 'Quản lý chi nhánh';
+      case 3:
+        return 'Nhân viên';
+      case 4:
+        return 'Đầu bếp';
+      case 5:
+        return 'Chủ sở hữu';
+      default:
+        return 'Không xác định';
+    }
   }
 }

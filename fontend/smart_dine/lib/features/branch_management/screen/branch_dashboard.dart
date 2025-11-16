@@ -24,56 +24,67 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
     final currentBranchId = ref.watch(currentBranchIdProvider);
     final isAuthenticated = ref.watch(isAuthenticatedProvider);
     
-    // Nếu chưa có session, tự động tạo mock session (chỉ cho development)
-    if (!isAuthenticated && currentBranchId == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        // Chỉ mock khi thực sự không có session nào
-        final session = ref.read(userSessionProvider);
-        if (session.userId == null) {
-          ref.read(userSessionProvider.notifier).mockLogin(branchId: 1);
-        }
-      });
-      
+    // Kiểm tra authentication - yêu cầu user phải đăng nhập
+    if (!isAuthenticated) {
       return Scaffold(
         backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Style.backgroundColor,
         body: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
+              Icon(Icons.login, size: 64, color: Colors.grey),
               SizedBox(height: 16),
-              Text('Đang khởi tạo phiên làm việc...'),
+              Text('Vui lòng đăng nhập để tiếp tục'),
             ],
           ),
         ),
       );
     }
 
-    final branchIdInt = currentBranchId!; // Safe to use ! here since we checked above
-    final statisticsAsyncValue = ref.watch(branchStatisticsProvider(branchIdInt));
+    final branchIdInt = currentBranchId;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    if (branchIdInt == null) {
+      return Scaffold(
+        backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.warning, size: 64, color: Colors.orange),
+              SizedBox(height: 16),
+              Text('Không tìm thấy thông tin chi nhánh'),
+              Text('Vui lòng đăng nhập lại'),
+            ],
+          ),
+        ),
+      );
+    }
+    final statisticsAsyncValue = ref.watch(branchStatisticsProvider(branchIdInt));
     
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
       body: SafeArea(
         child: statisticsAsyncValue.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error, size: 64, color: Colors.red),
-                const SizedBox(height: 16),
-                Text('Lỗi tải dữ liệu: $error'),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    // ignore: unused_result
-                    ref.refresh(branchStatisticsProvider(branchIdInt));
-                  },
-                  child: const Text('Thử lại'),
-                ),
-              ],
+          error: (error, stackTrace) => RefreshIndicator(
+            onRefresh: () async {
+              return ref.refresh(branchStatisticsProvider(branchIdInt));
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(),
+                  const SizedBox(height: 20),
+                  // Hiển thị các card với thông báo "Chưa có dữ liệu"
+                  _buildEmptyMetricsCards(isDark),
+                  const SizedBox(height: 20),
+                  _buildQuickActions(isDark),
+                ],
+              ),
             ),
           ),
           data: (statistics) => RefreshIndicator(
@@ -350,6 +361,112 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyMetricsCards(bool isDark) {
+    final cardColor = isDark ? Colors.grey[900]! : Colors.white;
+    final textColor = isDark ? Style.colorLight : Style.colorDark;
+    
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      childAspectRatio: 1.5,
+      children: [
+        _buildEmptyMetricCard(
+          'Doanh thu hôm nay',
+          Icons.attach_money,
+          Colors.green,
+          cardColor,
+          textColor,
+        ),
+        _buildEmptyMetricCard(
+          'Đơn hàng',
+          Icons.receipt_long,
+          Colors.blue,
+          cardColor,
+          textColor,
+        ),
+        _buildEmptyMetricCard(
+          'Khách hàng mới',
+          Icons.people,
+          Colors.orange,
+          cardColor,
+          textColor,
+        ),
+        _buildEmptyMetricCard(
+          'Giá trị TB/đơn',
+          Icons.trending_up,
+          Colors.purple,
+          cardColor,
+          textColor,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyMetricCard(
+    String title,
+    IconData icon,
+    Color iconColor,
+    Color cardColor,
+    Color textColor,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: iconColor.withOpacity(0.5), size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: Style.fontContent.copyWith(
+                    color: textColor.withOpacity(0.7),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Chưa có dữ liệu',
+            style: Style.fontTitleMini.copyWith(
+              color: Colors.orange,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'API chưa trả về dữ liệu',
+            style: Style.fontContent.copyWith(
+              color: textColor.withOpacity(0.5),
+              fontSize: 10,
+            ),
+          ),
+        ],
       ),
     );
   }

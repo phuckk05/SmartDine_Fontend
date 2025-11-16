@@ -1,9 +1,12 @@
 // import 'package:email_validator/email_validator.dart';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
+import 'package:mart_dine/features/bottom_Navigation/bottom_navigation.dart';
 import 'package:mart_dine/features/forgot_passwork/screens/screen_findaccuont.dart';
 import 'package:mart_dine/features/signup/screen_select_signup.dart';
 // import 'package:mart_dine/features/staff/screen_choose_table.dart'; // Tạm ẩn
@@ -81,48 +84,65 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
         return;
       } else if (user.statusId == 1) {
         // Đã duyệt
-                // Kiểm tra role và hiển thị thông tin
+        // Kiểm tra role và hiển thị thông tin
         String roleName = '';
         int? branchId;
         switch (user.role) {
           case 1:
             roleName = 'Administrator';
+            // Admin không cần branchId cụ thể
             break;
           case 2:
             roleName = 'Manager';
+            // Manager: tìm chi nhánh mà user này là manager (manager_id trong bảng branches)
             branchId = await ref
                 .read(branchNotifierProvider.notifier)
-                .getBranchIdByUserId(user.id as int);
+                .getBranchIdByManagerId(user.id as int);
+
             break;
           case 3:
             roleName = 'Staff';
+            // Staff: tìm trong bảng user_branches
             branchId = await ref
                 .read(branchNotifierProvider.notifier)
                 .getBranchIdByUserId(user.id as int);
+
+            break;
           case 4:
             roleName = 'Chef';
+            // Chef: tìm trong bảng user_branches
             branchId = await ref
                 .read(branchNotifierProvider.notifier)
                 .getBranchIdByUserId(user.id as int);
+
             break;
           case 5:
             roleName = 'Owner';
+            // Owner không cần branchId cụ thể hoặc có thể truy cập tất cả
             break;
           default:
             roleName = 'Staff';
             branchId = await ref
                 .read(branchNotifierProvider.notifier)
                 .getBranchIdByUserId(user.id as int);
+            break;
         }
 
+
+
         // Lưu user session cho branch management
-        await ref.read(userSessionProvider.notifier).login(
-          userId: user.id ?? 0,
-          userName: user.fullName,
-          userRole: user.role ?? 3,
-          branchIds: branchId != null ? [branchId] : [],
-          defaultBranchId: branchId,
-        );
+        await ref
+            .read(userSessionProvider.notifier)
+            .login(
+              userId: user.id ?? 0,
+              userName: user.fullName,
+              userRole: user.role ?? 3,
+              companyId: user.companyId,
+              branchIds: branchId != null ? [branchId] : [],
+              defaultBranchId: branchId,
+            );
+
+
 
         Constrats.showThongBao(
           context,
@@ -130,7 +150,13 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
         );
 
         // Điều hướng dựa theo role
-        if (user.role == 2) {
+        if (user.role == 1) {
+          // Admin
+          Routes.pushRightLeftConsumerFul(
+            context,
+            const ScreenBottomNavigation(index: 2),
+          );
+        } else if (user.role == 2) {
           // Manager -> Màn hình quản lý chi nhánh
           Navigator.pushReplacement(
             context,
@@ -139,14 +165,19 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
             ),
           );
         } else if (user.role == 3) {
-          // Staff -> Màn hình chọn bàn (Tạm ẩn)
-          // TODO: Sẽ mở lại khi cần thiết
+          // Staff -> Tạm thời chuyển về Bottom Navigation (có thể thay đổi sau)
           Constrats.showThongBao(
             context,
-            'Chức năng nhân viên đang được phát triển.',
+            'Chức năng nhân viên đang được phát triển. Chuyển về màn hình chính.',
           );
           
-          /* Tạm comment phần chọn bàn
+          // Tạm thời chuyển về bottom navigation với index 0 (Home)
+          Routes.pushRightLeftConsumerFul(
+            context,
+            const ScreenBottomNavigation(index: 0),
+          );
+
+          /* TODO: Sẽ mở lại khi có màn hình chọn bàn
           // Try to resolve companyId from branchId if available
           int? companyId;
           if (branchId != null) {
@@ -165,26 +196,38 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
             ),
           );
           */
-          // if (user.role == 1) {
-          //   Routes.pushRightLeftConsumerFul(context, AdminHomeScreen());
-          // } else if (user.role == 2) {
-          //   Routes.pushRightLeftConsumerFul(context, ManagerHomeScreen());
-          // } else if (user.role == 3) {
-          //   Routes.pushRightLeftConsumerFul(context, StaffHomeScreen());
-          // } else if (user.role == 4) {
-          //   Routes.pushRightLeftConsumerFul(context, ChefHomeScreen());
-          // } else if (user.role == 5) {
-          //   Routes.pushRightLeftConsumerFul(context, OwnerHomeScreen());
-          // }
+        } else if (user.role == 4) {
+          // Chef
+          Routes.pushRightLeftConsumerFul(
+            context,
+            const ScreenBottomNavigation(index: 1),
+          );
+        } else if (user.role == 5) {
+          // Owner -> Chuyển về Bottom Navigation với quyền admin
+          Routes.pushRightLeftConsumerFul(
+            context,
+            const ScreenBottomNavigation(index: 2),
+          );
+        } else {
+          // Default fallback cho các role không xác định
+          Constrats.showThongBao(
+            context,
+            'Vai trò không xác định. Chuyển về màn hình chính.',
+          );
+          Routes.pushRightLeftConsumerFul(
+            context,
+            const ScreenBottomNavigation(index: 0),
+          );
         }
-      } else {
+      } 
+    }
+    else {
         Constrats.showThongBao(
           context,
           'Đăng nhập không thành công. Vui lòng kiểm tra lại email và mật khẩu.',
         );
       }
       ref.read(isLoadingNotifierProvider.notifier).toggle(false);
-    }
   }
 
   //Hàm dispose

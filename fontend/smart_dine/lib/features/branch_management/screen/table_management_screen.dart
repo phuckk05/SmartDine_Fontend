@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
@@ -125,12 +126,8 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
     final currentBranchId = ref.watch(currentBranchIdProvider);
     final isAuthenticated = ref.watch(isAuthenticatedProvider);
     
-    // Nếu chưa có session, tự động tạo mock session
+    // Yêu cầu user phải đăng nhập
     if (!isAuthenticated || currentBranchId == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(userSessionProvider.notifier).mockLogin(branchId: 1);
-      });
-      
       return Scaffold(
         backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Style.backgroundColor,
         appBar: widget.showBackButton
@@ -151,9 +148,9 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
+              Icon(Icons.login, size: 64, color: Colors.grey),
               SizedBox(height: 16),
-              Text('Đang khởi tạo phiên làm việc...'),
+              Text('Vui lòng đăng nhập để tiếp tục'),
             ],
           ),
         ),
@@ -1177,13 +1174,15 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
   void _showSuccessDialog(BuildContext context, String message, bool isDark, Color cardColor) {
     showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        // Auto close after 1.5 seconds
-        Future.delayed(const Duration(milliseconds: 1500), () {
-          if (Navigator.canPop(context)) {
-            Navigator.pop(context);
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) {
+        // Auto close after 2 seconds - sử dụng Timer
+        Timer? timer;
+        timer = Timer(const Duration(milliseconds: 2000), () {
+          if (dialogContext.mounted && Navigator.of(dialogContext).canPop()) {
+            Navigator.of(dialogContext).pop();
           }
+          timer?.cancel();
         });
         
         return Dialog(
@@ -1215,6 +1214,24 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
                     color: isDark ? Style.colorLight : Style.colorDark,
                   ),
                   textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                // Thêm button đóng
+                ElevatedButton(
+                  onPressed: () {
+                    timer?.cancel();
+                    Navigator.of(dialogContext).pop();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'Đóng',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             ),

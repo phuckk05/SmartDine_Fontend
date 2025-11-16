@@ -24,13 +24,8 @@ class _TodayActivitiesScreenState extends ConsumerState<TodayActivitiesScreen> {
     final currentBranchId = ref.watch(currentBranchIdProvider);
     final isAuthenticated = ref.watch(isAuthenticatedProvider);
     
-    // Nếu chưa có session, tự động tạo mock session
-    if (!isAuthenticated || currentBranchId == null) {
-      // Tự động mock login với branch mặc định
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(userSessionProvider.notifier).mockLogin(branchId: 1);
-      });
-      
+    // Yêu cầu user phải đăng nhập
+    if (!isAuthenticated) {
       return Scaffold(
         backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
         appBar: AppBarCus(
@@ -42,16 +37,39 @@ class _TodayActivitiesScreenState extends ConsumerState<TodayActivitiesScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
+              Icon(Icons.login, size: 64, color: Colors.grey),
               SizedBox(height: 16),
-              Text('Đang khởi tạo phiên làm việc...'),
+              Text('Vui lòng đăng nhập để tiếp tục'),
             ],
           ),
         ),
       );
     }
     
-    final todayActivitiesAsync = ref.watch(todayActivitiesProvider(currentBranchId));
+    final branchIdInt = currentBranchId;
+    
+    if (branchIdInt == null) {
+      return Scaffold(
+        backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
+        appBar: AppBarCus(
+          title: 'Hoạt động hôm nay',
+          isCanpop: true,
+          isButtonEnabled: true,
+        ),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.warning, size: 64, color: Colors.orange),
+              SizedBox(height: 16),
+              Text('Không tìm thấy thông tin chi nhánh'),
+              Text('Vui lòng đăng nhập lại'),
+            ],
+          ),
+        ),
+      );
+    }
+    final todayActivitiesAsync = ref.watch(todayActivitiesProvider(branchIdInt));
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
@@ -93,7 +111,7 @@ class _TodayActivitiesScreenState extends ConsumerState<TodayActivitiesScreen> {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
-                  ref.read(todayActivitiesProvider(currentBranchId).notifier).refresh();
+                  ref.read(todayActivitiesProvider(branchIdInt).notifier).refresh();
                 },
                 child: const Text('Thử lại'),
               ),

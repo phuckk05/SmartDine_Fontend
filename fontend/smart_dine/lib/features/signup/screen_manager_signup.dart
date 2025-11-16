@@ -94,7 +94,6 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
     final result = await cloudinaryAPI.getURL(file);
     if (result != "0") {
       ref.read(_imageUrlProvider.notifier).state = result.toString();
-
     } else {
       Constrats.showThongBao(context, "Lỗi chọn ảnh");
     }
@@ -128,7 +127,7 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
       Constrats.showThongBao(context, "Không có internet !");
     } else {
       final imageUrl = ref.watch(_imageUrlProvider);
-            if (_nameController.text.isNotEmpty &&
+      if (_nameController.text.isNotEmpty &&
           _addressController.text.isNotEmpty &&
           _codeController.text.isNotEmpty &&
           _codeRestaurantController.text.isNotEmpty &&
@@ -330,10 +329,7 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
                             ? Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(
-                                  "Giấy phép kinh doanh",
-                                  style: Style.fontContent,
-                                ),
+                                Text("Giấy phép", style: Style.fontContent),
                                 const Icon(Icons.add, color: Colors.grey),
                               ],
                             )

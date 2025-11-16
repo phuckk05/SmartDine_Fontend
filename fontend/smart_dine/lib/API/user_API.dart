@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/user.dart';
@@ -28,10 +29,18 @@ class UserAPI {
       Uri.parse('$uri2/email/${Uri.encodeComponent(email)}'),
       headers: {'Content-Type': 'application/json'},
     );
+
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = jsonDecode(response.body);
-      return User.fromMap(data);
+      final user = User.fromMap(data);
+
+      /// Lưu vào SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user', jsonEncode(user.toMap()));
+
+      return user;
     }
+
     return null;
   }
 
@@ -43,17 +52,28 @@ class UserAPI {
         headers: {'Content-Type': 'application/json'},
       );
 
-                  if (response.statusCode == 200) {
+      print('🔍 [API] Login response status: ${response.statusCode}');
+      print('🔍 [API] Login response body: ${response.body}');
+
+      if (response.statusCode == 200) {
         if (response.body.isEmpty) {
           print('Empty response body');
           return null;
         }
         final Map<String, dynamic> data = jsonDecode(response.body);
-        return User.fromMap(data);
+        print('🔍 [API] Parsed user data: $data');
+
+        final user = User.fromMap(data);
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user', jsonEncode(user.toMap()));
+
+        print('🔍 [API] User object - id: ${user.id}, name: ${user.fullName}');
+        return user;
       }
       return null;
     } catch (e) {
-            return null;
+      print('🔍 [API] Login error: $e');
+      return null;
     }
   }
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
@@ -5,6 +6,7 @@ import 'package:bcrypt/bcrypt.dart';
 import '../../../models/user.dart';
 import '../../../providers/employee_management_provider.dart';
 import '../../../providers/user_session_provider.dart';
+import '../../../providers/user_approval_provider.dart';
 
 // Status class for user statuses
 class UserStatus {
@@ -98,16 +100,8 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
     final currentBranchId = ref.watch(currentBranchIdProvider);
     final isAuthenticated = ref.watch(isAuthenticatedProvider);
     
-    // Nếu chưa có session, tự động tạo mock session (chỉ cho development)
-    if (!isAuthenticated && currentBranchId == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        // Chỉ mock khi thực sự không có session nào
-        final session = ref.read(userSessionProvider);
-        if (session.userId == null) {
-          ref.read(userSessionProvider.notifier).mockLogin(branchId: 1);
-        }
-      });
-      
+    // Yêu cầu user phải đăng nhập
+    if (!isAuthenticated) {
       return Scaffold(
         backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Style.backgroundColor,
         appBar: widget.showBackButton
@@ -128,19 +122,79 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
+              Icon(Icons.login, size: 64, color: Colors.grey),
               SizedBox(height: 16),
-              Text('Đang khởi tạo phiên làm việc...'),
+              Text('Vui lòng đăng nhập để tiếp tục'),
             ],
           ),
         ),
       );
     }
 
-    final branchId = currentBranchId!; // Safe since we checked above
+    final branchId = currentBranchId;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    // Debug: Kiểm tra session
+    print('🔍 [EMPLOYEE_MGR] currentBranchId: $currentBranchId');
+    print('🔍 [EMPLOYEE_MGR] isAuthenticated: $isAuthenticated');
+    
+    // Debug: Hiển thị thông tin session trên màn hình
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final session = ref.read(userSessionProvider);
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Debug Session Info'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('isAuthenticated: ${session.isAuthenticated}'),
+              Text('userId: ${session.userId}'),
+              Text('userRole: ${session.userRole}'),
+              Text('companyId: ${session.companyId}'),
+              Text('currentBranchId: ${session.currentBranchId}'),
+              Text('branchIds: ${session.branchIds}'),
+              SizedBox(height: 10),
+              Text('Provider values:', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text('currentBranchIdProvider: $currentBranchId'),
+              Text('isAuthenticatedProvider: $isAuthenticated'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Close'),
+            ),
+          ],
+        ),
+      );
+    });
+    
+    if (branchId == null) {
+      return Scaffold(
+        backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          title: Text('Quản lý nhân viên', style: Style.fontTitle),
+        ),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.warning, size: 64, color: Colors.orange),
+              SizedBox(height: 16),
+              Text('Không tìm thấy thông tin chi nhánh'),
+              Text('Vui lòng đăng nhập lại'),
+            ],
+          ),
+        ),
+      );
+    }
 
     final employeesAsyncValue = ref.watch(employeeManagementProvider(branchId));
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Style.colorLight : Style.colorDark;
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
 
@@ -185,7 +239,10 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
-                  ref.invalidate(employeeManagementProvider(ref.read(currentBranchIdProvider)!));
+                  final branchId = ref.read(currentBranchIdProvider);
+                  if (branchId != null) {
+                    ref.invalidate(employeeManagementProvider(branchId));
+                  }
                 },
                 child: const Text('Thử lại'),
               ),
@@ -209,6 +266,81 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
+          // Nút Nhân viên chờ duyệt
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Consumer(
+              builder: (context, ref, child) {
+                final currentBranchId = ref.watch(currentBranchIdProvider);
+                if (currentBranchId == null) {
+                  return const SizedBox.shrink();
+                }
+                
+                final pendingUsersAsync = ref.watch(pendingUsersByBranchProvider(currentBranchId));
+                
+                return pendingUsersAsync.when(
+                  loading: () => Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ElevatedButton.icon(
+                      onPressed: null,
+                      icon: const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      ),
+                      label: const Text(
+                        'Đang tải tài khoản bị khóa...',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange.withOpacity(0.7),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  error: (error, stack) => Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showPendingUsersDialog(context, currentBranchId, isDark),
+                      icon: const Icon(Icons.person_add_alt_1, color: Colors.white),
+                      label: const Text(
+                        'Tài khoản bị khóa (0)',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  data: (pendingUsers) => Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showPendingUsersDialog(context, currentBranchId, isDark),
+                      icon: const Icon(Icons.person_add_alt_1, color: Colors.white),
+                      label: Text(
+                        'Tài khoản bị khóa (${pendingUsers.length})',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
           // Search bar
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -649,7 +781,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
                                         backImage: null,
                                       ).copyWith(
                                         role: _selectedRoleId,
-                                        companyId: 1, // Mock company ID
+                                        companyId: ref.read(currentCompanyIdProvider),
                                         roleName: _roles.firstWhere((r) => r.id == _selectedRoleId).name,
                                         statusName: _userStatuses.firstWhere((s) => s.id == _selectedStatusId).name,
                                         branchIds: [branchId],
@@ -1080,13 +1212,15 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
   void _showSuccessDialog(BuildContext context, String message, bool isDark, Color cardColor) {
     showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        // Auto close after 1.5 seconds
-        Future.delayed(const Duration(milliseconds: 1500), () {
-          if (Navigator.canPop(context)) {
-            Navigator.pop(context);
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) {
+        // Auto close after 2 seconds - sử dụng Timer để tránh memory leak
+        Timer? timer;
+        timer = Timer(const Duration(milliseconds: 2000), () {
+          if (dialogContext.mounted && Navigator.of(dialogContext).canPop()) {
+            Navigator.of(dialogContext).pop();
           }
+          timer?.cancel();
         });
         
         return Dialog(
@@ -1117,7 +1251,24 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
                   style: Style.fontTitle.copyWith(
                     color: isDark ? Style.colorLight : Style.colorDark,
                   ),
-                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                // Thêm button đóng để user có thể đóng thủ công
+                ElevatedButton(
+                  onPressed: () {
+                    timer?.cancel();
+                    Navigator.of(dialogContext).pop();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'Đóng',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             ),
@@ -1125,5 +1276,230 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
         );
       },
     );
+  }
+
+  // Dialog hiển thị danh sách nhân viên chờ duyệt
+  void _showPendingUsersDialog(BuildContext context, int branchId, bool isDark) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.9,
+            height: MediaQuery.of(context).size.height * 0.7,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Tài khoản bị khóa',
+                      style: Style.fontTitleMini.copyWith(
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(
+                        Icons.close,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(),
+                // List of pending users
+                Expanded(
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      final pendingUsersAsync = ref.watch(userApprovalProvider(branchId));
+                      
+                      return pendingUsersAsync.when(
+                        loading: () => const Center(child: CircularProgressIndicator()),
+                        error: (error, stack) => Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.error, color: Colors.red, size: 48),
+                              const SizedBox(height: 16),
+                              Text('Lỗi: $error'),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: () => ref.refresh(userApprovalProvider(branchId)),
+                                child: const Text('Thử lại'),
+                              ),
+                            ],
+                          ),
+                        ),
+                        data: (pendingUsers) => pendingUsers.isEmpty
+                          ? const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.check_circle, color: Colors.green, size: 48),
+                                  SizedBox(height: 16),
+                                  Text('Không có tài khoản bị khóa'),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: pendingUsers.length,
+                              itemBuilder: (context, index) {
+                                final user = pendingUsers[index];
+                                return _buildPendingUserCard(context, user, branchId, isDark);
+                              },
+                            ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Card cho từng user chờ duyệt
+  Widget _buildPendingUserCard(BuildContext context, User user, int branchId, bool isDark) {
+    return Card(
+      color: isDark ? Colors.grey[800] : Colors.white,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: Colors.orange,
+                  child: Text(
+                    user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : '?',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user.fullName,
+                        style: Style.fontTitleMini.copyWith(
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                      Text(
+                        user.email,
+                        style: Style.fontContent.copyWith(
+                          color: isDark ? Colors.grey[300] : Colors.grey[600],
+                        ),
+                      ),
+                      Text(
+                        user.phone,
+                        style: Style.fontContent.copyWith(
+                          color: isDark ? Colors.grey[300] : Colors.grey[600],
+                        ),
+                      ),
+                      // Hiển thị trạng thái
+                      Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: user.statusId == 0 ? Colors.red.withOpacity(0.2) : Colors.green.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          user.statusId == 0 ? 'Bị khóa' : 'Hoạt động',
+                          style: TextStyle(
+                            color: user.statusId == 0 ? Colors.red : Colors.green,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: () => _rejectUser(context, user.id!, branchId),
+                  icon: const Icon(Icons.close, color: Colors.red),
+                  label: const Text('Từ chối', style: TextStyle(color: Colors.red)),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  onPressed: () => _approveUser(context, user.id!, branchId),
+                  icon: const Icon(Icons.check, color: Colors.white),
+                  label: const Text('Kích hoạt', style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Duyệt user
+  void _approveUser(BuildContext context, int userId, int branchId) async {
+    final notifier = ref.read(userApprovalProvider(branchId).notifier);
+    final success = await notifier.approveUser(userId);
+    
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Đã kích hoạt tài khoản thành công'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      // Refresh employee list
+      _refreshEmployees();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Có lỗi xảy ra khi kích hoạt tài khoản'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // Từ chối user
+  void _rejectUser(BuildContext context, int userId, int branchId) async {
+    final notifier = ref.read(userApprovalProvider(branchId).notifier);
+    final success = await notifier.rejectUser(userId, 'Không đáp ứng yêu cầu');
+    
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Đã từ chối nhân viên'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Có lỗi xảy ra khi từ chối nhân viên'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

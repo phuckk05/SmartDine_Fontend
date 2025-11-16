@@ -3,6 +3,7 @@ import 'package:mart_dine/features/branch_management/screen/branch_dashboard.dar
 import 'package:mart_dine/features/branch_management/screen/employee_management_screen.dart';
 import 'package:mart_dine/features/branch_management/screen/table_management_screen.dart';
 import 'package:mart_dine/features/branch_management/screen/branch_reports_screen.dart';
+import 'package:mart_dine/features/branch_management/screen/settings_screen.dart';
 
 class BranchManagementNavigation extends StatefulWidget {
   const BranchManagementNavigation({super.key});
@@ -14,12 +15,13 @@ class BranchManagementNavigation extends StatefulWidget {
 class _BranchManagementNavigationState extends State<BranchManagementNavigation> {
   int _selectedIndex = 0;
   
-  // Các màn hình của Branch Management - 4 tabs chính
+  // Các màn hình của Branch Management - 5 tabs chính
   final List<Widget> _screens = [
     const BranchDashboardScreen(),
     const EmployeeManagementScreen(showBackButton: false),
-              const TableManagementScreen(showBackButton: false),
+    const TableManagementScreen(showBackButton: false),
     const BranchReportsScreen(showBackButton: false),
+    const SettingsScreen(showBackButton: false),
   ];
 
   void _onItemTapped(int index) {
@@ -72,6 +74,11 @@ class _BranchManagementNavigationState extends State<BranchManagementNavigation>
             icon: Icon(Icons.analytics_outlined),
             activeIcon: Icon(Icons.analytics, color: Colors.blue),
             label: 'Báo cáo',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings_outlined),
+            activeIcon: Icon(Icons.settings, color: Colors.blue),
+            label: 'Cài đặt',
           ),
         ],
       ),
