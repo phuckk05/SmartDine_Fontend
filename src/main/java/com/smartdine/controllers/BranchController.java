@@ -39,8 +39,7 @@ public class BranchController {
             final Branch createBranch = branchServices.create(branch);
             return ResponseEntity.ok(createBranch);
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().body(e.getMessage());
+            return ResponseEntity.internalServerError().body("Lỗi tạo chi nhánh: " + e.getMessage());
         }
     }
 
@@ -54,8 +53,7 @@ public class BranchController {
             }
             return ResponseEntity.ok(updated);
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().body(e.getMessage());
+            return ResponseEntity.internalServerError().body("Lỗi cập nhật chi nhánh: " + e.getMessage());
         }
     }
 
@@ -88,8 +86,7 @@ public class BranchController {
             List<Branch> branches = branchServices.getByCompanyId(companyId);
             return ResponseEntity.ok(branches);
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().body(e.getMessage());
+            return ResponseEntity.internalServerError().body("Lỗi lấy chi nhánh theo công ty: " + e.getMessage());
         }
     }
 
@@ -110,6 +107,42 @@ public class BranchController {
             return ResponseEntity.ok(statistics);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+        }
+    }
+
+    // Lấy danh sách chi nhánh theo managerId
+    @GetMapping("/manager/{managerId}")
+    public ResponseEntity<?> getBranchesByManager(@PathVariable Integer managerId) {
+        try {
+            List<Branch> branches = branchServices.getAll()
+                .stream()
+                .filter(branch -> branch.getManagerId().equals(managerId))
+                .collect(java.util.stream.Collectors.toList());
+            return ResponseEntity.ok(branches);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Lỗi " + e.getMessage());
+        }
+    }
+
+    // Cập nhật trạng thái chi nhánh
+    @PutMapping("/{branchId}/status")
+    public ResponseEntity<?> updateBranchStatus(@PathVariable Integer branchId, @RequestBody Map<String, Integer> statusUpdate) {
+        try {
+            Branch branch = branchServices.getBranchById(branchId);
+            if (branch == null) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            Integer newStatusId = statusUpdate.get("statusId");
+            if (newStatusId == null) {
+                return ResponseEntity.badRequest().body("statusId là bắt buộc");
+            }
+            
+            branch.setStatusId(newStatusId);
+            Branch updated = branchServices.updateBranch(branchId, branch);
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Lỗi " + e.getMessage());
         }
     }
 }

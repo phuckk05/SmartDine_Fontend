@@ -1,7 +1,10 @@
 package com.smartdine.services;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.smartdine.response.GetListCompanyAndOwnerResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -118,7 +121,7 @@ public class CompanyServices {
         return stats;
     }
 
-    //Quản lý cửa hàng
+    // Quản lý cửa hàng
     // ✅ Danh sách công ty đã được duyệt (statusId = 1)
     public List<Company> getActiveCompanies() {
         return companyRepository.findByStatusId(1);
@@ -145,6 +148,34 @@ public class CompanyServices {
         return company;
     }
 
+    public List<Map<String, Object>> getCompaniesWithBranches(BranchServices branchServices) {
+        List<Company> companies = companyRepository.findAll();
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (Company company : companies) {
+            Map<String, Object> companyMap = new HashMap<>();
+            companyMap.put("id", company.getId());
+            companyMap.put("name", company.getName());
+            companyMap.put("company_code", company.getCompanyCode());
+            companyMap.put("statusId", company.getStatusId());
+            companyMap.put("createdAt", company.getCreatedAt());
+
+            List<Map<String, Object>> branchList = new ArrayList<>();
+            branchServices.getByCompanyId(company.getId()).forEach(branch -> {
+                Map<String, Object> branchMap = new HashMap<>();
+                branchMap.put("id", branch.getId());
+                branchMap.put("company_id", branch.getCompanyId());
+                branchMap.put("name", branch.getName());
+                branchMap.put("active", branch.getStatusId() != null ? branch.getStatusId() == 1 : Boolean.TRUE);
+                branchList.add(branchMap);
+            });
+
+            companyMap.put("branches", branchList);
+            result.add(companyMap);
+        }
+
+        return result;
+    }
 
     public List<GetListCompanyAndOwnerResponse> getListCompanyAndOwner() {
         return companyRepository.getListCompanyAndOwner();
