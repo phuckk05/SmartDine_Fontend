@@ -11,7 +11,8 @@ class BranchDashboardScreen extends ConsumerStatefulWidget {
   const BranchDashboardScreen({super.key});
 
   @override
-  ConsumerState<BranchDashboardScreen> createState() => _BranchDashboardScreenState();
+  ConsumerState<BranchDashboardScreen> createState() =>
+      _BranchDashboardScreenState();
 }
 
 class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
@@ -23,11 +24,14 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
     // Lấy branchId từ user session
     final currentBranchId = ref.watch(currentBranchIdProvider);
     final isAuthenticated = ref.watch(isAuthenticatedProvider);
-    
+
     // Kiểm tra authentication - yêu cầu user phải đăng nhập
     if (!isAuthenticated) {
       return Scaffold(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Style.backgroundColor,
+        backgroundColor:
+            Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey[850]
+                : Style.backgroundColor,
         body: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -43,7 +47,7 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
 
     final branchIdInt = currentBranchId;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     if (branchIdInt == null) {
       return Scaffold(
         backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
@@ -60,54 +64,62 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
         ),
       );
     }
-    final statisticsAsyncValue = ref.watch(branchStatisticsProvider(branchIdInt));
-    
+    final statisticsAsyncValue = ref.watch(
+      branchStatisticsProvider(branchIdInt),
+    );
+
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
       body: SafeArea(
         child: statisticsAsyncValue.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => RefreshIndicator(
-            onRefresh: () async {
-              return ref.refresh(branchStatisticsProvider(branchIdInt));
-            },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 20),
-                  // Hiển thị các card với thông báo "Chưa có dữ liệu"
-                  _buildEmptyMetricsCards(isDark),
-                  const SizedBox(height: 20),
-                  _buildQuickActions(isDark),
-                ],
+          error:
+              (error, stackTrace) => RefreshIndicator(
+                onRefresh: () async {
+                  return ref.refresh(branchStatisticsProvider(branchIdInt));
+                },
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(),
+                      const SizedBox(height: 20),
+                      // Hiển thị các card với thông báo "Chưa có dữ liệu"
+                      _buildEmptyMetricsCards(isDark),
+                      const SizedBox(height: 20),
+                      _buildQuickActions(isDark),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
-          data: (statistics) => RefreshIndicator(
-            onRefresh: () async {
-              return ref.refresh(branchStatisticsProvider(ref.read(currentBranchIdProvider)!));
-            },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 20),
-                  if (statistics != null) ...[
-                    _buildMetricsCards(statistics, isDark),
-                    const SizedBox(height: 20),
-                  ],
-                  _buildQuickActions(isDark),
-                ],
+          data:
+              (statistics) => RefreshIndicator(
+                onRefresh: () async {
+                  return ref.refresh(
+                    branchStatisticsProvider(
+                      ref.read(currentBranchIdProvider)!,
+                    ),
+                  );
+                },
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(),
+                      const SizedBox(height: 20),
+                      if (statistics != null) ...[
+                        _buildMetricsCards(statistics, isDark),
+                        const SizedBox(height: 20),
+                      ],
+                      _buildQuickActions(isDark),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
         ),
       ),
     );
@@ -153,7 +165,7 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
   Widget _buildMetricsCards(BranchMetrics statistics, bool isDark) {
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
     final textColor = isDark ? Style.colorLight : Style.colorDark;
-    
+
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -239,10 +251,7 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
           const Spacer(),
           Text(
             value,
-            style: Style.fontTitle.copyWith(
-              fontSize: 20,
-              color: textColor,
-            ),
+            style: Style.fontTitle.copyWith(fontSize: 20, color: textColor),
           ),
           const SizedBox(height: 4),
           Text(
@@ -260,7 +269,7 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
   Widget _buildQuickActions(bool isDark) {
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
     final textColor = isDark ? Style.colorLight : Style.colorDark;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -290,32 +299,22 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
             mainAxisSpacing: 12,
             childAspectRatio: 2.5,
             children: [
-              _buildQuickActionButton(
-                'Danh sách đơn hàng',
-                Icons.list_alt,
-                () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const OrderListScreen(),
-                    ),
-                  );
-                },
-                isDark,
-              ),
-              _buildQuickActionButton(
-                'Hoạt động hôm nay',
-                Icons.today,
-                () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const TodayActivitiesScreen(),
-                    ),
-                  );
-                },
-                isDark,
-              ),
+              _buildQuickActionButton('Danh sách đơn hàng', Icons.list_alt, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const OrderListScreen(),
+                  ),
+                );
+              }, isDark),
+              _buildQuickActionButton('Hoạt động hôm nay', Icons.today, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TodayActivitiesScreen(),
+                  ),
+                );
+              }, isDark),
             ],
           ),
         ],
@@ -337,17 +336,11 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
         decoration: BoxDecoration(
           color: primaryColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: primaryColor.withOpacity(0.2),
-          ),
+          border: Border.all(color: primaryColor.withOpacity(0.2)),
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: primaryColor,
-              size: 20,
-            ),
+            Icon(icon, color: primaryColor, size: 20),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -368,7 +361,7 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
   Widget _buildEmptyMetricsCards(bool isDark) {
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
     final textColor = isDark ? Style.colorLight : Style.colorDark;
-    
+
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),

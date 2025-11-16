@@ -14,7 +14,7 @@ class CompanyOwnerAPI {
 
   /// 🔹 Lấy danh sách công ty và chủ cửa hàng
   Future<List<CompanyOwner>> getCompanyOwners() async {
-    final url = Uri.parse('$baseUrl/get-list-company-and-owner');
+    final url = Uri.parse('$uri2/get-list-company-and-owner');
     final response = await http.get(
       url,
       headers: {'Content-Type': 'application/json'},

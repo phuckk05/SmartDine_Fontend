@@ -183,26 +183,28 @@ class _ScreenKitchenState extends ConsumerState<ScreenKitchen>
                 ),
                 Expanded(
                   child: orderState.when(
-                    data:
-                        (orders) => TabBarView(
-                          controller: _tabController,
-                          children:
-                              _statusIds
-                                  .map(
-                                    (status) => RefreshIndicator(
-                                      onRefresh: _loadAll,
-                                      child: buildList(
-                                        orders
-                                            .where(
-                                              (order) =>
-                                                  order.statusId == status,
-                                            )
-                                            .toList(),
-                                      ),
+                    data: (orders) {
+                      // 🔥 Sắp xếp tất cả orders theo thời gian tạo (mới nhất → cũ nhất)
+                      final sortedOrders = [...orders]
+                        ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+                      return TabBarView(
+                        controller: _tabController,
+                        children:
+                            _statusIds
+                                .map(
+                                  (status) => RefreshIndicator(
+                                    onRefresh: _loadAll,
+                                    child: buildList(
+                                      sortedOrders
+                                          .where((o) => o.statusId == status)
+                                          .toList(),
                                     ),
-                                  )
-                                  .toList(),
-                        ),
+                                  ),
+                                )
+                                .toList(),
+                      );
+                    },
                     loading:
                         () => RefreshIndicator(
                           onRefresh: _loadAll,
@@ -243,7 +245,7 @@ class _ScreenKitchenState extends ConsumerState<ScreenKitchen>
 
     /// Sắp xếp giảm dần theo thời gian tạo (mới nhất lên đầu):
     //Sắp xếp giảm dần theo thời gian tạo (mới nhất lên đầu)
-    orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    orders.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
     return ListView.separated(
       physics: const AlwaysScrollableScrollPhysics(),

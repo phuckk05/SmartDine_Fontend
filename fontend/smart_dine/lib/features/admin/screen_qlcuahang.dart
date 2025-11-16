@@ -18,16 +18,41 @@ class ScreenQlCuaHang extends ConsumerWidget {
         ),
         centerTitle: true,
         backgroundColor: Colors.blueAccent,
+        automaticallyImplyLeading: false,
       ),
       body: asyncList.when(
+        // Dữ liệu
         data: (list) {
           if (list.isEmpty) {
-            return const Center(
-              child: Text("Không có cửa hàng nào được duyệt."),
+            return RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(companyOwnerListProvider);
+              },
+              child: ListView(
+                children: const [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      'Danh sách hoạt động cửa hàng đã duyệt',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 250),
+                  Center(
+                    child: Text(
+                      "Không có cửa hàng nào được duyệt.",
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
             );
           }
 
-          //Sắp xếp giảm dần theo thời gian tạo (mới nhất lên đầu)
+          // Nếu có dữ liệu → sort + show list
           list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
           return RefreshIndicator(
@@ -36,6 +61,7 @@ class ScreenQlCuaHang extends ConsumerWidget {
               itemCount: list.length,
               itemBuilder: (context, index) {
                 final item = list[index];
+
                 return ItemCuaHang(
                   item: item,
                   onDelete: () async {
@@ -68,6 +94,7 @@ class ScreenQlCuaHang extends ConsumerWidget {
                         await ref
                             .read(companyOwnerApiProvider)
                             .deleteCompany(item.userId);
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
@@ -75,12 +102,11 @@ class ScreenQlCuaHang extends ConsumerWidget {
                             ),
                           ),
                         );
+
                         ref.invalidate(companyOwnerListProvider);
                       } catch (e) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Lỗi khi xóa: ${e.toString()}"),
-                          ),
+                          SnackBar(content: Text("Lỗi khi xóa: $e")),
                         );
                       }
                     }
@@ -90,7 +116,11 @@ class ScreenQlCuaHang extends ConsumerWidget {
             ),
           );
         },
+
+        // Lỗi
         error: (err, stack) => Center(child: Text("Lỗi tải dữ liệu: $err")),
+
+        // Loading
         loading:
             () => const Center(
               child: CircularProgressIndicator(color: Colors.blueAccent),

@@ -90,6 +90,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
         // Kiểm tra role và hiển thị thông tin
         String roleName = '';
         int? branchId;
+        int? companyId;
         switch (user.role) {
           case 1:
             roleName = 'Administrator';
@@ -101,6 +102,11 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
             branchId = await ref
                 .read(branchNotifierProvider.notifier)
                 .getBranchIdByManagerId(user.id as int);
+            if (branchId != null) {
+              companyId = await ref
+                  .read(branchNotifierProvider.notifier)
+                  .getCompanyIdByBranchId(branchId);
+            }
 
             break;
           case 3:
@@ -109,29 +115,50 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
             branchId = await ref
                 .read(branchNotifierProvider.notifier)
                 .getBranchIdByUserId(user.id as int);
-
-            break;
+            if (branchId != null) {
+              companyId = await ref
+                  .read(branchNotifierProvider.notifier)
+                  .getCompanyIdByBranchId(branchId);
+            }
           case 4:
             roleName = 'Chef';
             // Chef: tìm trong bảng user_branches
             branchId = await ref
                 .read(branchNotifierProvider.notifier)
                 .getBranchIdByUserId(user.id as int);
-
+            if (branchId != null) {
+              companyId = await ref
+                  .read(branchNotifierProvider.notifier)
+                  .getCompanyIdByBranchId(branchId);
+            }
             break;
           case 5:
             roleName = 'Owner';
             // Owner không cần branchId cụ thể hoặc có thể truy cập tất cả
             break;
+          case 6:
+            roleName = 'Cashier';
+            branchId = await ref
+                .read(branchNotifierProvider.notifier)
+                .getBranchIdByUserId(user.id as int);
+            if (branchId != null) {
+              companyId = await ref
+                  .read(branchNotifierProvider.notifier)
+                  .getCompanyIdByBranchId(branchId);
+            }
+            break;
+
           default:
             roleName = 'Staff';
             branchId = await ref
                 .read(branchNotifierProvider.notifier)
                 .getBranchIdByUserId(user.id as int);
-            break;
+            if (branchId != null) {
+              companyId = await ref
+                  .read(branchNotifierProvider.notifier)
+                  .getCompanyIdByBranchId(branchId);
+            }
         }
-
-
 
         // Lưu user session cho branch management
         await ref
@@ -144,8 +171,6 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
               branchIds: branchId != null ? [branchId] : [],
               defaultBranchId: branchId,
             );
-
-
 
         Constrats.showThongBao(
           context,
@@ -168,42 +193,22 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
             ),
           );
         } else if (user.role == 3) {
-          // Staff -> Tạm thời chuyển về Bottom Navigation (có thể thay đổi sau)
+          // Staff -> Màn hình chọn bàn (Tạm ẩn)
+          // TODO: Sẽ mở lại khi cần thiết
           Constrats.showThongBao(
             context,
-            'Chức năng nhân viên đang được phát triển. Chuyển về màn hình chính.',
+            'Chức năng nhân viên đang được phát triển.',
           );
-          
-          // Tạm thời chuyển về bottom navigation với index 0 (Home)
-          Routes.pushRightLeftConsumerFul(
-            context,
-            const ScreenBottomNavigation(index: 0),
-          );
-
-          /* TODO: Sẽ mở lại khi có màn hình chọn bàn
-          // Try to resolve companyId from branchId if available
-          int? companyId;
-          if (branchId != null) {
-            final cid = await ref
-                .read(branchNotifierProvider.notifier)
-                .getCompanyIdByBranchId(branchId);
-            if (cid != null) companyId = cid;
-          }
-
-          Routes.pushRightLeftConsumerFul(
-            context,
-            ScreenChooseTable(
-              branchId: branchId ?? 0,
-              userId: user.id ?? 0,
-              companyId: companyId ?? 0,
-            ),
-          );
-          */
         } else if (user.role == 4) {
           // Chef
           Routes.pushRightLeftConsumerFul(
             context,
-            const ScreenBottomNavigation(index: 1),
+            ScreenBottomNavigation(
+              index: 1,
+              branchId: branchId,
+              companyId: companyId,
+              userId: user.id,
+            ),
           );
         } else if (user.role == 5) {
           // Owner -> Chuyển về Bottom Navigation với quyền admin
@@ -213,26 +218,18 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
             context,
             MaterialPageRoute(builder: (context) => const ScreenDashboard()),
           );
-        } else {
-          // Default fallback cho các role không xác định
-          Constrats.showThongBao(
-            context,
-            'Vai trò không xác định. Chuyển về màn hình chính.',
-          );
-          Routes.pushRightLeftConsumerFul(
-            context,
-            const ScreenBottomNavigation(index: 0),
-          );
+        }  else if (user.role == 6) {
+          //Cashier
+
         }
-      } 
-    }
-    else {
-        Constrats.showThongBao(
-          context,
-          'Đăng nhập không thành công. Vui lòng kiểm tra lại email và mật khẩu.',
-        );
       }
-      ref.read(isLoadingNotifierProvider.notifier).toggle(false);
+    } else {
+      Constrats.showThongBao(
+        context,
+        'Đăng nhập không thành công. Vui lòng kiểm tra lại email và mật khẩu.',
+      );
+    }
+    ref.read(isLoadingNotifierProvider.notifier).toggle(false);
   }
 
   //Hàm dispose
