@@ -9,14 +9,17 @@ import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/bottom_Navigation/bottom_navigation.dart';
 import 'package:mart_dine/features/forgot_passwork/screens/screen_findaccuont.dart';
 import 'package:mart_dine/features/signup/screen_select_signup.dart';
+import 'package:mart_dine/features/owner/screen_dashboard.dart';
 // import 'package:mart_dine/features/staff/screen_choose_table.dart'; // Tạm ẩn
 import 'package:mart_dine/features/branch_management/screen/branch_navigation.dart';
 import 'package:mart_dine/providers/branch_provider.dart';
 import 'package:mart_dine/providers/loading_provider.dart';
 import 'package:mart_dine/providers/user_provider.dart';
 import 'package:mart_dine/providers/user_session_provider.dart';
+import 'package:mart_dine/providers_owner/system_stats_provider.dart';
 import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets/loading.dart';
+
 
 class ScreenSignIn extends ConsumerStatefulWidget {
   const ScreenSignIn({super.key});
@@ -204,9 +207,13 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
           );
         } else if (user.role == 5) {
           // Owner -> Chuyển về Bottom Navigation với quyền admin
-          Routes.pushRightLeftConsumerFul(
+          // Cập nhật ID của owner đã đăng nhập vào provider
+          ref.read(loggedInOwnerIdProvider.notifier).state = user.id ?? 0;
+          
+          // SỬA: Điều hướng đến ScreenDashboard và thay thế màn hình đăng nhập
+          Navigator.pushReplacement(
             context,
-            const ScreenBottomNavigation(index: 2),
+            MaterialPageRoute(builder: (context) => const ScreenDashboard()),
           );
         } else {
           // Default fallback cho các role không xác định
