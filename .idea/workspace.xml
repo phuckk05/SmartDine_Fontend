@@ -5,9 +5,23 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d309e5cc-7a4e-4f4c-ab75-cd5462f20589" name="Changes" comment="fix conflict">
+<<<<<<< HEAD
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/fontend/smart_dine/lib/features/kitchen/screen_caidat.dart" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/features/kitchen/screen_caidat.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/fontend/smart_dine/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/main.dart" afterDir="false" />
+=======
+      <change beforePath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/fontend/smart_dine/lib/API/company_API.dart" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/API/company_API.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/fontend/smart_dine/lib/API/company_owner_API.dart" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/API/company_owner_API.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/fontend/smart_dine/lib/features/admin/screen_company_detail.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/fontend/smart_dine/lib/features/admin/screen_qlcuahang.dart" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/features/admin/screen_qlcuahang.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/fontend/smart_dine/lib/features/admin/screen_qlxacnhan.dart" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/features/admin/screen_qlxacnhan.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/fontend/smart_dine/lib/models/company_owner.dart" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/company_owner.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/fontend/smart_dine/lib/models/item_cuahang.dart" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/models/item_cuahang.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/fontend/smart_dine/lib/providers/qlcuahang_provider.dart" beforeDir="false" afterPath="$PROJECT_DIR$/fontend/smart_dine/lib/providers/qlcuahang_provider.dart" afterDir="false" />
+>>>>>>> origin/admin
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -38,9 +52,15 @@
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
     "dart.analysis.tool.window.visible": "false",
+<<<<<<< HEAD
     "git-widget-placeholder": "kitchen-3",
     "last_opened_file_path": "C:/flutter/SmartDine_Fontend",
     "settings.editor.selected.configurable": "preferences.pluginManager",
+=======
+    "git-widget-placeholder": "admin",
+    "last_opened_file_path": "C:/flutter/SmartDine_Fontend",
+    "settings.editor.selected.configurable": "dart.settings",
+>>>>>>> origin/admin
     "show.migrate.to.gradle.popup": "false"
   }
 }]]></component>

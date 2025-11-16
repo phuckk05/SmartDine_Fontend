@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mart_dine/features/admin/screen_settingdashboard.dart';
+import 'package:mart_dine/features/kitchen/screen_caidat.dart';
+import 'package:mart_dine/features/kitchen/screen_kitchen.dart';
+import 'package:mart_dine/features/kitchen/screen_lichsu.dart';
 import 'package:mart_dine/features/admin/screen_dashboard.dart';
 import 'package:mart_dine/features/admin/screen_qlcuahang.dart';
 import 'package:mart_dine/features/admin/screen_qlxacnhan.dart';
@@ -91,6 +95,7 @@ class _BottomNavigationState extends ConsumerState<ScreenBottomNavigation> {
     const ScreenDashboard(),
     const ScreenQlXacNhan(),
     const ScreenQlCuaHang(),
+    const ScreenSettingDashboard(),
   ];
 
   @override
@@ -158,6 +163,11 @@ class _BottomNavigationState extends ConsumerState<ScreenBottomNavigation> {
                     icon: Icon(Icons.store_outlined),
                     activeIcon: Icon(Icons.store),
                     label: 'Cửa hàng',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.settings_outlined),
+                    activeIcon: Icon(Icons.settings),
+                    label: 'Cài đặt',
                   ),
                 ],
               )
