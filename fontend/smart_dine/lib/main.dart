@@ -4,8 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:mart_dine/features/signin/screen_signin.dart';
 // import 'package:mart_dine/features/staff/screen_choose_table.dart';
 import 'package:mart_dine/providers/mode_provider.dart';
-import 'features/branch_management/screen/branch_navigation.dart';
-import 'config/app_config.dart';
+
 // import 'providers/user_session_provider.dart';
 
 Future<void> main() async {

@@ -24,7 +24,7 @@ class PaymentAPI {
         throw Exception('Failed to create payment: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error creating payment: $e');
+
       return null;
     }
   }
@@ -42,7 +42,7 @@ class PaymentAPI {
         throw Exception('Failed to get payments: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error getting payments by order: $e');
+
       return [];
     }
   }
@@ -60,7 +60,7 @@ class PaymentAPI {
         throw Exception('Failed to get payments: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error getting payments by branch: $e');
+
       return [];
     }
   }
@@ -87,7 +87,7 @@ class PaymentAPI {
         throw Exception('Failed to get revenue: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error getting revenue by day: $e');
+
       return 0.0;
     }
   }
@@ -112,7 +112,7 @@ class PaymentAPI {
         throw Exception('Failed to get revenue: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error getting revenue by week: $e');
+
       return 0.0;
     }
   }
@@ -137,7 +137,7 @@ class PaymentAPI {
         throw Exception('Failed to get revenue: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error getting revenue by month: $e');
+
       return 0.0;
     }
   }
@@ -161,7 +161,7 @@ class PaymentAPI {
         throw Exception('Failed to get revenue: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error getting revenue by year: $e');
+
       return 0.0;
     }
   }

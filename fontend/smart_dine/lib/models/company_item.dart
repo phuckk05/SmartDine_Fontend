@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mart_dine/models/company.dart';
-import 'package:intl/intl.dart';
 
 class CompanyItem extends StatelessWidget {
   final Company company;
@@ -14,9 +13,7 @@ class CompanyItem extends StatelessWidget {
     required this.onReject,
   });
 
-  String _formatDate(DateTime date) {
-    return DateFormat('dd/MM/yyyy - HH:mm').format(date); // HH:mm
-  }
+
 
   @override
   Widget build(BuildContext context) {

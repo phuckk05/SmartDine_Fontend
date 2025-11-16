@@ -213,7 +213,7 @@ class TableManagementAPI {
   // Lấy danh sách loại bàn
   Future<List<Map<String, dynamic>>?> getTableTypes() async {
     try {
-      final response = await _httpService.get('$baseUrl/table-types');
+      final response = await _httpService.get('$baseUrl/table-types/all');
       final data = _parseResponse(response);
       
       if (data != null) {
@@ -236,7 +236,7 @@ class TableManagementAPI {
   // Lấy danh sách trạng thái bàn
   Future<List<Map<String, dynamic>>?> getTableStatuses() async {
     try {
-      final response = await _httpService.get('$baseUrl/table-statuses');
+      final response = await _httpService.get('$baseUrl/table-statuses/all');
       final data = _parseResponse(response);
       
       if (data != null) {

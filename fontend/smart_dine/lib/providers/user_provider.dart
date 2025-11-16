@@ -26,7 +26,7 @@ class UserNotifier extends StateNotifier<User?> {
 
   // Đăng ký user
   Future<int> signUpInfor(User user, String branchCode, int index) async {
-        // Gọi API để tìm chi nhánh
+    // Gọi API để tìm chi nhánh
     final Branch? branch;
     bool check = false;
 
@@ -41,11 +41,11 @@ class UserNotifier extends StateNotifier<User?> {
         } else {
           return 3;
         }
-        } catch (e) {
-          // ignore: avoid_print
-          print('Error creating user: $e');
-          return 0;
-        }
+      } catch (e) {
+        // ignore: avoid_print
+        print('Error creating user: $e');
+        return 0;
+      }
     } else {
       try {
         branch = await branchAPI.findBranchByBranchCode(branchCode);
@@ -63,14 +63,14 @@ class UserNotifier extends StateNotifier<User?> {
               try {
                 final responseUserBranch = await userBranchAPI.create(
                   registerSuccess.id!,
-                  branch.id,
+                  branch.id!,
                 );
                 if (responseUserBranch == true) {
                   return 2;
                 }
                 return 4;
               } catch (e) {
-                print('Error creating user branch: $e');
+                print('Error creating user-branch: $e');
                 return 4;
               }
             } else {
@@ -78,24 +78,24 @@ class UserNotifier extends StateNotifier<User?> {
             }
           } catch (e) {
             // ignore: avoid_print
-            print('Error in user creation: $e');
+            print('Error creating user: $e');
             return 0;
           }
         }
       } catch (e) {
         // ignore: avoid_print
-        print('Error in branch lookup: $e');
-        return 0;
+        print('Error finding branch: $e');
+        return 1;
       }
     }
     return 0;
   }
 
   Future<User?> signInInfor(String email, String password) async {
-        try {
+    try {
       final user = await userAPI.signIn2(email);
-            if (user != null) {
-                // Cập nhật state sau khi đăng nhập thành công
+      if (user != null) {
+        // Cập nhật state sau khi đăng nhập thành công
         final isPasswordCorrect = BCrypt.checkpw(password, user.passworkHash);
         if (isPasswordCorrect) {
           state = user;
@@ -107,7 +107,7 @@ class UserNotifier extends StateNotifier<User?> {
         return null;
       }
     } catch (e) {
-      print('Error in sign in: $e');
+      print('Error signing in: $e');
       return null;
     }
   }
@@ -125,7 +125,7 @@ class UserNotifier extends StateNotifier<User?> {
         return false;
       }
     } catch (e) {
-      print('Error updating password: $e');
+      print('Error updating user: $e');
       return false;
     }
   }

@@ -29,9 +29,19 @@ class BranchNotifier extends StateNotifier<Branch?> {
   ) async {
     try {
       final responseCompany = await companyAPI.exitsCompanyCode(companyCode);
+
       if (responseCompany != null) {
         final branchPayload = branch.copyWith(companyId: responseCompany.id);
-        final response = await branchAPI.create(branchPayload);
+        final branchCreate = Branch.create(
+          companyId: branchPayload.companyId,
+          name: branchPayload.name,
+          branchCode: branchPayload.branchCode,
+          address: branchPayload.address,
+          image: branchPayload.image,
+          managerId: branchPayload.managerId,
+        );
+
+        final response = await branchAPI.create(branchCreate);
         if (response != null) {
           //Cập nhạt state
           state = response;
@@ -43,8 +53,7 @@ class BranchNotifier extends StateNotifier<Branch?> {
       } else {
         return 2;
       }
-    } catch (e) {
-          }
+    } catch (e) {}
     return 0;
   }
 
@@ -55,9 +64,9 @@ class BranchNotifier extends StateNotifier<Branch?> {
       if (userBranchData != null && userBranchData['branchId'] != null) {
         return userBranchData['branchId'] as int;
       }
-            return null;
+      return null;
     } catch (e) {
-            return null;
+      return null;
     }
   }
 
@@ -70,7 +79,7 @@ class BranchNotifier extends StateNotifier<Branch?> {
       }
       return null;
     } catch (e) {
-      print('Error getting branch by manager ID: $e');
+
       return null;
     }
   }
@@ -78,13 +87,13 @@ class BranchNotifier extends StateNotifier<Branch?> {
   // Lấy companyId theo branchId
   Future<int?> getCompanyIdByBranchId(int branchId) async {
     try {
-  final branch = await branchAPI.getBranchById(branchId.toString());
+      final branch = await branchAPI.getBranchById(branchId.toString());
       if (branch != null) {
         return branch.companyId;
       }
-            return null;
+      return null;
     } catch (e) {
-            return null;
+      return null;
     }
   }
 }

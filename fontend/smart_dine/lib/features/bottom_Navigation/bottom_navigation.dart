@@ -11,8 +11,17 @@ import 'package:mart_dine/features/kitchen/screen_lichsu.dart';
 final currentIndexProvider = StateProvider<int>((ref) => 0);
 
 class ScreenBottomNavigation extends ConsumerStatefulWidget {
+  final int? branchId;
+  final int? companyId;
   final int? index;
-  const ScreenBottomNavigation({super.key, this.index});
+  final int? userId;
+  const ScreenBottomNavigation({
+    super.key,
+    this.index,
+    this.branchId,
+    this.companyId,
+    this.userId,
+  });
 
   @override
   ConsumerState<ScreenBottomNavigation> createState() {

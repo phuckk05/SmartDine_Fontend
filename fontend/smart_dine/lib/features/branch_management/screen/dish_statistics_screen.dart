@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/widgets/appbar.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../../../providers/user_session_provider.dart';
+import '../../../providers/dish_statistics_provider.dart';
 
-class DishStatisticsScreen extends StatefulWidget {
+class DishStatisticsScreen extends ConsumerStatefulWidget {
   final bool showBackButton;
   
   const DishStatisticsScreen({super.key, this.showBackButton = true});
 
   @override
-  State<DishStatisticsScreen> createState() => _DishStatisticsScreenState();
+  ConsumerState<DishStatisticsScreen> createState() => _DishStatisticsScreenState();
 }
 
-class _DishStatisticsScreenState extends State<DishStatisticsScreen> {
+class _DishStatisticsScreenState extends ConsumerState<DishStatisticsScreen> {
   String _selectedFilter = 'Tuần';
   int _touchedIndex = -1;
 
@@ -100,6 +103,62 @@ class _DishStatisticsScreenState extends State<DishStatisticsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Style.colorLight : Style.colorDark;
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
+    
+    // Kiểm tra user session
+    final currentBranchId = ref.watch(currentBranchIdProvider);
+    final isAuthenticated = ref.watch(isAuthenticatedProvider);
+    
+    if (!isAuthenticated) {
+      return Scaffold(
+        backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
+        appBar: widget.showBackButton 
+          ? AppBarCus(
+              title: 'Thống kê món',
+              isCanpop: true,
+              isButtonEnabled: true,
+            )
+          : AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              title: Text('Thống kê món', style: Style.fontTitle),
+              automaticallyImplyLeading: false,
+            ),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.login, size: 64, color: Colors.grey),
+              SizedBox(height: 16),
+              Text('Vui lòng đăng nhập để xem thống kê'),
+            ],
+          ),
+        ),
+      );
+    }
+    
+    if (currentBranchId == null) {
+      return Scaffold(
+        backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
+        appBar: widget.showBackButton 
+          ? AppBarCus(
+              title: 'Thống kê món',
+              isCanpop: true,
+              isButtonEnabled: true,
+            )
+          : AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              title: Text('Thống kê món', style: Style.fontTitle),
+              automaticallyImplyLeading: false,
+            ),
+        body: _buildEmptyState(isDark, cardColor, textColor),
+      );
+    }
+
+    // Watch dish statistics data
+    final dishStatisticsAsync = ref.watch(dishStatisticsProvider(currentBranchId));
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
@@ -116,7 +175,20 @@ class _DishStatisticsScreenState extends State<DishStatisticsScreen> {
             title: Text('Thống kê món', style: Style.fontTitle),
             automaticallyImplyLeading: false,
           ),
-      body: SingleChildScrollView(
+      body: dishStatisticsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) => _buildErrorState(error, isDark, cardColor, textColor, currentBranchId),
+        data: (data) => _buildContent(data ?? DishStatisticsData(dishRevenueList: [], chartData: {}, totalDishes: 0, totalRevenue: 0.0), isDark, cardColor, textColor, currentBranchId),
+      ),
+    );
+  }
+
+  Widget _buildContent(DishStatisticsData data, bool isDark, Color cardColor, Color textColor, int branchId) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        await ref.read(dishStatisticsProvider(branchId).notifier).refresh(period: _selectedFilter.toLowerCase());
+      },
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,24 +200,28 @@ class _DishStatisticsScreenState extends State<DishStatisticsScreen> {
                   setState(() {
                     _selectedFilter = 'Năm';
                   });
+                  ref.read(dishStatisticsProvider(branchId).notifier).changePeriod('year');
                 }),
                 const SizedBox(width: 8),
                 _buildFilterChip('Tháng', _selectedFilter == 'Tháng', isDark, textColor, () {
                   setState(() {
                     _selectedFilter = 'Tháng';
                   });
+                  ref.read(dishStatisticsProvider(branchId).notifier).changePeriod('month');
                 }),
                 const SizedBox(width: 8),
                 _buildFilterChip('Tuần', _selectedFilter == 'Tuần', isDark, textColor, () {
                   setState(() {
                     _selectedFilter = 'Tuần';
                   });
+                  ref.read(dishStatisticsProvider(branchId).notifier).changePeriod('week');
                 }),
                 const SizedBox(width: 8),
                 _buildFilterChip('Hôm nay', _selectedFilter == 'Hôm nay', isDark, textColor, () {
                   setState(() {
                     _selectedFilter = 'Hôm nay';
                   });
+                  ref.read(dishStatisticsProvider(branchId).notifier).changePeriod('today');
                 }),
               ],
             ),
@@ -178,7 +254,7 @@ class _DishStatisticsScreenState extends State<DishStatisticsScreen> {
                     child: BarChart(
                       BarChartData(
                         alignment: BarChartAlignment.spaceAround,
-                        maxY: _selectedFilter == 'Năm' ? 1500 : (_selectedFilter == 'Tháng' ? 400 : (_selectedFilter == 'Tuần' ? 100 : 25)),
+                        maxY: _getMaxY(data, _selectedFilter),
                         barTouchData: BarTouchData(
                           enabled: true,
                           touchTooltipData: BarTouchTooltipData(
@@ -245,7 +321,7 @@ class _DishStatisticsScreenState extends State<DishStatisticsScreen> {
                         ),
                         gridData: FlGridData(show: false),
                         borderData: FlBorderData(show: false),
-                        barGroups: _getChartData()[_selectedFilter]!,
+                        barGroups: _buildBarChartGroups(data, _selectedFilter),
                       ),
                     ),
                   ),
@@ -271,12 +347,15 @@ class _DishStatisticsScreenState extends State<DishStatisticsScreen> {
                 children: [
                   _buildTableHeader(textColor),
                   const Divider(height: 1),
-                  _buildTableRow('Phở bò', '8,500,000đ', '425', '425', '0', '100%', textColor),
-                  _buildTableRow('Cà phê sữa', '6,300,000đ', '315', '310', '5', '98%', textColor),
-                  _buildTableRow('Bánh mì thịt', '4,200,000đ', '280', '275', '5', '98%', textColor),
-                  _buildTableRow('Bún chả', '5,600,000đ', '245', '240', '5', '98%', textColor),
-                  _buildTableRow('Trà sữa', '3,800,000đ', '190', '182', '8', '96%', textColor),
-                  _buildTableRow('Gỏi cuốn', '2,100,000đ', '140', '135', '5', '96%', textColor),
+                  ...data.dishRevenueList.map((dish) => _buildTableRow(
+                    dish['name'] ?? '',
+                    dish['revenue'] ?? '0',
+                    dish['total'] ?? '0',
+                    dish['sold'] ?? '0',
+                    dish['remaining'] ?? '0',
+                    dish['percentage'] ?? '0%',
+                    textColor,
+                  )).toList(),
                 ],
               ),
             ),
@@ -445,5 +524,173 @@ class _DishStatisticsScreenState extends State<DishStatisticsScreen> {
         ],
       ),
     );
+  }
+
+  // Empty state khi không có chi nhánh
+  Widget _buildEmptyState(bool isDark, Color cardColor, Color textColor) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(32),
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Icon
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.restaurant_menu,
+              size: 40,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 24),
+          
+          // Title
+          Text(
+            'Chưa có dữ liệu thống kê món',
+            style: Style.fontTitle.copyWith(
+              color: textColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
+          ),
+          const SizedBox(height: 12),
+          
+          // Subtitle
+          Text(
+            'Hệ thống sẽ hiển thị thống kê khi có đơn hàng.\nVui lòng đăng nhập với tài khoản có quyền truy cập chi nhánh.',
+            textAlign: TextAlign.center,
+            style: Style.fontContent.copyWith(
+              color: textColor.withOpacity(0.7),
+              fontSize: 16,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 32),
+          
+          // Button
+          ElevatedButton.icon(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            label: const Text(
+              'Quay lại',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6200EE),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(Object error, bool isDark, Color cardColor, Color textColor, int branchId) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        await ref.read(dishStatisticsProvider(branchId).notifier).refresh();
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(32),
+          margin: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            children: [
+              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                'Lỗi tải dữ liệu thống kê',
+                style: Style.fontTitle.copyWith(color: textColor),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                error.toString(),
+                style: Style.fontContent.copyWith(color: textColor.withOpacity(0.7)),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () async {
+                  await ref.read(dishStatisticsProvider(branchId).notifier).refresh();
+                },
+                child: const Text('Thử lại'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  double _getMaxY(DishStatisticsData data, String period) {
+    if (data.chartData.containsKey(period)) {
+      final chartList = data.chartData[period]!;
+      if (chartList.isNotEmpty) {
+        final maxValue = chartList.map((item) => (item['y'] as num).toDouble()).reduce((a, b) => a > b ? a : b);
+        return maxValue * 1.2; // Add 20% padding
+      }
+    }
+    
+    // Fallback values
+    switch (period) {
+      case 'Năm': return 1500;
+      case 'Tháng': return 400;
+      case 'Tuần': return 100;
+      default: return 25;
+    }
+  }
+
+  List<BarChartGroupData> _buildBarChartGroups(DishStatisticsData data, String period) {
+    final color = Colors.blue;
+    final touchedColor = Colors.green;
+    
+    if (data.chartData.containsKey(period)) {
+      final chartList = data.chartData[period]!;
+      return chartList.map((item) {
+        final x = (item['x'] as num).toInt();
+        final y = (item['y'] as num).toDouble();
+        return BarChartGroupData(
+          x: x,
+          barRods: [
+            BarChartRodData(
+              toY: y,
+              color: _touchedIndex == (x - 1) ? touchedColor : color,
+              width: 16,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+            ),
+          ],
+        );
+      }).toList();
+    }
+    
+    // Fallback to empty data
+    return [];
   }
 }

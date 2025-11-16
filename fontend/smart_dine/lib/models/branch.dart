@@ -5,11 +5,7 @@ class BranchStatus {
   final String code; // ACTIVE, INACTIVE, MAINTENANCE
   final String name;
 
-  BranchStatus({
-    required this.id,
-    required this.code,
-    required this.name,
-  });
+  BranchStatus({required this.id, required this.code, required this.name});
 
   factory BranchStatus.fromJson(Map<String, dynamic> json) {
     return BranchStatus(
@@ -20,17 +16,13 @@ class BranchStatus {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'code': code,
-      'name': name,
-    };
+    return {'id': id, 'code': code, 'name': name};
   }
 }
 
 class Branch {
   //Properties
-  final int id;
+  int? id;
   final int companyId;
   final String name;
   final String branchCode;
@@ -50,7 +42,7 @@ class Branch {
 
   //Constructor
   Branch({
-    required this.id,
+    this.id,
     required this.companyId,
     required this.name,
     required this.branchCode,
@@ -76,7 +68,6 @@ class Branch {
   }) {
     final now = DateTime.now();
     return Branch(
-      id: 0, // Temporary ID for new branch
       companyId: companyId,
       name: name,
       branchCode: branchCode,
@@ -127,21 +118,23 @@ class Branch {
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      'id': id,
+    final map = <String, dynamic>{
       'companyId': companyId,
-      'company_id': companyId, // snake_case cho backend
       'name': name,
       'branchCode': branchCode,
-      'branch_code': branchCode, // snake_case cho backend
       'address': address,
       'image': image,
       'statusId': statusId,
-      'status_id': statusId, // snake_case cho backend
       'managerId': managerId,
-      'createdAt': createdAt.millisecondsSinceEpoch,
-      'updatedAt': updatedAt.millisecondsSinceEpoch,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
     };
+
+    if (id != 0) {
+      map['id'] = id;
+    }
+
+    return map;
   }
 
   factory Branch.fromMap(Map<String, dynamic> map) {
@@ -152,11 +145,15 @@ class Branch {
       branchCode: map['branchCode'] ?? '',
       address: map['address'] ?? '',
       image: map['image'] ?? '',
-
       statusId: int.tryParse(map['statusId'].toString()) ?? 0,
       managerId: int.tryParse(map['managerId'].toString()) ?? 0,
       createdAt: DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(map['updatedAt'] ?? '') ?? DateTime.now(),
+      // Parse relation fields
+      managerName: map['managerName'] ?? map['manager_name'],
+      managerEmail: map['managerEmail'] ?? map['manager_email'],
+      managerPhone: map['managerPhone'] ?? map['manager_phone'],
+      companyName: map['companyName'] ?? map['company_name'],
     );
   }
 

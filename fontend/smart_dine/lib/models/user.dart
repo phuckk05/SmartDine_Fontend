@@ -138,7 +138,7 @@ class User {
       email: (map['email'] ?? '') as String,
       phone: (map['phone'] ?? '') as String,
       passworkHash:
-          (map['passworkHash'] ?? map['passwork_hash'] ?? '') as String,
+          (map['passworkHash'] ?? map['passwork_hash'] ?? map['passwordHash'] ?? '') as String,
       fontImage: (map['fontImage'] ?? map['font_image']) as String?,
       backImage: (map['backImage'] ?? map['back_image']) as String?,
       statusId: (map['statusId'] ?? map['status_id']) as int?,

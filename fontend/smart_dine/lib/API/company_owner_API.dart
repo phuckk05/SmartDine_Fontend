@@ -30,6 +30,24 @@ class CompanyOwnerAPI {
     }
   }
 
+  /// 🔹 Lấy thông tin công ty theo ID
+  Future<CompanyOwner?> getCompanyById(int companyId) async {
+    final url = Uri.parse('$baseUrl/$companyId');
+    final response = await http.get(
+      url,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> jsonData = jsonDecode(response.body);
+      return CompanyOwner.fromMap(jsonData);
+    } else {
+      throw Exception(
+        'Lỗi ${response.statusCode}: Không thể tải thông tin công ty ID $companyId',
+      );
+    }
+  }
+
   /// 🔹 Xóa công ty
   Future<void> deleteCompany(int companyId) async {
     final url = Uri.parse('$baseUrl/delete/$companyId');
@@ -77,7 +95,6 @@ class CompanyOwnerAPI {
   /// 🟢 Kích hoạt công ty (statusId = 1)
   Future<void> activateCompany(int id) async {
     final url = Uri.parse('$baseUrl/active/$id');
-    print("đang goi den url ${url}");
     final response = await http.put(
       url,
       headers: {'Content-Type': 'application/json'},
@@ -92,7 +109,6 @@ class CompanyOwnerAPI {
   /// 🔴 Vô hiệu hóa công ty (statusId = 2)
   Future<void> deactivateCompany(int id) async {
     final url = Uri.parse('$baseUrl/inactive/$id');
-    print("đang goi den url ${url}");
 
     final response = await http.put(
       url,

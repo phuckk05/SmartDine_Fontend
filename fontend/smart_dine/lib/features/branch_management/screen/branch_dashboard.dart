@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/branch_management/screen/order_list_screen.dart';
 import 'package:mart_dine/features/branch_management/screen/today_activities_screen.dart';
+import 'package:mart_dine/features/branch_management/screen/dish_statistics_screen.dart';
+import 'package:mart_dine/features/branch_management/screen/branch_performance_screen.dart';
 import '../../../providers/branch_statistics_provider.dart';
 import '../../../providers/user_session_provider.dart';
 import '../../../models/statistics.dart';
@@ -311,6 +313,32 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => const TodayActivitiesScreen(),
+                    ),
+                  );
+                },
+                isDark,
+              ),
+              _buildQuickActionButton(
+                'Thống kê món ăn',
+                Icons.restaurant_menu,
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DishStatisticsScreen(),
+                    ),
+                  );
+                },
+                isDark,
+              ),
+              _buildQuickActionButton(
+                'Hiệu suất nhân viên',
+                Icons.group,
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const BranchPerformanceScreen(),
                     ),
                   );
                 },

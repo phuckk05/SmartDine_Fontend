@@ -21,10 +21,10 @@ class ChefAPI {
 
         return Chef.fromJson(chefData);
       } else {
-        print("Lỗi khi lấy chef theo id: ${response.statusCode}");
+
       }
     } catch (e) {
-      print("Lỗi khi gọi API getById: $e");
+
     }
     return null;
   }

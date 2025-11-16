@@ -21,9 +21,7 @@ class OrderAPI {
         final Map<String, dynamic> data = json.decode(response.body);
         return Order.fromMap(data);
       } else {
-        print(
-          'Lỗi gửi yêu cầu thanh toán: \\${response.statusCode} - \\${response.body}',
-        );
+
         return null;
       }
     } catch (e) {

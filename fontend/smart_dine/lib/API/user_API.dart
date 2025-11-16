@@ -43,24 +43,24 @@ class UserAPI {
         headers: {'Content-Type': 'application/json'},
       );
 
-      print('🔍 [API] Login response status: ${response.statusCode}');
-      print('🔍 [API] Login response body: ${response.body}');
+
+
 
                   if (response.statusCode == 200) {
         if (response.body.isEmpty) {
-          print('Empty response body');
+
           return null;
         }
         final Map<String, dynamic> data = jsonDecode(response.body);
-        print('🔍 [API] Parsed user data: $data');
+
         
         final user = User.fromMap(data);
-        print('🔍 [API] User object - id: ${user.id}, name: ${user.fullName}');
+
         return user;
       }
       return null;
     } catch (e) {
-      print('🔍 [API] Login error: $e');
+
       return null;
     }
   }
@@ -93,6 +93,59 @@ class UserAPI {
       return User.fromMap(data);
     }
     return null;
+  }
+
+  // Lấy user theo ID - Uses /all endpoint and filters by ID
+  Future<User?> getUserById(int userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$uri2/all'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        final userMap = data.firstWhere(
+          (user) => (user['id'] ?? 0) == userId,
+          orElse: () => null,
+        );
+        
+        if (userMap != null) {
+          return User.fromMap(Map<String, dynamic>.from(userMap));
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Update user status (for approval functionality) - DEPRECATED
+  // Use EmployeeManagementAPI.updateEmployee() instead
+  @deprecated
+  Future<bool> updateUserStatus(int userId, int statusId) async {
+    return false;
+  }
+
+  // Get all users with pending status (statusId = 3)
+  Future<List<User>> getPendingUsers() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$uri2/all'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        final allUsers = data.map((json) => User.fromMap(json)).toList();
+        
+        // Filter only pending users (statusId = 3)
+        return allUsers.where((user) => user.statusId == 3).toList();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
   }
 }
 
