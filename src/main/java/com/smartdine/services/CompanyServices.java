@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.smartdine.response.GetListCompanyAndOwnerResponse;
+import com.smartdine.response.GetListPendingCompanyAndOwnerResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -43,10 +44,6 @@ public class CompanyServices {
         return companyRepository.findByCompanyCode(companyCode).orElse(null);
     }
 
-    /// Danh sách xác nhận chờ duyệt
-    public List<Company> getPendingCompanies() {
-        return companyRepository.findByStatusId(3);
-    }
 
     /// Duyệt công ty
     public Company approveCompany(Integer companyId) {
@@ -188,4 +185,47 @@ public class CompanyServices {
         company.setStatusId(statusId);
         return companyRepository.save(company);
     }
+
+    public List<GetListPendingCompanyAndOwnerResponse> getPendingCompanies() {
+
+        List<Company> companies = companyRepository.findByStatusId(3);
+
+        List<GetListPendingCompanyAndOwnerResponse> responseList = new ArrayList<>();
+
+        for (Company c : companies) {
+
+            // Lấy danh sách Owner của công ty (role = 5)
+            List<User> owners = userRepository.findByCompanyIdAndRole(c.getId(), 5);
+
+            // Chỉ lấy 1 owner đầu tiên (hệ thống bạn thường có 1 Owner)
+            User owner = owners.isEmpty() ? null : owners.get(0);
+
+            GetListPendingCompanyAndOwnerResponse dto = new GetListPendingCompanyAndOwnerResponse();
+
+            dto.setCompanyId(c.getId());
+            dto.setCompanyName(c.getName());
+            dto.setCompanyCode(c.getCompanyCode());
+            dto.setAddress(c.getAddress());
+            dto.setCompanyStatus("Pending");
+            dto.setCreatedAt(c.getCreatedAt() != null ? c.getCreatedAt().toString() : null);
+            dto.setUpdatedAt(c.getUpdatedAt() != null ? c.getUpdatedAt().toString() : null);
+
+            if (owner != null) {
+                dto.setUserId(owner.getId());
+                dto.setFullName(owner.getFullName());
+                dto.setEmail(owner.getEmail());
+                dto.setPhone(owner.getPhone());
+                dto.setPhoneNumber(owner.getPhone()); // nếu cần trường này
+                dto.setFrontImage(owner.getFontImage());
+                dto.setBackImage(owner.getBackImage());
+                dto.setOwnerStatus(owner.getStatusId() != null ? owner.getStatusId().toString() : null);
+            }
+
+            responseList.add(dto);
+        }
+
+        return responseList;
+    }
+
+
 }

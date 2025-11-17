@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.smartdine.response.GetListCompanyAndOwnerResponse;
+import com.smartdine.response.GetListPendingCompanyAndOwnerResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -78,7 +79,7 @@ public class CompanyController {
     @GetMapping("/pending")
     public ResponseEntity<?> getPendingCompanies() {
         try {
-            List<Company> pending = companyServices.getPendingCompanies();
+            List<GetListPendingCompanyAndOwnerResponse> pending = companyServices.getPendingCompanies();
             return ResponseEntity.ok(pending);
         } catch (Exception e) {
             e.printStackTrace();
