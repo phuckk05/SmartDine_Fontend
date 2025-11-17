@@ -12,21 +12,42 @@ class ScreenAdminDashboard extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Dashboard Admin"),
-        backgroundColor: Colors.teal,
+        title: const Text(
+          'Dashboard Quản trị',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.blueAccent,
+        automaticallyImplyLeading: false,
       ),
-      body: asyncStats.when(
-        loading:
-            () => const Center(
-              child: CircularProgressIndicator(color: Colors.teal),
-            ),
 
-        error: (err, _) => Center(child: Text("Lỗi tải dữ liệu: $err")),
+      body: RefreshIndicator(
+        color: Colors.blueAccent,
+        onRefresh: () async {
+          /// Gọi refresh provider
+          ref.invalidate(adminStatsProvider);
+          await ref.read(adminStatsProvider.future);
+        },
 
-        data:
-            (stats) => Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
+        child: asyncStats.when(
+          loading:
+              () => const Center(
+                child: CircularProgressIndicator(color: Colors.blueAccent),
+              ),
+
+          error:
+              (err, _) => ListView(
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.8,
+                    child: Center(child: Text("Lỗi tải dữ liệu: $err")),
+                  ),
+                ],
+              ),
+
+          data:
+              (stats) => ListView(
+                padding: const EdgeInsets.all(16),
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -45,7 +66,7 @@ class ScreenAdminDashboard extends ConsumerWidget {
                   ),
                 ],
               ),
-            ),
+        ),
       ),
     );
   }

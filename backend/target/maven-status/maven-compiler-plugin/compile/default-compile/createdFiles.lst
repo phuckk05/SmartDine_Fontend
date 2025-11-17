@@ -1,0 +1,6 @@
+com\smartdine\controllers\CategoryController.class
+com\smartdine\services\CategoryServices.class
+com\smartdine\controllers\MenuItemController.class
+com\smartdine\services\MenuItemServices.class
+com\smartdine\repository\MenuItemRepository.class
+com\smartdine\repository\CategoryRepository.class

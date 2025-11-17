@@ -27,14 +27,14 @@ class StatCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 40, color: Colors.teal),
+          Icon(icon, size: 40, color: Colors.blueAccent),
           const SizedBox(height: 10),
           Text(title, style: const TextStyle(fontSize: 16)),
           const SizedBox(height: 5),
           Text(
             value,
             style: const TextStyle(
-              color: Colors.teal,
+              color: Colors.blueAccent,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
