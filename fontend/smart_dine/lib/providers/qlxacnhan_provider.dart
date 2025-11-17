@@ -1,9 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/API/company_API.dart';
-import 'package:mart_dine/models/company.dart';
+import 'package:mart_dine/models/pending_company.dart';
 
 /// Quản lý trạng thái danh sách công ty chờ xác nhận
-class QlXacNhanNotifier extends StateNotifier<AsyncValue<List<Company>>> {
+class QlXacNhanNotifier
+    extends StateNotifier<AsyncValue<List<PendingCompany>>> {
   final CompanyAPI api;
 
   QlXacNhanNotifier(this.api) : super(const AsyncLoading()) {
@@ -12,7 +13,7 @@ class QlXacNhanNotifier extends StateNotifier<AsyncValue<List<Company>>> {
 
   /// Lấy danh sách công ty chờ xác nhận (statusId = 3)
   Future<void> loadPendingCompanies() async {
-    state = const AsyncLoading(); // Hiển thị loading khi tải lại
+    state = const AsyncLoading();
     try {
       final companies = await api.getPendingCompanies();
       state = AsyncData(companies);
@@ -25,7 +26,6 @@ class QlXacNhanNotifier extends StateNotifier<AsyncValue<List<Company>>> {
   Future<void> approveCompany(int id) async {
     try {
       await api.approveCompany(id);
-      // Tự động cập nhật danh sách mà không cần restart
       await loadPendingCompanies();
     } catch (e, st) {
       state = AsyncError('Lỗi khi duyệt công ty: $e', st);
@@ -55,7 +55,9 @@ class QlXacNhanNotifier extends StateNotifier<AsyncValue<List<Company>>> {
 
 /// Provider chính cho màn quản lý xác nhận công ty
 final qlXacNhanProvider =
-    StateNotifierProvider<QlXacNhanNotifier, AsyncValue<List<Company>>>((ref) {
+    StateNotifierProvider<QlXacNhanNotifier, AsyncValue<List<PendingCompany>>>((
+      ref,
+    ) {
       final api = ref.read(companyApiProvider);
       return QlXacNhanNotifier(api);
     });

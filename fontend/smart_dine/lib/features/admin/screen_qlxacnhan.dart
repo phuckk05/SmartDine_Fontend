@@ -91,11 +91,11 @@ class ScreenQlXacNhan extends ConsumerWidget {
                           onApprove: () async {
                             await ref
                                 .read(qlXacNhanProvider.notifier)
-                                .approveCompany(company.id!);
+                                .approveCompany(company.companyId!);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  '✅ Đã duyệt công ty ${company.name}',
+                                  '✅ Đã duyệt công ty ${company.companyName}',
                                   style: const TextStyle(color: Colors.white),
                                 ),
                                 backgroundColor: Colors.green,
@@ -106,11 +106,11 @@ class ScreenQlXacNhan extends ConsumerWidget {
                           onReject: () async {
                             await ref
                                 .read(qlXacNhanProvider.notifier)
-                                .rejectCompany(company.id!);
+                                .rejectCompany(company.companyId!);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  '❌ Đã từ chối công ty ${company.name}',
+                                  '❌ Đã từ chối công ty ${company.companyName}',
                                   style: const TextStyle(color: Colors.white),
                                 ),
                                 backgroundColor: Colors.redAccent,

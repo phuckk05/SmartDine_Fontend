@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'package:mart_dine/models/company.dart';
+import 'package:mart_dine/models/pending_company.dart';
 
 final uri1 = 'https://spring-boot-smartdine.onrender.com/api/companys';
 final uri2 = 'https://smartdine-backend-oq2x.onrender.com/api/companys';
@@ -20,7 +21,7 @@ class CompanyAPI {
           .map((company) => Company.fromMap(company as Map<String, dynamic>))
           .toList();
     }
-        return [];
+    return [];
   }
 
   //Đăng kí company
@@ -50,17 +51,6 @@ class CompanyAPI {
     return null;
   }
 
-  //Quản lý xác nhận
-  // Lấy danh sách công ty chờ xác nhận
-  Future<List<Company>> getPendingCompanies() async {
-    final response = await http.get(Uri.parse('$uri2/pending'));
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((e) => Company.fromMap(e)).toList();
-    }
-    throw Exception('Lỗi khi lấy danh sách công ty chờ duyệt');
-  }
-
   // Duyệt công ty
   Future<void> approveCompany(int id) async {
     final response = await http.put(Uri.parse('$uri2/approve/$id'));
@@ -82,6 +72,17 @@ class CompanyAPI {
     final response = await http.delete(Uri.parse('$uri2/delete/$id'));
     if (response.statusCode != 200) {
       throw Exception('Không thể xóa công ty');
+    }
+  }
+
+  Future<List<PendingCompany>> getPendingCompanies() async {
+    final response = await http.get(Uri.parse('$uri2/pending'));
+
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.map((e) => PendingCompany.fromJson(e)).toList();
+    } else {
+      throw Exception("Lỗi tải pending companies");
     }
   }
 }

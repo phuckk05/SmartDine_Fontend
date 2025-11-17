@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:mart_dine/models/company.dart';
 import 'package:intl/intl.dart';
+import 'package:mart_dine/features/admin/screen_company_detail.dart';
+import 'package:mart_dine/models/pending_company.dart';
 
 class CompanyItem extends StatelessWidget {
-  final Company company;
+  final PendingCompany company;
   final VoidCallback onApprove;
   final VoidCallback onReject;
 
@@ -14,14 +15,32 @@ class CompanyItem extends StatelessWidget {
     required this.onReject,
   });
 
-  String _formatDate(DateTime date) {
-    return DateFormat('dd/MM/yyyy - HH:mm').format(date); // HH:mm
+  String _formatDate(String dateString) {
+    try {
+      final date = DateTime.parse(dateString);
+      return DateFormat('dd/MM/yyyy - HH:mm').format(date);
+    } catch (e) {
+      return dateString;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => _showCompanyDetailDialog(context),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (_) => ScreenCompanyDetail(
+                  company: company,
+                  onApprove: onApprove,
+                  onReject: onReject,
+                ),
+          ),
+        );
+      },
+
       child: Card(
         elevation: 2,
         margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
@@ -32,7 +51,7 @@ class CompanyItem extends StatelessWidget {
             child: const Icon(Icons.business, color: Colors.blueAccent),
           ),
           title: Text(
-            company.name,
+            company.companyName,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           subtitle: Padding(
@@ -60,80 +79,120 @@ class CompanyItem extends StatelessWidget {
           backgroundColor: Colors.white,
           child: Padding(
             padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Tiêu đề
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Chi tiết thông tin',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blueAccent,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.grey),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                // Nội dung thông tin
-                _buildInfoRow('Tên:', company.name),
-                _buildInfoRow('Mã:', company.companyCode),
-                _buildInfoRow('Địa chỉ:', company.address),
-                _buildInfoRow(
-                  'Ngày tạo:',
-                  '${company.createdAt.day}/${company.createdAt.month}/${company.createdAt.year}',
-                ),
-                _buildInfoRow(
-                  'Cập nhật:',
-                  '${company.updatedAt.day}/${company.updatedAt.month}/${company.updatedAt.year}',
-                ),
-                _buildInfoRow('Trạng thái:', company.statusId.toString()),
-                const SizedBox(height: 20),
-
-                // Nút hành động
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        onReject();
-                      },
-                      icon: const Icon(Icons.close),
-                      label: const Text('Từ chối'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Chi tiết công ty',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blueAccent,
                         ),
                       ),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        onApprove();
-                      },
-                      icon: const Icon(Icons.check),
-                      label: const Text('Duyệt'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.grey),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  /// Company Info
+                  _buildInfoRow('Tên công ty:', company.companyName),
+                  _buildInfoRow('Mã:', company.companyCode),
+                  _buildInfoRow('Địa chỉ:', company.address),
+                  _buildInfoRow('Ngày tạo:', _formatDate(company.createdAt)),
+                  _buildInfoRow('Cập nhật:', _formatDate(company.updatedAt)),
+                  _buildInfoRow('Trạng thái:', company.companyStatus),
+
+                  const SizedBox(height: 16),
+
+                  /// Owner Info
+                  const Text(
+                    "Thông tin chủ sở hữu",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+
+                  _buildInfoRow('Tên:', company.fullName),
+                  _buildInfoRow('Email:', company.email),
+                  _buildInfoRow('SĐT:', company.phoneNumber),
+                  _buildInfoRow('Trạng thái:', company.ownerStatus),
+
+                  const SizedBox(height: 16),
+
+                  /// Images
+                  const Text(
+                    "Hình ảnh CCCD:",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+
+                  Row(
+                    children: [
+                      if (company.frontImage.isNotEmpty)
+                        Expanded(
+                          child: Image.network(
+                            company.frontImage,
+                            height: 130,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      const SizedBox(width: 10),
+                      if (company.backImage.isNotEmpty)
+                        Expanded(
+                          child: Image.network(
+                            company.backImage,
+                            height: 130,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          onReject();
+                        },
+                        icon: const Icon(Icons.close),
+                        label: const Text('Từ chối'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          onApprove();
+                        },
+                        icon: const Icon(Icons.check),
+                        label: const Text('Duyệt'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -148,7 +207,7 @@ class CompanyItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 100,
+            width: 120,
             child: Text(
               label,
               style: const TextStyle(
