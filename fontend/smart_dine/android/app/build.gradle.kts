@@ -25,11 +25,7 @@ android {
         applicationId = "com.example.me_talk"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-<<<<<<< HEAD
         minSdk = maxOf(flutter.minSdkVersion, 23)
-=======
-        minSdk = 23
->>>>>>> 1cb2cc84006f5a2eddd5561043dd88cb88c9757d
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
