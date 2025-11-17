@@ -96,6 +96,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
         // Kiểm tra role và hiển thị thông tin
         String roleName = '';
         int? branchId;
+        ref.read(isLoadingNotifierProvider.notifier).toggle(false);
         switch (user.role) {
           case 1:
             roleName = 'Administrator';
@@ -162,7 +163,6 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
         );
       }
     }
-    ref.read(isLoadingNotifierProvider.notifier).toggle(false);
   }
 
   //Hàm dispose
