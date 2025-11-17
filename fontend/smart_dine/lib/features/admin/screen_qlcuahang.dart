@@ -11,6 +11,7 @@ class ScreenQlCuaHang extends ConsumerWidget {
     final asyncList = ref.watch(companyOwnerListProvider);
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FB),
       appBar: AppBar(
         title: const Text(
           'Hoạt động cửa hàng',
@@ -20,8 +21,9 @@ class ScreenQlCuaHang extends ConsumerWidget {
         backgroundColor: Colors.blueAccent,
         automaticallyImplyLeading: false,
       ),
+
       body: asyncList.when(
-        // Dữ liệu
+        // ------------------- DỮ LIỆU -------------------
         data: (list) {
           if (list.isEmpty) {
             return RefreshIndicator(
@@ -29,22 +31,23 @@ class ScreenQlCuaHang extends ConsumerWidget {
                 ref.invalidate(companyOwnerListProvider);
               },
               child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 children: const [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      'Danh sách hoạt động cửa hàng đã duyệt',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 250),
+                  SizedBox(height: 200),
                   Center(
-                    child: Text(
-                      "Không có cửa hàng nào được duyệt.",
-                      style: TextStyle(fontSize: 16),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.store_mall_directory,
+                          size: 80,
+                          color: Colors.grey,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'Không có cửa hàng nào được duyệt.',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -52,12 +55,13 @@ class ScreenQlCuaHang extends ConsumerWidget {
             );
           }
 
-          // Nếu có dữ liệu → sort + show list
+          // Sắp xếp mới nhất
           list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
           return RefreshIndicator(
             onRefresh: () async => ref.invalidate(companyOwnerListProvider),
             child: ListView.builder(
+              padding: const EdgeInsets.all(16),
               itemCount: list.length,
               itemBuilder: (context, index) {
                 final item = list[index];
@@ -117,13 +121,56 @@ class ScreenQlCuaHang extends ConsumerWidget {
           );
         },
 
-        // Lỗi
-        error: (err, stack) => Center(child: Text("Lỗi tải dữ liệu: $err")),
-
-        // Loading
+        // ------------------- LOADING -------------------
         loading:
             () => const Center(
-              child: CircularProgressIndicator(color: Colors.blueAccent),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(color: Colors.blueAccent),
+                  SizedBox(height: 16),
+                  Text(
+                    'Đang tải dữ liệu...',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+
+        // ------------------- ERROR -------------------
+        error:
+            (err, stack) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 60,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Lỗi tải dữ liệu:\n$err",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.red, fontSize: 15),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: () => ref.invalidate(companyOwnerListProvider),
+                      label: const Text('Thử lại'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
       ),
     );
