@@ -22,7 +22,10 @@ public interface CompanyRepository extends JpaRepository<Company, Integer> {
         u.fullName,
         u.phone,
         (SELECT COUNT(b.id) FROM Branch b WHERE b.companyId = c.id),
-        c.statusId
+        c.statusId,
+        u.email,
+        u.backImage,
+        u.fontImage
     )
     FROM Company c
     JOIN User u ON u.companyId = c.id

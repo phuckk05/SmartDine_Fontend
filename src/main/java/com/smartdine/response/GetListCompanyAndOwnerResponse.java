@@ -1,7 +1,7 @@
 package com.smartdine.response;
 
 public class GetListCompanyAndOwnerResponse {
-    private Integer companyId;      // ✅ Thêm ID công ty
+    private Integer companyId;
     private String companyName;
     private String ownerName;
     private String phoneNumber;
@@ -9,10 +9,15 @@ public class GetListCompanyAndOwnerResponse {
     private Integer statusId;
     private Long totalBranches;
 
+    // 🔥 Thêm 3 trường mới
+    private String email;
+    private String frontImage;
+    private String backImage;
+
     public GetListCompanyAndOwnerResponse() {
     }
 
-    // ✅ Constructor đầy đủ (có companyId)
+    // ✅ Constructor đầy đủ (có trường mới)
     public GetListCompanyAndOwnerResponse(
             Integer companyId,
             String companyName,
@@ -20,7 +25,10 @@ public class GetListCompanyAndOwnerResponse {
             String fullName,
             String phone,
             Long totalBranches,
-            Integer statusId
+            Integer statusId,
+            String email,
+            String frontImage,
+            String backImage
     ) {
         this.companyId = companyId;
         this.companyName = companyName;
@@ -29,9 +37,12 @@ public class GetListCompanyAndOwnerResponse {
         this.phoneNumber = phone;
         this.totalBranches = totalBranches;
         this.statusId = statusId;
+        this.email = email;
+        this.frontImage = frontImage;
+        this.backImage = backImage;
     }
 
-    // ✅ Overload cho primitive long
+    // Overload long
     public GetListCompanyAndOwnerResponse(
             Integer companyId,
             String companyName,
@@ -39,12 +50,15 @@ public class GetListCompanyAndOwnerResponse {
             String fullName,
             String phone,
             long totalBranches,
-            Integer statusId
+            Integer statusId,
+            String email,
+            String frontImage,
+            String backImage
     ) {
-        this(companyId, companyName, userId, fullName, phone, Long.valueOf(totalBranches), statusId);
+        this(companyId, companyName, userId, fullName, phone, Long.valueOf(totalBranches), statusId, email, frontImage, backImage);
     }
 
-    // ✅ Overload cho primitive int
+    // Overload int
     public GetListCompanyAndOwnerResponse(
             Integer companyId,
             String companyName,
@@ -52,67 +66,45 @@ public class GetListCompanyAndOwnerResponse {
             String fullName,
             String phone,
             int totalBranches,
-            Integer statusId
+            Integer statusId,
+            String email,
+            String frontImage,
+            String backImage
     ) {
-        this(companyId, companyName, userId, fullName, phone, Long.valueOf(totalBranches), statusId);
+        this(companyId, companyName, userId, fullName, phone, Long.valueOf(totalBranches), statusId, email, frontImage, backImage);
     }
 
     // ========================
     // Getter & Setter
     // ========================
-    public Integer getCompanyId() {
-        return companyId;
-    }
+    public Integer getCompanyId() { return companyId; }
+    public void setCompanyId(Integer companyId) { this.companyId = companyId; }
 
-    public void setCompanyId(Integer companyId) {
-        this.companyId = companyId;
-    }
+    public String getCompanyName() { return companyName; }
+    public void setCompanyName(String companyName) { this.companyName = companyName; }
 
-    public String getCompanyName() {
-        return companyName;
-    }
+    public Integer getUserId() { return userId; }
+    public void setUserId(Integer userId) { this.userId = userId; }
 
-    public void setCompanyName(String companyName) {
-        this.companyName = companyName;
-    }
+    public String getOwnerName() { return ownerName; }
+    public void setOwnerName(String ownerName) { this.ownerName = ownerName; }
 
-    public Integer getUserId() {
-        return userId;
-    }
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 
-    public void setUserId(Integer userId) {
-        this.userId = userId;
-    }
+    public Long getTotalBranches() { return totalBranches; }
+    public void setTotalBranches(Long totalBranches) { this.totalBranches = totalBranches; }
 
-    public String getOwnerName() {
-        return ownerName;
-    }
+    public Integer getStatusId() { return statusId; }
+    public void setStatusId(Integer statusId) { this.statusId = statusId; }
 
-    public void setOwnerName(String ownerName) {
-        this.ownerName = ownerName;
-    }
+    // ⭐ Getter – Setter mới
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
+    public String getFrontImage() { return frontImage; }
+    public void setFrontImage(String frontImage) { this.frontImage = frontImage; }
 
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    public Long getTotalBranches() {
-        return totalBranches;
-    }
-
-    public void setTotalBranches(Long totalBranches) {
-        this.totalBranches = totalBranches;
-    }
-
-    public Integer getStatusId() {
-        return statusId;
-    }
-
-    public void setStatusId(Integer statusId) {
-        this.statusId = statusId;
-    }
+    public String getBackImage() { return backImage; }
+    public void setBackImage(String backImage) { this.backImage = backImage; }
 }
