@@ -771,6 +771,7 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
       onChanged: (Branch? newValue) {
         ref.read(_selectedBranchProvider.notifier).state = newValue;
         _codeBranchController.text = newValue?.branchCode ?? '';
+        print('Selected Branch Code: ${_codeBranchController.text}');
       },
     );
   }
@@ -798,13 +799,14 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
               phone: _phoneController.text,
               password: _passwordController1.text,
               statusId: 0, // Mặc định bị khóa, chờ duyệt
-              role: widget.index == 1
-                  ? 5 // Owner
-                  : widget.index == 2
-                  ? 2 // Manager  
-                  : widget.index == 3
-                  ? 3 // Staff
-                  : 4, // Chef
+              role:
+                  widget.index == 1
+                      ? 5 // Owner
+                      : widget.index == 2
+                      ? 2 // Manager
+                      : widget.index == 3
+                      ? 3 // Staff
+                      : 4, // Chef
               companyId: null,
               fontImage: fontImageUrl ?? "Chưa có",
               backImage: backImageUrl ?? "Chưa có",

@@ -84,7 +84,7 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHeader(),
+                      _buildHeader(branchIdInt),
                       const SizedBox(height: 20),
                       // Hiển thị các card với thông báo "Chưa có dữ liệu"
                       _buildEmptyMetricsCards(isDark),
@@ -97,11 +97,7 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
           data:
               (statistics) => RefreshIndicator(
                 onRefresh: () async {
-                  return ref.refresh(
-                    branchStatisticsProvider(
-                      ref.read(currentBranchIdProvider)!,
-                    ),
-                  );
+                  return ref.refresh(branchStatisticsProvider(branchIdInt));
                 },
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -109,7 +105,7 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHeader(),
+                      _buildHeader(branchIdInt),
                       const SizedBox(height: 20),
                       if (statistics != null) ...[
                         _buildMetricsCards(statistics, isDark),
@@ -125,7 +121,7 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(int branchId) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -148,9 +144,8 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
         ),
         IconButton(
           onPressed: () {
-            final branchIdInt = ref.read(currentBranchIdProvider)!;
             // ignore: unused_result
-            ref.refresh(branchStatisticsProvider(branchIdInt));
+            ref.refresh(branchStatisticsProvider(branchId));
           },
           icon: const Icon(Icons.refresh),
           style: IconButton.styleFrom(
