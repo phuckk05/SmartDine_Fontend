@@ -24,10 +24,10 @@ public class OrderItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "order_id")
+    @Column(name = "order_id", insertable = false, updatable = false)
     private Integer orderId;
 
-    @Column(name = "item_id")
+    @Column(name = "item_id", insertable = false, updatable = false)
     private Integer itemId;
 
     private Integer quantity;
