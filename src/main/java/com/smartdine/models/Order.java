@@ -24,7 +24,7 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "table_id")
+    @Column(name = "table_id", insertable = false, updatable = false)
     private Integer tableId;
 
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
