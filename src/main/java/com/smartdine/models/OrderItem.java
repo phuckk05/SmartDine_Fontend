@@ -49,13 +49,13 @@ public class OrderItem {
     @JsonIgnore
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "item_id", insertable = false, updatable = false)
+    @JoinColumn(name = "item_id")
     private Item item;
 
     @JsonIgnore
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", insertable = false, updatable = false)
+    @JoinColumn(name = "order_id")
     private Order order;
 
     public OrderItem() {

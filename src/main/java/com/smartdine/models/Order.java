@@ -1,4 +1,4 @@
-package com.smartdine.models;
+ienpackage com.smartdine.models;
 
 import java.time.LocalDateTime;
 
@@ -29,7 +29,7 @@ public class Order {
 
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "table_id", insertable = false, updatable = false)
+    @JoinColumn(name = "table_id")
     private RestaurantTable table;
 
     @Column(name = "company_id")
