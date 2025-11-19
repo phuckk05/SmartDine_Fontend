@@ -1,4 +1,4 @@
-ienpackage com.smartdine.models;
+package com.smartdine.models;
 
 import java.time.LocalDateTime;
 
