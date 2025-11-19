@@ -40,11 +40,40 @@ public class OrderController {
     @PostMapping("/save")
     public ResponseEntity<?> saveOrder(@RequestBody Order order) {
         try {
+            // Validate required fields
+            if (order.getBranchId() == null || order.getBranchId() <= 0) {
+                return ResponseEntity.badRequest().body("Branch ID không hợp lệ");
+            }
+            if (order.getCompanyId() == null || order.getCompanyId() <= 0) {
+                return ResponseEntity.badRequest().body("Company ID không hợp lệ");
+            }
+            if (order.getUserId() == null || order.getUserId() <= 0) {
+                return ResponseEntity.badRequest().body("User ID không hợp lệ");
+            }
+            if (order.getTableId() == null || order.getTableId() <= 0) {
+                return ResponseEntity.badRequest().body("Table ID không hợp lệ");
+            }
+            if (order.getStatusId() == null || order.getStatusId() <= 0) {
+                return ResponseEntity.badRequest().body("Status ID không hợp lệ");
+            }
+
             Order savedOrder = orderServices.saveOrder(order);
             return ResponseEntity.ok(savedOrder);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body("Error saving order: " + e.getMessage());
+            String errorMessage = e.getMessage();
+            if (errorMessage.contains("violates foreign key constraint")) {
+                if (errorMessage.contains("branch_id_fkey")) {
+                    return ResponseEntity.badRequest().body("Branch ID không tồn tại trong hệ thống");
+                } else if (errorMessage.contains("company_id_fkey")) {
+                    return ResponseEntity.badRequest().body("Company ID không tồn tại trong hệ thống");
+                } else if (errorMessage.contains("user_id_fkey")) {
+                    return ResponseEntity.badRequest().body("User ID không tồn tại trong hệ thống");
+                } else if (errorMessage.contains("table_id_fkey")) {
+                    return ResponseEntity.badRequest().body("Table ID không tồn tại trong hệ thống");
+                }
+            }
+            return ResponseEntity.internalServerError().body("Lỗi lưu đơn hàng: " + errorMessage);
         }
     }
 
