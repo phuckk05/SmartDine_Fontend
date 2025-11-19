@@ -11,6 +11,9 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
+import java.time.LocalDateTime; // Có thể thiếu cả cái này nếu bạn dùng LocalDateTime
+import java.util.List;        // Có thể thiếu cả List
+
 @Entity
 @Table(name = "orders")
 public class Order {
@@ -21,11 +24,6 @@ public class Order {
 
     @Column(name = "table_id")
     private Integer tableId;
-
-    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "table_id")
-    private RestaurantTable table;
 
     @Column(name = "company_id")
     private Integer companyId;
