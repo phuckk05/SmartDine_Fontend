@@ -41,7 +41,7 @@ public class OrderController {
     public ResponseEntity<?> saveOrder(@RequestBody Order order) {
         try {
             // Validate required fields
-            if (order.getBranchId() == null || order.getBranchId() <= 0) {
+            if (order.getBranchId() == null || order.getBranchId() < 0) {
                 return ResponseEntity.badRequest().body("Branch ID không hợp lệ");
             }
             if (order.getCompanyId() == null || order.getCompanyId() <= 0) {
