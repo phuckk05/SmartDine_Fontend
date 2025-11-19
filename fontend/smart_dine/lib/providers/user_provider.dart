@@ -56,6 +56,7 @@ class UserNotifier extends StateNotifier<User?> {
         }
         if (check == true) {
           try {
+            print('User input: ${user}');
             final registerSuccess = await userAPI.createUser(user);
             if (registerSuccess != null) {
               // Cập nhật state sau khi đăng ký thành công

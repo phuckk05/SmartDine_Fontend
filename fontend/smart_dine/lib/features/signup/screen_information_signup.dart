@@ -798,15 +798,14 @@ class _ScreenInformationState extends ConsumerState<ScreenInformationSignup> {
               email: _emailController.text,
               phone: _phoneController.text,
               password: _passwordController1.text,
-              statusId: 0, // Mặc định bị khóa, chờ duyệt
+              statusId: 3,
               role:
                   widget.index == 1
                       ? 5 // Owner
                       : widget.index == 2
                       ? 2 // Manager
-                      : widget.index == 3
-                      ? 3 // Staff
-                      : 4, // Chef
+                      : 3, // Staff
+
               companyId: null,
               fontImage: fontImageUrl ?? "Chưa có",
               backImage: backImageUrl ?? "Chưa có",

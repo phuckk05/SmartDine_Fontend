@@ -20,6 +20,9 @@ class UserAPI {
       final Map<String, dynamic> data = jsonDecode(response.body);
       return User.fromMap(data);
     }
+    print(
+      '🔍 [API] Create user failed: ${response.statusCode} ${response.body}',
+    );
     return null;
   }
 

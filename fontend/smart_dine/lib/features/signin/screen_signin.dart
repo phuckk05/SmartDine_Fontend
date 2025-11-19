@@ -20,7 +20,6 @@ import 'package:mart_dine/providers_owner/system_stats_provider.dart';
 import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets/loading.dart';
 
-
 class ScreenSignIn extends ConsumerStatefulWidget {
   const ScreenSignIn({super.key});
   @override
@@ -50,9 +49,9 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
 
   //Hàm sigin
   void toSignIn() async {
-    // if (isValidEmail(_emailController.text) == false) {
-    //   Constrats.showThongBao(context, 'Vui lòng nhập đúng định dạng email.');
-    //   return;
+    // if (isValidEmail(_emailController.text) == false)đúng định dạng email.');
+    //   return; {
+    //   Constrats.showThongBao(context, 'Vui lòng nhập
     // }
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       Constrats.showThongBao(
@@ -71,17 +70,15 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
       // Kiểm tra trạng thái tài khoản
       if (user.statusId == 3) {
         // Chờ duyệt
-        Constrats.showThongBao(
-          context,
+        await _showApprovalDialog(
           'Tài khoản của bạn chưa được duyệt. Vui lòng chờ admin phê duyệt.',
         );
         ref.read(isLoadingNotifierProvider.notifier).toggle(false);
         return;
       } else if (user.statusId == 2) {
         //Không hoạt động
-        Constrats.showThongBao(
-          context,
-          'Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ admin.',
+        await _showApprovalDialog(
+          'Tài khoản của bạn đang bị vô hiệu hóa. Vui lòng liên hệ admin.',
         );
         ref.read(isLoadingNotifierProvider.notifier).toggle(false);
         return;
@@ -212,15 +209,14 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
           );
         } else if (user.role == 5) {
           // Owner -> Chuyển về Bottom Navigation với quyền admin
-          
+
           // SỬA: Điều hướng đến ScreenDashboard và thay thế màn hình đăng nhập
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const ScreenDashboard()),
           );
-        }  else if (user.role == 6) {
+        } else if (user.role == 6) {
           //Cashier
-
         }
       }
     } else {
@@ -230,6 +226,25 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
       );
     }
     ref.read(isLoadingNotifierProvider.notifier).toggle(false);
+  }
+
+  Future<void> _showApprovalDialog(String message) async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Thông báo '),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Đóng'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   //Hàm dispose
