@@ -44,7 +44,7 @@ public class OrderController {
             return ResponseEntity.ok(savedOrder);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.internalServerError().body("Error saving order: " + e.getMessage());
         }
     }
 
