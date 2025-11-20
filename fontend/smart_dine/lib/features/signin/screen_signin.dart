@@ -169,11 +169,6 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
               defaultBranchId: branchId,
             );
 
-        Constrats.showThongBao(
-          context,
-          'Đăng nhập thành công!\nVai trò: $roleName ${branchId != null ? "- Chi nhánh: $branchId" : ""}',
-        );
-
         // Điều hướng dựa theo role
         if (user.role == 1) {
           // Admin
