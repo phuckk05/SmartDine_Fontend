@@ -1,11 +1,12 @@
 package com.smartdine.services;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import com.smartdine.models.Branch;
+import com.smartdine.models.UserBranch;
+import com.smartdine.repository.UserBranchRepository;
+import com.smartdine.response.CompanyBranchResponse;
 import com.smartdine.response.GetListCompanyAndOwnerResponse;
 import com.smartdine.response.GetListPendingCompanyAndOwnerResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,9 @@ public class CompanyServices {
 
     @Autowired
     private BranchRepository branchRepository;
+
+    @Autowired
+    private UserBranchRepository userBranchRepository;
 
     // Lấy tất cà company
     public List<Company> getAll() {
@@ -225,6 +229,41 @@ public class CompanyServices {
         }
 
         return responseList;
+    }
+
+    public CompanyBranchResponse getCompanyBranchByUser(Integer userId) {
+
+        // 1. Lấy user
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+
+        // 2. Lấy công ty
+        Company company = companyRepository.findById(user.getCompanyId())
+                .orElseThrow(() -> new RuntimeException("Công ty không tồn tại"));
+
+        // 3. Lấy danh sách chi nhánh
+        UserBranch ub = userBranchRepository.findByUserId(userId);
+
+        // Nếu không có chi nhánh
+        if (ub == null) {
+            return new CompanyBranchResponse(
+                    company.getId(),
+                    company.getName(),
+                    null,
+                    "Không có chi nhánh"
+            );
+        }
+
+        // Lấy chi nhánh đầu tiên
+        Optional<Branch> branchOpt = branchRepository.findById(ub.getBranchId());
+        String branchName = branchOpt.map(Branch::getName).orElse("Không tìm thấy chi nhánh");
+
+        return new CompanyBranchResponse(
+                company.getId(),
+                company.getName(),
+                ub.getBranchId(),
+                branchName
+        );
     }
 
 

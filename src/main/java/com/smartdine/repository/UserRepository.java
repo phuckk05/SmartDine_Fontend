@@ -28,4 +28,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     
     int countByCompanyId(Integer companyId);
 
+
+
 }
