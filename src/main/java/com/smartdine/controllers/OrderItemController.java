@@ -1,6 +1,7 @@
 package com.smartdine.controllers;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,7 +28,7 @@ public class OrderItemController {
         this.orderServices = orderServices;
     }
 
-    // save order item
+    // Save order items
     @PostMapping("/save")
     public ResponseEntity<?> saveOrderItem(@RequestBody List<OrderItem> orderItems) {
         try {
@@ -51,7 +52,6 @@ public class OrderItemController {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();
         }
-
     }
 
     // Lấy danh sách order item theo orderId
@@ -66,11 +66,14 @@ public class OrderItemController {
         }
     }
 
-    // Cập nhật trạng thái của order item
+    // Cập nhật trạng thái của order item (nhận Map với statusId)
     @PutMapping("/{id}/status")
-    public ResponseEntity<OrderItem> updateOrderItemStatus(@PathVariable Integer id, @RequestBody Integer status) {
+    public ResponseEntity<OrderItem> updateOrderItemStatus(
+            @PathVariable Integer id, 
+            @RequestBody Map<String, Integer> payload) {
         try {
-            OrderItem updatedOrderItem = orderItemServices.updateOrderItemStatus(id, status);
+            Integer statusId = payload.get("statusId");
+            OrderItem updatedOrderItem = orderItemServices.updateOrderItemStatus(id, statusId);
             return ResponseEntity.ok(updatedOrderItem);
         } catch (Exception e) {
             e.printStackTrace();
@@ -89,5 +92,4 @@ public class OrderItemController {
             return ResponseEntity.internalServerError().build();
         }
     }
-
 }
