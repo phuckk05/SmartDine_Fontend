@@ -77,10 +77,7 @@ public class ItemServices {
 
     // Xóa item
     public boolean deleteItem(Integer id) {
-        if (!itemRepository.existsById(id)) {
-            return false;
-        }
-        itemRepository.deleteById(id);
-        return true;
+        throw new UnsupportedOperationException(
+                "Xóa món khỏi menu đã bị vô hiệu hóa. Hãy xóa order item tương ứng thay vì xóa menu item.");
     }
 }
