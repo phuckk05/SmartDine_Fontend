@@ -1,8 +1,12 @@
 package com.smartdine.controllers;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,7 +31,7 @@ public class OrderItemController {
         this.orderServices = orderServices;
     }
 
-    // save order item
+    // Save order items
     @PostMapping("/save")
     public ResponseEntity<?> saveOrderItem(@RequestBody List<OrderItem> orderItems) {
         try {
@@ -44,14 +48,13 @@ public class OrderItemController {
     public ResponseEntity<List<OrderItem>> getOrderItemsToday(@PathVariable Integer branchId) {
         try {
             List<Order> orders = orderServices.getOrdersByBranchIdToday(branchId);
-            List<Integer> orderIds = orders.stream().map(Order::getId).toList();
+            List<Integer> orderIds = orders.stream().map(Order::getId).collect(Collectors.toList());
             List<OrderItem> orderItems = orderItemServices.getOrderItemsByOrderIds(orderIds);
             return ResponseEntity.ok(orderItems);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();
         }
-
     }
 
     // Lấy danh sách order item theo orderId
@@ -66,11 +69,14 @@ public class OrderItemController {
         }
     }
 
-    // Cập nhật trạng thái của order item
+    // Cập nhật trạng thái của order item (nhận Map với statusId)
     @PutMapping("/{id}/status")
-    public ResponseEntity<OrderItem> updateOrderItemStatus(@PathVariable Integer id, @RequestBody Integer status) {
+    public ResponseEntity<OrderItem> updateOrderItemStatus(
+            @PathVariable Integer id,
+            @RequestBody Map<String, Integer> payload) {
         try {
-            OrderItem updatedOrderItem = orderItemServices.updateOrderItemStatus(id, status);
+            Integer statusId = payload.get("statusId");
+            OrderItem updatedOrderItem = orderItemServices.updateOrderItemStatus(id, statusId);
             return ResponseEntity.ok(updatedOrderItem);
         } catch (Exception e) {
             e.printStackTrace();
@@ -90,4 +96,35 @@ public class OrderItemController {
         }
     }
 
+    // Cập nhật số lượng của order item
+    @PutMapping("/{id}/quantity")
+    public ResponseEntity<OrderItem> updateOrderItemQuantity(
+            @PathVariable Integer id,
+            @RequestBody Map<String, Integer> payload) {
+        try {
+            Integer newQuantity = payload.get("quantity");
+            OrderItem updatedOrderItem = orderItemServices.updateOrderItemQuantity(id, newQuantity);
+            return ResponseEntity.ok(updatedOrderItem);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // Xóa order item chờ xác nhận
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deletePendingOrderItem(@PathVariable Integer id) {
+        try {
+            boolean deleted = orderItemServices.deletePendingOrderItem(id);
+            if (!deleted) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
 }

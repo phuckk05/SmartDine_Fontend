@@ -77,17 +77,7 @@ public class ItemServices {
 
     // Xóa item
     public boolean deleteItem(Integer id) {
-        Item item = itemRepository.findById(id).orElse(null);
-        if (item == null) {
-            return false;
-        }
-
-        Integer statusId = item.getStatusId();
-        if (statusId == null || statusId.intValue() != 1) {
-            throw new IllegalStateException("Chỉ được phép xóa món ở trạng thái chờ duyệt (statusId = 1).");
-        }
-
-        itemRepository.deleteById(id);
-        return true;
+        throw new UnsupportedOperationException(
+                "Xóa món khỏi menu đã bị vô hiệu hóa. Hãy xóa order item tương ứng thay vì xóa menu item.");
     }
 }

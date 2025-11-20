@@ -2,19 +2,17 @@ package com.smartdine.models;
 
 import java.time.LocalDateTime;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+
+import java.time.LocalDateTime; // Có thể thiếu cả cái này nếu bạn dùng LocalDateTime
+import java.util.List;        // Có thể thiếu cả List
 
 @Entity
 @Table(name = "orders")
@@ -26,11 +24,6 @@ public class Order {
 
     @Column(name = "table_id")
     private Integer tableId;
-
-    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "table_id")
-    private RestaurantTable table;
 
     @Column(name = "company_id")
     private Integer companyId;
@@ -93,13 +86,7 @@ public class Order {
         this.tableId = tableId;
     }
 
-    public RestaurantTable getTable() {
-        return table;
-    }
 
-    public void setTable(RestaurantTable table) {
-        this.table = table;
-    }
 
     public Integer getCompanyId() {
         return companyId;
