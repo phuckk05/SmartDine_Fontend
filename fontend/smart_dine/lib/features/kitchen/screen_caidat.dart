@@ -51,37 +51,30 @@ class SettingNotifier extends StateNotifier<SettingState> {
   final AuthService _authService = AuthService();
 
   SettingNotifier() : super(SettingState());
+
   // Lấy dữ liệu user và role từ API
   Future<void> fetchUserData() async {
     try {
       state = state.copyWith(isLoading: true);
 
-      // Lấy user từ SharedPreferences
       final savedUser = await getSavedUser();
-
       if (savedUser == null) {
-        print('Không tìm thấy user trong SharedPreferences');
-        state = state.copyWith(
-          isLoading: false,
-          isLoggedOut: true,
-        ); // nếu muốn logout
+        state = state.copyWith(isLoading: false, isLoggedOut: true);
         return;
       }
 
-      // Gọi API lấy danh sách roles
+      // Lấy role
       final rolesRes = await http.get(
         Uri.parse('https://smartdine-backend-oq2x.onrender.com/api/roles/all'),
       );
+      final roles = json.decode(rolesRes.body);
 
-      final List<dynamic> roles = json.decode(rolesRes.body);
-
-      // Tìm roleName tương ứng từ roleId của user
       final roleMatch = roles.firstWhere(
         (r) => r['id'] == savedUser.role,
         orElse: () => {'name': 'Unknown'},
       );
 
-      // Cập nhật state
+      // Gán thông tin user cơ bản
       state = state.copyWith(
         user: {
           "id": savedUser.id,
@@ -99,8 +92,10 @@ class SettingNotifier extends StateNotifier<SettingState> {
         isLoading: false,
         isLoggedOut: false,
       );
+
+      /// GỌI API CHI NHÁNH (mới thêm)
+      await fetchCompanyBranch(savedUser.id!);
     } catch (e) {
-      print('Lỗi khi fetch dữ liệu: $e');
       state = state.copyWith(isLoading: false, isLoggedOut: false);
     }
   }
@@ -135,6 +130,33 @@ class SettingNotifier extends StateNotifier<SettingState> {
     }
   }
 
+  // Lấy thông tin công ty và chi nhánh
+  Future<void> fetchCompanyBranch(int userId) async {
+    try {
+      final res = await http.get(
+        Uri.parse(
+          'https://smartdine-backend-oq2x.onrender.com/api/company/company-branch/$userId',
+        ),
+      );
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+
+        state = state.copyWith(
+          user: {
+            ...?state.user,
+            "companyName": data["companyName"],
+            "branchName": data["branchName"],
+          },
+        );
+      } else {
+        print("Lỗi khi gọi API company-branch: ${res.body}");
+      }
+    } catch (e) {
+      print("Lỗi fetchCompanyBranch: $e");
+    }
+  }
+
   void toggleVibration(bool value) =>
       state = state.copyWith(vibrationEnabled: value);
 
@@ -166,83 +188,129 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cài đặt'),
+        title: const Text(
+          'Cài đặt tài khoản',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 25,
+          ),
+        ),
         centerTitle: true,
+        backgroundColor: Colors.blueAccent,
+        elevation: 0,
         automaticallyImplyLeading: false,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child:
-            state.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : Column(
+      body:
+          state.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Thông tin nhân viên',
+                      "Thông tin nhân viên",
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
+
+                    /// THÔNG TIN NGƯỜI SỬ DỤNG THẺ
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          /// Bên trái: Thông tin user
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                state.user?['fullName'] ?? 'Không có tên',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
+                          /// Thông tin user
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  state.user?['fullName'] ?? 'Không có tên',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text('ID: ${state.user?['id'] ?? ''}'),
-                              const SizedBox(height: 4),
-                              Text(state.user?['email'] ?? ''),
-                            ],
+                                const SizedBox(height: 4),
+                                Text(
+                                  "Mã nhân viên: ${state.user?['id'] ?? ''}",
+                                ),
+                                Text("Email: ${state.user?['email'] ?? ''}"),
+                                Text(
+                                  "Cửa hàng: ${state.user?['companyName'] ?? '---'}",
+                                ),
+                                Text(
+                                  "Chi nhánh: ${state.user?['branchName'] ?? '---'}",
+                                ),
+                              ],
+                            ),
                           ),
 
-                          /// Bên phải: Vai trò
-                          Text(
-                            state.roleName ?? 'Không xác định',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          /// Role
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              state.roleName ?? "Không xác định",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blue,
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 28),
                     const Text(
-                      'Hoạt động & dịch vụ',
+                      "Hoạt động & dịch vụ",
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 10),
 
+                    /// DARK MODE SWITCH
                     SwitchListTile(
-                      title: const Text('Chế độ tối'),
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text(
+                        "Chế độ tối",
+                        style: TextStyle(fontSize: 16),
+                      ),
                       value: state.darkModeEnabled,
                       onChanged: notifier.toggleDarkMode,
+                      secondary: const Icon(Icons.dark_mode),
                     ),
 
-                    const Spacer(),
+                    const SizedBox(height: 40),
 
+                    /// ĐĂNG XUẤT BUTTON
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
+                      child: ElevatedButton.icon(
                         onPressed: () async {
                           final success = await notifier.logout();
 
@@ -271,15 +339,15 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
                             );
                           }
                         },
-
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
+                        icon: const Icon(Icons.logout, color: Colors.white),
+                        label: const Text(
                           'Đăng xuất',
                           style: TextStyle(color: Colors.white, fontSize: 16),
                         ),
@@ -287,7 +355,7 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
                     ),
                   ],
                 ),
-      ),
+              ),
     );
   }
 }
