@@ -38,6 +38,23 @@ public class OrderItemController {
             return ResponseEntity.internalServerError().build();
         }
     }
+    @PutMapping("/order-items/{id}/status")
+    public ResponseEntity<Void> updateOrderItemStatus(
+        @PathVariable Integer id,
+        @RequestBody Map<String, Integer> payload
+    ) {
+        Integer statusId = payload.get("statusId");
+        orderItemService.updateStatus(id, statusId);
+        return ResponseEntity.ok().build();
+    }
+
+    // Trong OrderItemService
+    public void updateStatus(Integer orderItemId, Integer statusId) {
+        OrderItem orderItem = orderItemRepository.findById(orderItemId)
+            .orElseThrow(() -> new RuntimeException("Order item not found"));
+        orderItem.setStatusId(statusId);
+        orderItemRepository.save(orderItem);
+    }
 
     // Lấy tất cả order item ngày hôm nay
     @GetMapping("/today/branch/{branchId}")
