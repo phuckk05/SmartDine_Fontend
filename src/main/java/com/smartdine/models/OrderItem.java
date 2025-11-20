@@ -24,11 +24,11 @@ public class OrderItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @JsonProperty("orderId")  
+
     @Column(name = "order_id")
     private Integer orderId;
 
-    @JsonProperty("itemId")   
+
     @Column(name = "item_id")
     private Integer itemId;
 
@@ -36,26 +36,30 @@ public class OrderItem {
 
     private String note;
 
-    @JsonProperty("statusId")  
+
     @Column(name = "status_id")
     private Integer statusId;
 
-    @JsonProperty("addedBy")   
+ 
     @Column(name = "added_by")
     private Integer addedBy;
 
-    @JsonProperty("servedBy")  
     @Column(name = "served_by")
     private Integer servedBy;
 
-    @JsonProperty("createdAt") 
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "item_id", insertable = false, updatable = false)
+    private Item item;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", insertable = false, updatable = false)
+    private Order order;
 
-    public OrderItem() {
-    }
+    public OrderItem() {}
 
     public OrderItem(Integer id, Integer orderId, Integer itemId, Integer quantity, String note,
             Integer statusId, Integer addedBy, Integer servedBy, LocalDateTime createdAt) {
@@ -140,22 +144,6 @@ public class OrderItem {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
-    }
-
-    public Item getItem() {
-        return item;
-    }
-
-    public void setItem(Item item) {
-        this.item = item;
-    }
-
-    public Order getOrder() {
-        return order;
-    }
-
-    public void setOrder(Order order) {
-        this.order = order;
     }
 
     @PrePersist

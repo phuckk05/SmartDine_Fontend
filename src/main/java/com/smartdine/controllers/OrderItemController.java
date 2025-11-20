@@ -2,6 +2,7 @@ package com.smartdine.controllers;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,7 +46,7 @@ public class OrderItemController {
     public ResponseEntity<List<OrderItem>> getOrderItemsToday(@PathVariable Integer branchId) {
         try {
             List<Order> orders = orderServices.getOrdersByBranchIdToday(branchId);
-            List<Integer> orderIds = orders.stream().map(Order::getId).toList();
+            List<Integer> orderIds = orders.stream().map(Order::getId).collect(Collectors.toList());
             List<OrderItem> orderItems = orderItemServices.getOrderItemsByOrderIds(orderIds);
             return ResponseEntity.ok(orderItems);
         } catch (Exception e) {
@@ -86,6 +87,21 @@ public class OrderItemController {
     public ResponseEntity<OrderItem> updateServedBy(@PathVariable Integer id, @RequestBody Integer servedBy) {
         try {
             OrderItem updatedOrderItem = orderItemServices.updateServedBy(id, servedBy);
+            return ResponseEntity.ok(updatedOrderItem);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // Cập nhật số lượng của order item
+    @PutMapping("/{id}/quantity")
+    public ResponseEntity<OrderItem> updateOrderItemQuantity(
+            @PathVariable Integer id,
+            @RequestBody Map<String, Integer> payload) {
+        try {
+            Integer newQuantity = payload.get("quantity");
+            OrderItem updatedOrderItem = orderItemServices.updateOrderItemQuantity(id, newQuantity);
             return ResponseEntity.ok(updatedOrderItem);
         } catch (Exception e) {
             e.printStackTrace();

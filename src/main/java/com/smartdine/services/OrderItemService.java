@@ -1,9 +1,11 @@
 package com.smartdine.services;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -33,22 +35,22 @@ public class OrderItemService {
     // Lấy danh sách OrderItem theo các orderId
     public List<OrderItem> getOrderItemsByOrderIds(List<Integer> orderIds) {
         if (orderIds == null || orderIds.isEmpty()) {
-            return List.of();
+            return new ArrayList<>();
         }
         Set<Integer> uniqueIds = new LinkedHashSet<>(orderIds);
-        return orderItemRepository.findByOrderIdIn(List.copyOf(uniqueIds)).stream()
+        return orderItemRepository.findByOrderIdIn(new ArrayList<>(uniqueIds)).stream()
                 .sorted(Comparator.comparing(OrderItem::getCreatedAt))
-                .toList();
+                .collect(Collectors.toList());
     }
 
     // Lấy danh sách OrderItem theo từng orderId
     public List<OrderItem> getOrderItemsByOrderId(Integer orderId) {
         if (orderId == null) {
-            return List.of();
+            return new ArrayList<>();
         }
         return orderItemRepository.findByOrderId(orderId).stream()
                 .sorted(Comparator.comparing(OrderItem::getCreatedAt))
-                .toList();
+                .collect(Collectors.toList());
     }
 
     // Cập nhật trạng thái của order item
@@ -70,5 +72,22 @@ public class OrderItemService {
         orderItem.setServedBy(servedBy);
         return orderItemRepository.save(orderItem);
     }
-    
+
+    // Cập nhật số lượng của order item
+    public OrderItem updateOrderItemQuantity(Integer id, Integer newQuantity) {
+        OrderItem orderItem = orderItemRepository.findById(id).orElse(null);
+        if (orderItem == null) {
+            throw new IllegalArgumentException("OrderItem not found with id: " + id);
+        }
+        if (newQuantity < 0) {
+            throw new IllegalArgumentException("Quantity cannot be negative");
+        }
+        orderItem.setQuantity(newQuantity);
+        // Nếu số lượng = 0, đặt status = 4 (hủy)
+        if (newQuantity == 0) {
+            orderItem.setStatusId(4);
+        }
+        return orderItemRepository.save(orderItem);
+    }
+
 }
