@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:mart_dine/features/bottom_Navigation/bottom_navigation.dart';
-import 'package:mart_dine/features/signin/screen_signin.dart';
 import 'package:mart_dine/features/staff/screen_choose_table.dart';
 import 'package:mart_dine/features/staff/screen_branch_selection.dart';
 
@@ -35,28 +34,28 @@ class SmartDineApp extends ConsumerWidget {
               ref.watch(modeProvider) ? Brightness.dark : Brightness.light,
         ),
       ),
-      home: const AuthWrapper(),
+      home: const ScreenChooseTable(branchId: 1),
     );
   }
 }
 
-class AuthWrapper extends ConsumerWidget {
-  const AuthWrapper({super.key});
+// class AuthWrapper extends ConsumerWidget {
+//   const AuthWrapper({super.key});
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentUser = ref.watch(userNotifierProvider);
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     final currentUser = ref.watch(userNotifierProvider);
 
-    if (currentUser == null) {
-      return const ScreenSignIn();
-    } else {
-      if (currentUser.role == 3) {
-        return const ScreenChooseTable();
-      } else if (currentUser.role == 4) {
-        return const ScreenBottomNavigation(index: 1);
-      } else {
-        return const ScreenChooseTable();
-      }
-    }
-  }
-}
+//     if (currentUser == null) {
+//       return const ScreenSignIn();
+//     } else {
+//       if (currentUser.role == 3) {
+//         return const ScreenChooseTable();
+//       } else if (currentUser.role == 4) {
+//         return const ScreenBottomNavigation(index: 1);
+//       } else {
+//         return const ScreenChooseTable();
+//       }
+//     }
+//   }
+// }
