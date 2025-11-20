@@ -7,17 +7,16 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/features/cashier/screen_payment.dart';
+import 'package:mart_dine/API/menu_item_API.dart';
 import 'package:mart_dine/models/item.dart';
 import 'package:mart_dine/models/order.dart';
 import 'package:mart_dine/models/order_item.dart';
 import 'package:mart_dine/providers/cart_provider.dart';
 import 'package:mart_dine/providers/menu_item_provider.dart';
-import 'package:mart_dine/providers/table_provider.dart';
 import 'package:mart_dine/providers/user_provider.dart';
 import 'package:mart_dine/API/order_API.dart';
 import 'package:mart_dine/API/order_item_API.dart';
 import 'package:mart_dine/routes.dart';
-import 'package:mart_dine/widgets/appbar.dart';
 import 'package:mart_dine/widgets/icon_back.dart';
 // Import provider của bạn để gọi API
 // Giả sử bạn có model OrderItem đã import
@@ -50,8 +49,27 @@ class ScreenMenu extends ConsumerStatefulWidget {
 class _DisplayOrderItem {
   final Item item;
   final int quantity;
+  final int? orderStatusId;
+  final List<int> pendingOrderItemIds;
 
-  const _DisplayOrderItem({required this.item, required this.quantity});
+  const _DisplayOrderItem({
+    required this.item,
+    required this.quantity,
+    this.orderStatusId,
+    this.pendingOrderItemIds = const <int>[],
+  });
+}
+
+class _StatusDisplay {
+  final String label;
+  final Color foregroundColor;
+  final Color backgroundColor;
+
+  const _StatusDisplay({
+    required this.label,
+    required this.foregroundColor,
+    required this.backgroundColor,
+  });
 }
 
 //State provider
@@ -94,6 +112,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
 
   bool _showSearchBar = false;
   bool _isDisposed = false;
+  final Set<int> _deletingItemIds = <int>{};
 
   @override
   void dispose() {
@@ -414,16 +433,205 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
     }
   }
 
+  _StatusDisplay _menuStatusDisplayFor(int statusId, ThemeData theme) {
+    switch (statusId) {
+      case 1:
+        return _StatusDisplay(
+          label: 'Chờ duyệt',
+          foregroundColor: Colors.orange.shade800,
+          backgroundColor: Colors.orange.shade100,
+        );
+      case 2:
+        return _StatusDisplay(
+          label: 'Đang bán',
+          foregroundColor: theme.colorScheme.primary,
+          backgroundColor: theme.colorScheme.primary.withOpacity(0.12),
+        );
+      case 3:
+        return _StatusDisplay(
+          label: 'Tạm ngưng',
+          foregroundColor: theme.colorScheme.error,
+          backgroundColor: theme.colorScheme.error.withOpacity(0.12),
+        );
+      default:
+        return _StatusDisplay(
+          label: 'Không xác định',
+          foregroundColor: theme.colorScheme.onSurface,
+          backgroundColor: theme.colorScheme.onSurface.withOpacity(0.08),
+        );
+    }
+  }
+
+  _StatusDisplay _orderStatusDisplayFor(int statusId, ThemeData theme) {
+    switch (statusId) {
+      case 1:
+        return _StatusDisplay(
+          label: 'Chờ xác nhận',
+          foregroundColor: Colors.orange.shade800,
+          backgroundColor: Colors.orange.shade100,
+        );
+      case 2:
+        return _StatusDisplay(
+          label: 'Đang chế biến',
+          foregroundColor: Colors.deepOrange.shade700,
+          backgroundColor: Colors.deepOrange.shade100,
+        );
+      case 3:
+        return _StatusDisplay(
+          label: 'Đã phục vụ',
+          foregroundColor: Colors.green.shade800,
+          backgroundColor: Colors.green.shade100,
+        );
+      case 4:
+        return _StatusDisplay(
+          label: 'Đã hủy',
+          foregroundColor: theme.colorScheme.error,
+          backgroundColor: theme.colorScheme.error.withOpacity(0.12),
+        );
+      case 5:
+        return _StatusDisplay(
+          label: 'Hết món',
+          foregroundColor: Colors.brown.shade600,
+          backgroundColor: Colors.brown.shade100,
+        );
+      case 6:
+        return _StatusDisplay(
+          label: 'Đã nấu xong',
+          foregroundColor: Colors.blueGrey.shade700,
+          backgroundColor: Colors.blueGrey.shade100,
+        );
+      default:
+        return _StatusDisplay(
+          label: 'Không xác định',
+          foregroundColor: theme.colorScheme.onSurface,
+          backgroundColor: theme.colorScheme.onSurface.withOpacity(0.08),
+        );
+    }
+  }
+
+  Widget _buildStatusChip({
+    required Item item,
+    required ThemeData theme,
+    int? orderStatusId,
+  }) {
+    final display =
+        orderStatusId != null
+            ? _orderStatusDisplayFor(orderStatusId, theme)
+            : _menuStatusDisplayFor(item.statusId, theme);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: display.backgroundColor,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        display.label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: display.foregroundColor,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmAndDeleteItem(
+    Item item,
+    List<int> pendingOrderItemIds,
+  ) async {
+    final itemId = item.id;
+    if (itemId == null || pendingOrderItemIds.isEmpty) return;
+
+    final shouldDelete =
+        await showDialog<bool>(
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                title: const Text('Xóa món chờ xác nhận?'),
+                content: Text(
+                  'Các phần "${item.name}" đang chờ xác nhận sẽ bị xóa khỏi order.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('HỦY'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text('XÓA'),
+                  ),
+                ],
+              ),
+        ) ??
+        false;
+
+    if (!shouldDelete || !mounted) return;
+
+    setState(() {
+      _deletingItemIds.add(itemId);
+    });
+
+    final orderItemApi = ref.read(orderItemApiProvider);
+
+    try {
+      for (final orderItemId in pendingOrderItemIds) {
+        await orderItemApi.deleteOrderItem(orderItemId);
+      }
+
+      final currentOrder = ref.read(_currentOrderProvider);
+      if (currentOrder != null) {
+        await _reloadExistingOrder(currentOrder);
+      } else {
+        await _reloadMenuItems();
+      }
+
+      if (!mounted) return;
+      Constrats.showThongBao(
+        context,
+        'Đã xóa ${pendingOrderItemIds.length} phần.',
+      );
+    } catch (e) {
+      if (mounted) {
+        Constrats.showThongBao(
+          context,
+          'Không thể xóa món: ${e.toString().replaceFirst('Exception: ', '')}',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _deletingItemIds.remove(itemId);
+        });
+      } else {
+        _deletingItemIds.remove(itemId);
+      }
+    }
+  }
+
   Future<void> _reloadExistingOrder(Order order) async {
     try {
       final orderItemApi = ref.read(orderItemApiProvider);
       final items = await orderItemApi.getOrderItemsByOrderId(order.id);
+      await _reloadMenuItems();
       if (!mounted) return;
       ref.read(_currentOrderProvider.notifier).state = order;
       ref.read(_existingOrderItemsProvider.notifier).state = items;
     } catch (e) {
       // ignore: avoid_print
       print('Lỗi tải lại order item: $e');
+    }
+  }
+
+  Future<void> _reloadMenuItems() async {
+    try {
+      await ref
+          .read(menuNotifierProvider.notifier)
+          .loadMenusByCompanyId(widget.companyId ?? 1);
+    } catch (e) {
+      // ignore: avoid_print
+      print('Lỗi tải menu: $e');
     }
   }
 
@@ -440,19 +648,45 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
     }
 
     final Map<int, int> counts = {};
+    final Map<int, DateTime> latestStatusTime = {};
+    final Map<int, int> latestStatusId = {};
+    final Map<int, List<int>> pendingOrderItemIds = {};
+
     for (final orderItem in existingOrderItems) {
       counts.update(
         orderItem.itemId,
         (value) => value + orderItem.quantity,
         ifAbsent: () => orderItem.quantity,
       );
+
+      final currentTime = orderItem.createdAt;
+      final existingTime = latestStatusTime[orderItem.itemId];
+      if (existingTime == null || currentTime.isAfter(existingTime)) {
+        latestStatusTime[orderItem.itemId] = currentTime;
+        latestStatusId[orderItem.itemId] = orderItem.statusId;
+      }
+
+      if (orderItem.statusId == 1 && orderItem.id != null) {
+        pendingOrderItemIds
+            .putIfAbsent(orderItem.itemId, () => <int>[])
+            .add(orderItem.id!);
+      }
     }
 
     final List<_DisplayOrderItem> display = <_DisplayOrderItem>[];
     counts.forEach((itemId, quantity) {
       final menuItem = menuMap[itemId];
       if (menuItem != null) {
-        display.add(_DisplayOrderItem(item: menuItem, quantity: quantity));
+        display.add(
+          _DisplayOrderItem(
+            item: menuItem,
+            quantity: quantity,
+            orderStatusId: latestStatusId[itemId],
+            pendingOrderItemIds: List<int>.unmodifiable(
+              pendingOrderItemIds[itemId] ?? const <int>[],
+            ),
+          ),
+        );
       }
     });
 
@@ -530,11 +764,13 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
     return Column(
       children: [
         ListTile(
-          title: Text(item.name, style: Style.fontNormal),
-          subtitle: Text(
-            '${item.price.toStringAsFixed(3)} đ',
-            style: Style.fontCaption,
+          title: Text(
+            item.name,
+            style: Style.fontNormal,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
+          subtitle: Text(_formatCurrency(item.price), style: Style.fontCaption),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -713,6 +949,8 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                         final currentOrder = ref.watch(_currentOrderProvider);
                         if (currentOrder != null) {
                           await _reloadExistingOrder(currentOrder);
+                        } else {
+                          await _reloadMenuItems();
                         }
                       },
                       child: ListView(
@@ -741,53 +979,113 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                                 ],
                               ),
                             ),
-                            ...existingDisplay.map(
-                              (entry) => Container(
+                            ...existingDisplay.map((entry) {
+                              final item = entry.item;
+                              final itemId = item.id;
+                              final canDelete =
+                                  entry.pendingOrderItemIds.isNotEmpty &&
+                                  itemId != null;
+                              final isDeleting =
+                                  itemId != null &&
+                                  _deletingItemIds.contains(itemId);
+                              return Container(
                                 margin: const EdgeInsets.symmetric(
                                   horizontal: 12,
                                   vertical: 4,
                                 ),
+                                padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: theme.colorScheme.secondaryContainer,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: ListTile(
-                                  dense: true,
-                                  title: Text(
-                                    entry.item.name,
-                                    style: Style.fontNormal.copyWith(
-                                      fontWeight: FontWeight.w600,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            item.name,
+                                            style: Style.fontNormal.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        _buildStatusChip(
+                                          item: item,
+                                          theme: theme,
+                                          orderStatusId: entry.orderStatusId,
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                  subtitle: Text(
-                                    '${entry.item.price.toStringAsFixed(3)} đ',
-                                    style: Style.fontCaption,
-                                  ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'x${entry.quantity}',
-                                        style: Style.fontNormal.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                          color: theme.colorScheme.primary,
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          _formatCurrency(item.price),
+                                          style: Style.fontCaption,
                                         ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      IconButton(
-                                        icon: Icon(
-                                          LucideIcons.plusCircle,
-                                          size: 20,
-                                          color: theme.colorScheme.primary,
+                                        const Spacer(),
+                                        Text(
+                                          'x${entry.quantity}',
+                                          style: Style.fontNormal.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: theme.colorScheme.primary,
+                                          ),
                                         ),
-                                        tooltip: 'Thêm 1 phần',
-                                        onPressed: () => _addItem(entry.item),
-                                      ),
-                                    ],
-                                  ),
+                                        IconButton(
+                                          icon: Icon(
+                                            LucideIcons.plusCircle,
+                                            size: 20,
+                                            color: theme.colorScheme.primary,
+                                          ),
+                                          tooltip: 'Thêm 1 phần',
+                                          onPressed: () => _addItem(item),
+                                        ),
+                                        IconButton(
+                                          icon:
+                                              isDeleting
+                                                  ? SizedBox(
+                                                    height: 18,
+                                                    width: 18,
+                                                    child: CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      valueColor:
+                                                          AlwaysStoppedAnimation<
+                                                            Color
+                                                          >(Colors.red),
+                                                    ),
+                                                  )
+                                                  : Icon(
+                                                    LucideIcons.trash2,
+                                                    color:
+                                                        canDelete
+                                                            ? Colors.red
+                                                            : Colors.grey,
+                                                  ),
+                                          tooltip:
+                                              canDelete
+                                                  ? 'Xóa các phần chờ xác nhận'
+                                                  : 'Chỉ xóa được món đang chờ xác nhận',
+                                          onPressed:
+                                              (!canDelete || isDeleting)
+                                                  ? null
+                                                  : () => _confirmAndDeleteItem(
+                                                    item,
+                                                    entry.pendingOrderItemIds,
+                                                  ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ),
+                              );
+                            }),
                             const Divider(height: 16),
                           ],
                           if (cartDisplay.isNotEmpty) ...[
@@ -864,7 +1162,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                               style: Style.fontNormal,
                             ),
                             Text(
-                              '${totalPrice.toStringAsFixed(3)} đ',
+                              _formatCurrency(totalPrice),
                               style: Style.fontTitleMini.copyWith(
                                 color: Theme.of(context).colorScheme.primary,
                               ),
@@ -1281,7 +1579,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '${item.price.toStringAsFixed(3)} đ',
+                    _formatCurrency(item.price),
                     style: TextStyle(
                       fontSize: 12,
                       color:

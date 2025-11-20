@@ -65,6 +65,23 @@ class MenuItemApi {
       return []; // Trả về rỗng nếu không có hoặc lỗi
     }
   }
+
+  Future<void> deleteMenuItem(int itemId) async {
+    final response = await http.delete(
+      Uri.parse('$uri2/$itemId'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      return;
+    }
+
+    final message =
+        response.body.isNotEmpty
+            ? response.body
+            : 'Không thể xóa món ăn (mã trạng thái: ${response.statusCode}).';
+    throw Exception(message);
+  }
 }
 
 final menuApiProvider = Provider<MenuItemApi>((ref) {

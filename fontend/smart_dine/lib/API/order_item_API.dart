@@ -65,6 +65,27 @@ class OrderItemAPI {
       'Loi lay order item theo orderId: ${response.statusCode} - ${response.body}',
     );
   }
+
+  Future<void> deleteOrderItem(int orderItemId) async {
+    final response = await http.delete(
+      Uri.parse('$uri2/$orderItemId'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 204) {
+      return;
+    }
+
+    if (response.statusCode == 400 || response.statusCode == 404) {
+      throw Exception(
+        response.body.isEmpty ? 'Không thể xóa order item.' : response.body,
+      );
+    }
+
+    throw Exception(
+      'Lỗi xóa order item: ${response.statusCode} - ${response.body}',
+    );
+  }
 }
 
 final orderItemApiProvider = Provider<OrderItemAPI>((ref) {

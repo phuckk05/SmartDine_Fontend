@@ -45,6 +45,7 @@ class ScreenSettings extends ConsumerWidget {
               );
             },
           ),
+
           _buildSettingsItem(
             context: context,
             icon: Icons.history,

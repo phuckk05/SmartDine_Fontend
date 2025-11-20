@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
-import 'package:mart_dine/features/bottom_Navigation/bottom_navigation.dart';
 import 'package:mart_dine/features/staff/screen_choose_table.dart';
 import 'package:mart_dine/providers/user_provider.dart';
 import 'package:mart_dine/routes.dart';
@@ -90,10 +89,10 @@ class ScreenRoleSelection extends ConsumerWidget {
                   Icons.kitchen,
                   Colors.orange,
                   () {
-                    Routes.pushRightLeftConsumerFul(
-                      context,
-                      const ScreenBottomNavigation(index: 1),
-                    );
+                    // Routes.pushRightLeftConsumerFul(
+                    //   context,
+                    //   const ScreenBottomNavigation(index: 1),
+                    // );
                   },
                 ),
 

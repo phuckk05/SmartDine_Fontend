@@ -12,7 +12,10 @@ class ScreenUserProfile extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('Hồ sơ người dùng', style: TextStyle(color: Colors.black)),
+        title: const Text(
+          'Hồ sơ người dùng',
+          style: TextStyle(color: Colors.black),
+        ),
         backgroundColor: Colors.white,
         elevation: 1,
       ),
@@ -31,7 +34,7 @@ class ScreenUserProfile extends StatelessWidget {
                     color: Colors.grey.withOpacity(0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
-                  )
+                  ),
                 ],
               ),
               child: Column(
@@ -42,11 +45,20 @@ class ScreenUserProfile extends StatelessWidget {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 24),
-                  _buildInfoTextField(label: 'Họ và tên', value: 'Nguyễn Văn A'),
+                  _buildInfoTextField(
+                    label: 'Họ và tên',
+                    value: 'Nguyễn Văn A',
+                  ),
                   const SizedBox(height: 16),
-                  _buildInfoTextField(label: 'Email', value: 'nguyenvana123@gmail.com'),
+                  _buildInfoTextField(
+                    label: 'Email',
+                    value: 'nguyenvana123@gmail.com',
+                  ),
                   const SizedBox(height: 16),
-                  _buildInfoTextField(label: 'Số điện thoại', value: '0123456789'),
+                  _buildInfoTextField(
+                    label: 'Số điện thoại',
+                    value: '0123456789',
+                  ),
                 ],
               ),
             ),
