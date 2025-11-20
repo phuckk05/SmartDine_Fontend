@@ -3,7 +3,6 @@ import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/widgets/appbar.dart';
 import 'package:fl_chart/fl_chart.dart';
 
-
 class BranchPerformanceScreen extends StatelessWidget {
   const BranchPerformanceScreen({super.key});
 
@@ -109,11 +108,29 @@ class BranchPerformanceScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _buildEmployeeRow('1', 'Hà Đức Lương', '285 đơn', '24.5 triệu', textColor),
+                  _buildEmployeeRow(
+                    '1',
+                    'Hà Đức Lương',
+                    '285 đơn',
+                    '24.5 triệu',
+                    textColor,
+                  ),
                   const Divider(height: 24),
-                  _buildEmployeeRow('2', 'Phúc', '268 đơn', '22.8 triệu', textColor),
+                  _buildEmployeeRow(
+                    '2',
+                    'Phúc',
+                    '268 đơn',
+                    '22.8 triệu',
+                    textColor,
+                  ),
                   const Divider(height: 24),
-                  _buildEmployeeRow('3', 'Tú Kiệt', '245 đơn', '21.2 triệu', textColor),
+                  _buildEmployeeRow(
+                    '3',
+                    'Tú Kiệt',
+                    '245 đơn',
+                    '21.2 triệu',
+                    textColor,
+                  ),
                 ],
               ),
             ),
@@ -147,9 +164,17 @@ class BranchPerformanceScreen extends StatelessWidget {
                     barTouchData: BarTouchData(
                       enabled: true,
                       touchTooltipData: BarTouchTooltipData(
-                        getTooltipColor: (group) => Colors.black.withOpacity(0.8),
+                        getTooltipColor:
+                            (group) => Colors.black.withOpacity(0.8),
                         getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                          const hours = ['6h-9h', '9h-12h', '12h-15h', '15h-18h', '18h-21h', '21h-24h'];
+                          const hours = [
+                            '6h-9h',
+                            '9h-12h',
+                            '12h-15h',
+                            '15h-18h',
+                            '18h-21h',
+                            '21h-24h',
+                          ];
                           String label = hours[group.x.toInt() - 1];
                           return BarTooltipItem(
                             '$label\n${rod.toY.toInt()} triệu',
@@ -171,7 +196,10 @@ class BranchPerformanceScreen extends StatelessWidget {
                             return Text(
                               '${value.toInt()}tr',
                               style: Style.fontCaption.copyWith(
-                                color: isDark ? Colors.grey[400] : Style.textColorGray,
+                                color:
+                                    isDark
+                                        ? Colors.grey[400]
+                                        : Style.textColorGray,
                                 fontSize: 10,
                               ),
                             );
@@ -182,8 +210,17 @@ class BranchPerformanceScreen extends StatelessWidget {
                         sideTitles: SideTitles(
                           showTitles: true,
                           getTitlesWidget: (value, meta) {
-                            const titles = ['', '6-9h', '9-12h', '12-15h', '15-18h', '18-21h', '21-24h'];
-                            if (value.toInt() < 0 || value.toInt() >= titles.length) {
+                            const titles = [
+                              '',
+                              '6-9h',
+                              '9-12h',
+                              '12-15h',
+                              '15-18h',
+                              '18-21h',
+                              '21-24h',
+                            ];
+                            if (value.toInt() < 0 ||
+                                value.toInt() >= titles.length) {
                               return const SizedBox.shrink();
                             }
                             return Padding(
@@ -191,7 +228,10 @@ class BranchPerformanceScreen extends StatelessWidget {
                               child: Text(
                                 titles[value.toInt()],
                                 style: Style.fontCaption.copyWith(
-                                  color: isDark ? Colors.grey[400] : Style.textColorGray,
+                                  color:
+                                      isDark
+                                          ? Colors.grey[400]
+                                          : Style.textColorGray,
                                   fontSize: 9,
                                 ),
                               ),
@@ -199,8 +239,12 @@ class BranchPerformanceScreen extends StatelessWidget {
                           },
                         ),
                       ),
-                      rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
                     ),
                     gridData: FlGridData(show: false),
                     borderData: FlBorderData(show: false),
@@ -241,9 +285,19 @@ class BranchPerformanceScreen extends StatelessWidget {
                 children: [
                   _buildDishRow('Phở bò', '425 phần', '8.5 triệu', textColor),
                   const Divider(height: 24),
-                  _buildDishRow('Cà phê sữa', '315 phần', '6.3 triệu', textColor),
+                  _buildDishRow(
+                    'Cà phê sữa',
+                    '315 phần',
+                    '6.3 triệu',
+                    textColor,
+                  ),
                   const Divider(height: 24),
-                  _buildDishRow('Bánh mì thịt', '280 phần', '4.2 triệu', textColor),
+                  _buildDishRow(
+                    'Bánh mì thịt',
+                    '280 phần',
+                    '4.2 triệu',
+                    textColor,
+                  ),
                   const Divider(height: 24),
                   _buildDishRow('Bún chả', '245 phần', '5.6 triệu', textColor),
                 ],
@@ -291,24 +345,30 @@ class BranchPerformanceScreen extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             value,
-            style: Style.fontTitleMini.copyWith(
-              color: textColor,
-              fontSize: 20,
-            ),
+            style: Style.fontTitleMini.copyWith(color: textColor, fontSize: 20),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildEmployeeRow(String rank, String name, String orders, String revenue, Color textColor) {
+  Widget _buildEmployeeRow(
+    String rank,
+    String name,
+    String orders,
+    String revenue,
+    Color textColor,
+  ) {
     return Row(
       children: [
         Container(
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: rank == '1' ? Colors.amber : (rank == '2' ? Colors.grey[400] : Colors.brown[300]),
+            color:
+                rank == '1'
+                    ? Colors.amber
+                    : (rank == '2' ? Colors.grey[400] : Colors.brown[300]),
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -351,7 +411,12 @@ class BranchPerformanceScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDishRow(String dish, String quantity, String revenue, Color textColor) {
+  Widget _buildDishRow(
+    String dish,
+    String quantity,
+    String revenue,
+    Color textColor,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
