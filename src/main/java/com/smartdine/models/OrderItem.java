@@ -24,37 +24,35 @@ public class OrderItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @JsonProperty("orderId")  
+    @Column(name = "order_id")
     private Integer orderId;
 
+    @JsonProperty("itemId")   
+    @Column(name = "item_id")
     private Integer itemId;
 
     private Integer quantity;
 
     private String note;
 
+    @JsonProperty("statusId")  
     @Column(name = "status_id")
     private Integer statusId;
 
+    @JsonProperty("addedBy")   
     @Column(name = "added_by")
     private Integer addedBy;
 
+    @JsonProperty("servedBy")  
     @Column(name = "served_by")
     private Integer servedBy;
 
+    @JsonProperty("createdAt") 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @JsonIgnore
-    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "item_id")
-    private Item item;
 
-    @JsonIgnore
-    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id")
-    private Order order;
 
     public OrderItem() {
     }
