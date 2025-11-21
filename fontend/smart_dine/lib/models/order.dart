@@ -5,7 +5,11 @@ class OrderStatus {
   final String code; // PENDING, COOKING, DONE, PAID
   final String name;
 
-  OrderStatus({required this.id, required this.code, required this.name});
+  OrderStatus({
+    required this.id,
+    required this.code,
+    required this.name,
+  });
 
   factory OrderStatus.fromJson(Map<String, dynamic> json) {
     return OrderStatus(
@@ -16,7 +20,11 @@ class OrderStatus {
   }
 
   Map<String, dynamic> toJson() {
-    return {'id': id, 'code': code, 'name': name};
+    return {
+      'id': id,
+      'code': code,
+      'name': name,
+    };
   }
 }
 
@@ -146,95 +154,57 @@ class Order {
   factory Order.fromMap(Map<String, dynamic> map) {
     return Order(
       id: map['id'] != null ? int.tryParse(map['id'].toString()) : null,
-      tableId:
-          map['tableId'] != null
-              ? int.tryParse(map['tableId'].toString())
-              : map['table_id'] != null
-              ? int.tryParse(map['table_id'].toString())
-              : null,
-      companyId:
-          map['companyId'] != null
-              ? int.tryParse(map['companyId'].toString())
-              : map['company_id'] != null
-              ? int.tryParse(map['company_id'].toString())
-              : null,
-      branchId:
-          map['branchId'] != null
-              ? int.tryParse(map['branchId'].toString())
-              : map['branch_id'] != null
-              ? int.tryParse(map['branch_id'].toString())
-              : (map['table'] != null && map['table']['branchId'] != null
-                  ? int.tryParse(map['table']['branchId'].toString())
-                  : map['table'] != null && map['table']['branch_id'] != null
-                  ? int.tryParse(map['table']['branch_id'].toString())
-                  : null),
-      userId:
-          map['userId'] != null
-              ? int.tryParse(map['userId'].toString())
-              : map['user_id'] != null
-              ? int.tryParse(map['user_id'].toString())
-              : null,
-      promotionId:
-          map['promotionId'] != null
-              ? int.tryParse(map['promotionId'].toString())
-              : map['promotion_id'] != null
-              ? int.tryParse(map['promotion_id'].toString())
-              : null,
+      tableId: map['tableId'] != null ? int.tryParse(map['tableId'].toString()) :
+               map['table_id'] != null ? int.tryParse(map['table_id'].toString()) : null,
+      companyId: map['companyId'] != null ? int.tryParse(map['companyId'].toString()) :
+                 map['company_id'] != null ? int.tryParse(map['company_id'].toString()) : null,
+      branchId: map['branchId'] != null ? int.tryParse(map['branchId'].toString()) :
+                map['branch_id'] != null ? int.tryParse(map['branch_id'].toString()) :
+                (map['table'] != null && map['table']['branchId'] != null ? int.tryParse(map['table']['branchId'].toString()) :
+                 map['table'] != null && map['table']['branch_id'] != null ? int.tryParse(map['table']['branch_id'].toString()) : null),
+      userId: map['userId'] != null ? int.tryParse(map['userId'].toString()) :
+              map['user_id'] != null ? int.tryParse(map['user_id'].toString()) : null,
+      promotionId: map['promotionId'] != null ? int.tryParse(map['promotionId'].toString()) :
+                   map['promotion_id'] != null ? int.tryParse(map['promotion_id'].toString()) : null,
       note: map['note']?.toString(),
-      statusId:
-          map['statusId'] != null
-              ? int.tryParse(map['statusId'].toString())
-              : map['status_id'] != null
-              ? int.tryParse(map['status_id'].toString())
-              : null,
-      createdAt:
-          map['createdAt'] != null
-              ? DateTime.parse(map['createdAt'].toString())
-              : (map['created_at'] != null
-                  ? DateTime.parse(map['created_at'].toString())
-                  : DateTime.now()),
-      updatedAt:
-          map['updatedAt'] != null
-              ? DateTime.parse(map['updatedAt'].toString())
-              : (map['updated_at'] != null
-                  ? DateTime.parse(map['updated_at'].toString())
-                  : DateTime.now()),
-      deletedAt:
-          map['deletedAt'] != null
-              ? DateTime.parse(map['deletedAt'].toString())
-              : (map['deleted_at'] != null
-                  ? DateTime.parse(map['deleted_at'].toString())
-                  : null),
-      status:
-          map['status'] != null ? OrderStatus.fromJson(map['status']) : null,
-      tableName:
-          map['tableName']?.toString() ??
-          map['table_name']?.toString() ??
-          (map['table'] != null ? map['table']['name']?.toString() : null),
-      userName:
-          map['userName']?.toString() ??
-          map['user_name']?.toString() ??
-          (map['user'] != null ? map['user']['name']?.toString() : null),
-      branchName:
-          map['branchName']?.toString() ??
-          map['branch_name']?.toString() ??
-          (map['branch'] != null ? map['branch']['name']?.toString() : null),
-      companyName:
-          map['companyName']?.toString() ??
-          map['company_name']?.toString() ??
-          (map['company'] != null ? map['company']['name']?.toString() : null),
-      items:
-          map['items'] != null
-              ? (map['items'] as List)
-                  .map((item) => OrderItem.fromMap(item))
-                  .toList()
-              : null,
-      totalAmount:
-          map['totalAmount'] != null
-              ? double.tryParse(map['totalAmount'].toString())
-              : (map['total_amount'] != null
-                  ? double.tryParse(map['total_amount'].toString())
-                  : null),
+      statusId: map['statusId'] != null ? int.tryParse(map['statusId'].toString()) :
+                map['status_id'] != null ? int.tryParse(map['status_id'].toString()) : null,
+      createdAt: map['createdAt'] != null 
+          ? DateTime.parse(map['createdAt'].toString()) 
+          : (map['created_at'] != null 
+              ? DateTime.parse(map['created_at'].toString()) 
+              : DateTime.now()),
+      updatedAt: map['updatedAt'] != null 
+          ? DateTime.parse(map['updatedAt'].toString()) 
+          : (map['updated_at'] != null 
+              ? DateTime.parse(map['updated_at'].toString()) 
+              : DateTime.now()),
+      deletedAt: map['deletedAt'] != null 
+          ? DateTime.parse(map['deletedAt'].toString()) 
+          : (map['deleted_at'] != null 
+              ? DateTime.parse(map['deleted_at'].toString()) 
+              : null),
+      status: map['status'] != null ? OrderStatus.fromJson(map['status']) : null,
+      tableName: map['tableName']?.toString() ?? 
+                 map['table_name']?.toString() ?? 
+                 (map['table'] != null ? map['table']['name']?.toString() : null),
+      userName: map['userName']?.toString() ?? 
+                map['user_name']?.toString() ?? 
+                (map['user'] != null ? map['user']['name']?.toString() : null),
+      branchName: map['branchName']?.toString() ?? 
+                  map['branch_name']?.toString() ?? 
+                  (map['branch'] != null ? map['branch']['name']?.toString() : null),
+      companyName: map['companyName']?.toString() ?? 
+                   map['company_name']?.toString() ?? 
+                   (map['company'] != null ? map['company']['name']?.toString() : null),
+      items: map['items'] != null 
+          ? (map['items'] as List).map((item) => OrderItem.fromMap(item)).toList()
+          : null,
+      totalAmount: map['totalAmount'] != null 
+          ? double.tryParse(map['totalAmount'].toString())
+          : (map['total_amount'] != null 
+              ? double.tryParse(map['total_amount'].toString())
+              : null),
     );
   }
 
@@ -250,11 +220,11 @@ class Order {
   bool isCancelled() => status?.code == 'CANCELLED';
 
   String getStatusName() => status?.name ?? 'Unknown';
-
+  
   double getTotalAmount() => totalAmount ?? 0.0;
-
+  
   String getTableDisplayName() => tableName ?? 'Bàn $tableId';
-
+  
   String getFormattedDate() {
     return '${createdAt.day}/${createdAt.month}/${createdAt.year} ${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}';
   }
@@ -357,68 +327,41 @@ class OrderItem {
   factory OrderItem.fromMap(Map<String, dynamic> map) {
     return OrderItem(
       id: map['id'] != null ? int.tryParse(map['id'].toString()) : null,
-      orderId:
-          int.tryParse(
-            map['orderId']?.toString() ?? map['order_id']?.toString() ?? '0',
-          ) ??
-          0,
-      itemId:
-          int.tryParse(
-            map['itemId']?.toString() ?? map['item_id']?.toString() ?? '0',
-          ) ??
-          0,
+      orderId: int.tryParse(map['orderId']?.toString() ?? map['order_id']?.toString() ?? '0') ?? 0,
+      itemId: int.tryParse(map['itemId']?.toString() ?? map['item_id']?.toString() ?? '0') ?? 0,
       quantity: int.tryParse(map['quantity']?.toString() ?? '0') ?? 0,
       note: map['note']?.toString(),
-      statusId:
-          map['statusId'] != null
-              ? int.tryParse(map['statusId'].toString())
-              : map['status_id'] != null
-              ? int.tryParse(map['status_id'].toString())
-              : null,
-      addedBy:
-          map['addedBy'] != null
-              ? int.tryParse(map['addedBy'].toString())
-              : map['added_by'] != null
-              ? int.tryParse(map['added_by'].toString())
-              : null,
-      servedBy:
-          map['servedBy'] != null
-              ? int.tryParse(map['servedBy'].toString())
-              : map['served_by'] != null
-              ? int.tryParse(map['served_by'].toString())
-              : null,
-      createdAt:
-          map['createdAt'] != null
-              ? DateTime.parse(map['createdAt'].toString())
-              : (map['created_at'] != null
-                  ? DateTime.parse(map['created_at'].toString())
-                  : DateTime.now()),
-      updatedAt:
-          map['updatedAt'] != null
-              ? DateTime.parse(map['updatedAt'].toString())
-              : (map['updated_at'] != null
-                  ? DateTime.parse(map['updated_at'].toString())
-                  : DateTime.now()),
-      status:
-          map['status'] != null ? OrderStatus.fromJson(map['status']) : null,
+      statusId: map['statusId'] != null ? int.tryParse(map['statusId'].toString()) :
+                map['status_id'] != null ? int.tryParse(map['status_id'].toString()) : null,
+      addedBy: map['addedBy'] != null ? int.tryParse(map['addedBy'].toString()) :
+               map['added_by'] != null ? int.tryParse(map['added_by'].toString()) : null,
+      servedBy: map['servedBy'] != null ? int.tryParse(map['servedBy'].toString()) :
+                map['served_by'] != null ? int.tryParse(map['served_by'].toString()) : null,
+      createdAt: map['createdAt'] != null 
+          ? DateTime.parse(map['createdAt'].toString()) 
+          : (map['created_at'] != null 
+              ? DateTime.parse(map['created_at'].toString()) 
+              : DateTime.now()),
+      updatedAt: map['updatedAt'] != null 
+          ? DateTime.parse(map['updatedAt'].toString()) 
+          : (map['updated_at'] != null 
+              ? DateTime.parse(map['updated_at'].toString()) 
+              : DateTime.now()),
+      status: map['status'] != null ? OrderStatus.fromJson(map['status']) : null,
       itemName: map['itemName']?.toString() ?? map['item_name']?.toString(),
-      itemPrice:
-          map['itemPrice'] != null
-              ? double.tryParse(map['itemPrice'].toString())
-              : (map['item_price'] != null
-                  ? double.tryParse(map['item_price'].toString())
-                  : null),
-      addedByName:
-          map['addedByName']?.toString() ?? map['added_by_name']?.toString(),
-      servedByName:
-          map['servedByName']?.toString() ?? map['served_by_name']?.toString(),
+      itemPrice: map['itemPrice'] != null 
+          ? double.tryParse(map['itemPrice'].toString())
+          : (map['item_price'] != null 
+              ? double.tryParse(map['item_price'].toString())
+              : null),
+      addedByName: map['addedByName']?.toString() ?? map['added_by_name']?.toString(),
+      servedByName: map['servedByName']?.toString() ?? map['served_by_name']?.toString(),
     );
   }
 
   String toJson() => json.encode(toMap());
 
-  factory OrderItem.fromJson(String source) =>
-      OrderItem.fromMap(json.decode(source));
+  factory OrderItem.fromJson(String source) => OrderItem.fromMap(json.decode(source));
 
   @override
   String toString() {
@@ -429,15 +372,15 @@ class OrderItem {
 // Extensions for Order class to add helper methods
 extension OrderExtensions on Order {
   String getStatusName() => status?.name ?? 'Unknown';
-
+  
   String getFormattedDate() {
     return '${createdAt.day}/${createdAt.month}/${createdAt.year} ${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}';
   }
-
+  
   String getTableDisplayName() => tableName ?? 'Bàn ${tableId ?? 0}';
-
+  
   double getTotalAmount() => totalAmount ?? 0.0;
-
+  
   Map<String, dynamic> toCreatePayload() {
     return {
       'tableId': tableId,

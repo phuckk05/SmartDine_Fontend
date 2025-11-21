@@ -23,27 +23,25 @@ class TableNotifier extends StateNotifier<List<Table>> {
     if (tableId == null) return null;
     final table = state.firstWhere(
       (table) => table.id == tableId,
-      orElse:
-          () => Table(
-            id: null,
-            branchId: null,
-            name: '',
-            typeId: null,
-            description: null,
-            statusId: null,
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          ),
+      orElse: () => Table(
+        id: null,
+        branchId: null,
+        name: '',
+        typeId: null,
+        description: null,
+        statusId: null,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
     );
     return table.name.isNotEmpty ? table.name : null;
   }
 }
 
-final tableNotifierProvider = StateNotifierProvider<TableNotifier, List<Table>>(
-  (ref) {
-    return TableNotifier(ref.read(tableApiProvider));
-  },
-);
+final tableNotifierProvider =
+    StateNotifierProvider<TableNotifier, List<Table>>((ref) {
+      return TableNotifier(ref.read(tableApiProvider));
+    });
 final unpaidTablesByBranchProvider = FutureProvider.family<Set<int>, int>((
   ref,
   branchId,

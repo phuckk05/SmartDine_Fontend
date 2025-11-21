@@ -8,8 +8,7 @@ final tableManagementApiProvider = Provider((ref) => TableManagementAPI());
 
 class TableManagementAPI {
   final HttpService _httpService = HttpService();
-  static const String baseUrl =
-      'https://smartdine-backend-oq2x.onrender.com/api';
+  static const String baseUrl = 'https://smartdine-backend-oq2x.onrender.com/api';
 
   // Helper để parse response
   dynamic _parseResponse(http.Response response) {
@@ -27,7 +26,7 @@ class TableManagementAPI {
     try {
       final response = await _httpService.get('$baseUrl/tables');
       final data = _parseResponse(response);
-
+      
       if (data != null) {
         List<dynamic> tables;
         if (data is Map<String, dynamic> && data['data'] != null) {
@@ -41,18 +40,16 @@ class TableManagementAPI {
       }
       return [];
     } catch (e) {
-      return null;
+            return null;
     }
   }
 
   // Lấy danh sách bàn theo chi nhánh
   Future<List<table_model.Table>?> getTablesByBranch(int branchId) async {
     try {
-      final response = await _httpService.get(
-        '$baseUrl/tables/branch/$branchId',
-      );
+      final response = await _httpService.get('$baseUrl/tables/branch/$branchId');
       final data = _parseResponse(response);
-
+      
       if (data != null) {
         List<dynamic> tables;
         if (data is Map<String, dynamic> && data['data'] != null) {
@@ -66,7 +63,7 @@ class TableManagementAPI {
       }
       return [];
     } catch (e) {
-      return null;
+            return null;
     }
   }
 
@@ -75,7 +72,7 @@ class TableManagementAPI {
     try {
       final response = await _httpService.get('$baseUrl/tables/$tableId');
       final data = _parseResponse(response);
-
+      
       if (data != null) {
         if (data is Map<String, dynamic>) {
           if (data['data'] != null) {
@@ -87,7 +84,7 @@ class TableManagementAPI {
       }
       return null;
     } catch (e) {
-      return null;
+            return null;
     }
   }
 
@@ -99,7 +96,7 @@ class TableManagementAPI {
         body: jsonEncode(table.toJson()),
       );
       final data = _parseResponse(response);
-
+      
       if (data != null && data is Map<String, dynamic>) {
         if (data['data'] != null) {
           return table_model.Table.fromJson(data['data']);
@@ -109,22 +106,19 @@ class TableManagementAPI {
       }
       return null;
     } catch (e) {
-      return null;
+            return null;
     }
   }
 
   // Cập nhật thông tin bàn
-  Future<table_model.Table?> updateTable(
-    int tableId,
-    table_model.Table table,
-  ) async {
+  Future<table_model.Table?> updateTable(int tableId, table_model.Table table) async {
     try {
       final response = await _httpService.put(
         '$baseUrl/tables/$tableId',
         body: jsonEncode(table.toJson()),
       );
       final data = _parseResponse(response);
-
+      
       if (data != null && data is Map<String, dynamic>) {
         if (data['data'] != null) {
           return table_model.Table.fromJson(data['data']);
@@ -134,7 +128,7 @@ class TableManagementAPI {
       }
       return null;
     } catch (e) {
-      return null;
+            return null;
     }
   }
 
@@ -144,52 +138,46 @@ class TableManagementAPI {
       final response = await _httpService.delete('$baseUrl/tables/$tableId');
       return response.statusCode >= 200 && response.statusCode < 300;
     } catch (e) {
-      return false;
+            return false;
     }
   }
 
   // Lấy thống kê độ chiếm chỗ theo chi nhánh
   Future<Map<String, dynamic>?> getOccupancyStatistics(int branchId) async {
     try {
-      final response = await _httpService.get(
-        '$baseUrl/tables/occupancy/branch/$branchId',
-      );
+      final response = await _httpService.get('$baseUrl/tables/occupancy/branch/$branchId');
       final data = _parseResponse(response);
-
+      
       if (data != null && data is Map<String, dynamic>) {
         return data;
       }
       return null;
     } catch (e) {
-      return null;
+            return null;
     }
   }
 
   // Lấy thống kê độ sử dụng theo chi nhánh
   Future<Map<String, dynamic>?> getUtilizationStatistics(int branchId) async {
     try {
-      final response = await _httpService.get(
-        '$baseUrl/tables/utilization/branch/$branchId',
-      );
+      final response = await _httpService.get('$baseUrl/tables/utilization/branch/$branchId');
       final data = _parseResponse(response);
-
+      
       if (data != null && data is Map<String, dynamic>) {
         return data;
       }
       return null;
     } catch (e) {
-      return null;
+            return null;
     }
   }
 
   // Lấy danh sách bàn còn trống theo chi nhánh
   Future<List<table_model.Table>?> getAvailableTables(int branchId) async {
     try {
-      final response = await _httpService.get(
-        '$baseUrl/tables/availability/branch/$branchId',
-      );
+      final response = await _httpService.get('$baseUrl/tables/availability/branch/$branchId');
       final data = _parseResponse(response);
-
+      
       if (data != null) {
         List<dynamic> tables;
         if (data is Map<String, dynamic> && data['data'] != null) {
@@ -203,24 +191,22 @@ class TableManagementAPI {
       }
       return [];
     } catch (e) {
-      return null;
+            return null;
     }
   }
 
   // Lấy thống kê bàn theo chi nhánh
   Future<Map<String, dynamic>?> getTableStatistics(int branchId) async {
     try {
-      final response = await _httpService.get(
-        '$baseUrl/tables/statistics/branch/$branchId',
-      );
+      final response = await _httpService.get('$baseUrl/tables/statistics/branch/$branchId');
       final data = _parseResponse(response);
-
+      
       if (data != null && data is Map<String, dynamic>) {
         return data;
       }
       return null;
     } catch (e) {
-      return null;
+            return null;
     }
   }
 
@@ -229,7 +215,7 @@ class TableManagementAPI {
     try {
       final response = await _httpService.get('$baseUrl/table-types');
       final data = _parseResponse(response);
-
+      
       if (data != null) {
         List<dynamic> types;
         if (data is Map<String, dynamic> && data['data'] != null) {
@@ -243,7 +229,7 @@ class TableManagementAPI {
       }
       return [];
     } catch (e) {
-      return null;
+            return null;
     }
   }
 
@@ -252,7 +238,7 @@ class TableManagementAPI {
     try {
       final response = await _httpService.get('$baseUrl/table-statuses');
       final data = _parseResponse(response);
-
+      
       if (data != null) {
         List<dynamic> statuses;
         if (data is Map<String, dynamic> && data['data'] != null) {
@@ -262,13 +248,11 @@ class TableManagementAPI {
         } else {
           return [];
         }
-        return statuses
-            .map((status) => Map<String, dynamic>.from(status))
-            .toList();
+        return statuses.map((status) => Map<String, dynamic>.from(status)).toList();
       }
       return [];
     } catch (e) {
-      return null;
+            return null;
     }
   }
 
@@ -281,18 +265,16 @@ class TableManagementAPI {
       );
       return response.statusCode >= 200 && response.statusCode < 300;
     } catch (e) {
-      return false;
+            return false;
     }
   }
 
   // Lấy orders hiện tại của bàn
   Future<List<Map<String, dynamic>>?> getTableCurrentOrders(int tableId) async {
     try {
-      final response = await _httpService.get(
-        '$baseUrl/tables/$tableId/orders/current',
-      );
+      final response = await _httpService.get('$baseUrl/tables/$tableId/orders/current');
       final data = _parseResponse(response);
-
+      
       if (data != null) {
         List<dynamic> orders;
         if (data is Map<String, dynamic> && data['data'] != null) {
@@ -306,7 +288,7 @@ class TableManagementAPI {
       }
       return [];
     } catch (e) {
-      return null;
+            return null;
     }
   }
 }

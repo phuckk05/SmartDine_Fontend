@@ -25,7 +25,8 @@ class OrderItemNotifier extends StateNotifier<List<OrderItem>> {
       if (mounted) {
         state = [...state, ...createdItems];
       }
-    } catch (e) {}
+    } catch (e) {
+          }
   }
 
   void removeOrderItem(OrderItem item) {

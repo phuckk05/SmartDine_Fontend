@@ -73,18 +73,6 @@ class BranchAPI {
     return null;
   }
 
-  Future<List<Branch>?> getBranchesByCompanyId(int companyId) async {
-    final response = await http.get(
-      Uri.parse('$_uri/company/$companyId'),
-      headers: {'Content-Type': 'application/json'},
-    );
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((item) => Branch.fromMap(item)).toList();
-    }
-    return null;
-  }
-
   // Lấy chi nhánh theo manager ID (cho role Manager)
   // Filter từ danh sách tất cả branches để tìm branch có managerId khớp
   Future<Branch?> getBranchByManagerId(int managerId) async {
