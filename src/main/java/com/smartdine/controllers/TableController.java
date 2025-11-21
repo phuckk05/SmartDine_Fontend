@@ -36,17 +36,16 @@ public class TableController {
     }
 
     // Lấy bàn theo chi nhánh
-    // @GetMapping("/branch/{branchId}")
-    // public ResponseEntity<List<RestaurantTable>> getTablesByBranch(@PathVariable
-    // int branchId) {
-    // try {
-    // List<RestaurantTable> tables = tableServices.getTablesByBranch(branchId);
-    // return ResponseEntity.ok(tables);
-    // } catch (Exception e) {
-    // e.printStackTrace();
-    // return ResponseEntity.internalServerError().build();
-    // }
-    // }
+    @GetMapping("/branch/{branchId}")
+    public ResponseEntity<List<RestaurantTable>> getTablesByBranch(@PathVariable int branchId) {
+        try {
+            List<RestaurantTable> tables = tableServices.getByBranchId(branchId);
+            return ResponseEntity.ok(tables);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 
     // Lấy bàn theo ID
     @GetMapping("/{tableId}")

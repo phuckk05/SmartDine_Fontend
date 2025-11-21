@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.smartdine.response.GetListCompanyAndOwnerResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +14,8 @@ import com.smartdine.models.User;
 import com.smartdine.repository.BranchRepository;
 import com.smartdine.repository.CompanyRepository;
 import com.smartdine.repository.UserRepository;
+import com.smartdine.response.GetListCompanyAndOwnerResponse;
+
 import jakarta.transaction.Transactional;
 
 @Service

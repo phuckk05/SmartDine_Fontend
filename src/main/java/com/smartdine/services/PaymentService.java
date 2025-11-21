@@ -128,4 +128,15 @@ public class PaymentService {
         }
         return paymentRepository.findByBranchIdAndToday(branchId);
     }
+
+    // Tính tổng doanh thu theo cashierId và branchId trong khoảng thời gian
+    public BigDecimal getRevenueByCashierAndBranch(Integer cashierId, Integer branchId, LocalDateTime start, LocalDateTime end) {
+        if (cashierId == null) {
+            throw new IllegalArgumentException("cashierId must not be null");
+        }
+        if (branchId == null) {
+            throw new IllegalArgumentException("branchId must not be null");
+        }
+        return paymentRepository.sumFinalAmountByCashierAndBranchBetween(cashierId, branchId, start, end);
+    }
 }

@@ -217,4 +217,14 @@ public class OrderServices {
                         && !order.getCreatedAt().isAfter(end))
                 .toList();
     }
+
+    // Lấy số đơn xử lý bởi nhân viên trong khoảng thời gian
+    public Long getOrdersHandledByEmployee(Integer userId, Integer branchId, LocalDateTime start, LocalDateTime end) {
+        return orderRepository.countByUserIdAndBranchIdAndCreatedAtBetween(userId, branchId, start, end);
+    }
+
+    // Lấy danh sách orders xử lý bởi nhân viên trong khoảng thời gian
+    public List<Order> getOrdersByEmployee(Integer userId, Integer branchId, LocalDateTime start, LocalDateTime end) {
+        return orderRepository.findByUserIdAndBranchIdAndCreatedAtBetween(userId, branchId, start, end);
+    }
 }
