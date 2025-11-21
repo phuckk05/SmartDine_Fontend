@@ -48,30 +48,26 @@ class DishStatisticsAPI {
   Future<List<Map<String, dynamic>>?> getDishRevenueData(int branchId) async {
     try {
       final salesData = await getDishSalesData(branchId);
-      
+
       if (salesData != null) {
         return salesData.map((dish) {
           final quantity = dish['quantity'] ?? 0;
           final name = dish['name'] ?? 'Món khác';
-          // Lấy giá từ API data thay vì mock
-          final price = (dish['price'] != null) ? dish['price'].toDouble() : 50000.0;
+          // Use actual price from backend or default, but don't hardcode
+          final price = (dish['price'] != null) ? dish['price'].toDouble() : 0.0;
           final revenue = quantity * price;
-          
+
           return {
             'name': name,
-            'quantity': quantity.toString(),
-            'revenue': '${(revenue / 1000000).toStringAsFixed(1)} triệu',
-            'total': quantity.toString(),
-            'sold': (quantity * 0.9).round().toString(), // 90% sold
-            'remaining': (quantity * 0.1).round().toString(), // 10% remaining
-            'percentage': '${((quantity / 300) * 100).round()}%', // Percentage of total capacity
+            'quantity': quantity,
+            'revenue': revenue, // Return raw revenue value
+            'price': price,
           };
         }).toList();
       }
-      
+
       return [];
     } catch (e) {
-
       return [];
     }
   }
@@ -79,9 +75,10 @@ class DishStatisticsAPI {
   // Lấy dữ liệu biểu đồ theo period
   Future<Map<String, List<Map<String, dynamic>>>?> getChartData(int branchId) async {
     try {
+      // Try to get real data from backend first
       final response = await _httpService.get('$baseUrl/orders/statistics/period/$branchId');
       final data = _httpService.handleResponse(response);
-      
+
       if (data is Map<String, dynamic>) {
         // Convert backend data to chart format
         return {
@@ -91,54 +88,50 @@ class DishStatisticsAPI {
           'Hôm nay': _generateHourlyChartData(data),
         };
       }
-      
+
       // Fallback to current summary data
       final summaryResponse = await _httpService.get('$baseUrl/orders/summary/today/$branchId');
       final summaryData = _httpService.handleResponse(summaryResponse);
-      
+
       if (summaryData is Map<String, dynamic>) {
         return _generateChartDataFromSummary(summaryData);
       }
-      
-      return null;
-    } catch (e) {
 
-      return null;
+      // Return empty data if no backend data available
+      return {
+        'Năm': [],
+        'Tháng': [],
+        'Tuần': [],
+        'Hôm nay': [],
+      };
+    } catch (e) {
+      // Return empty data on error
+      return {
+        'Năm': [],
+        'Tháng': [],
+        'Tuần': [],
+        'Hôm nay': [],
+      };
     }
   }
 
   List<Map<String, dynamic>> _generateMonthlyChartData(Map<String, dynamic> data) {
-    // Generate 12 months data
-    return List.generate(12, (index) {
-      return {
-        'x': index + 1,
-        'y': ((data['totalOrders'] ?? 100) / 12 * (0.8 + (index % 3) * 0.1)).round(),
-      };
-    });
+    // Return empty data - no real monthly data available
+    return [];
   }
 
   List<Map<String, dynamic>> _generateWeeklyChartData(Map<String, dynamic> data) {
-    // Generate 4 weeks data
-    return List.generate(4, (index) {
-      return {
-        'x': index + 1,
-        'y': ((data['totalOrders'] ?? 50) / 4 * (0.9 + (index % 2) * 0.2)).round(),
-      };
-    });
+    // Return empty data - no real weekly data available
+    return [];
   }
 
   List<Map<String, dynamic>> _generateDailyChartData(Map<String, dynamic> data) {
-    // Generate 7 days data
-    return List.generate(7, (index) {
-      return {
-        'x': index + 1,
-        'y': ((data['totalOrders'] ?? 30) / 7 * (0.8 + (index % 4) * 0.15)).round(),
-      };
-    });
+    // Return empty data - no real daily data available
+    return [];
   }
 
   List<Map<String, dynamic>> _generateHourlyChartData(Map<String, dynamic> data) {
-    // Use hourly breakdown if available
+    // Use hourly breakdown if available from backend
     final hourlyBreakdown = data['hourlyBreakdown'] as Map<String, dynamic>?;
     if (hourlyBreakdown != null) {
       return hourlyBreakdown.entries.map((entry) {
@@ -148,27 +141,17 @@ class DishStatisticsAPI {
         };
       }).toList();
     }
-    
+
     // Return empty hourly data if no data available
     return [];
   }
 
   Map<String, List<Map<String, dynamic>>> _generateChartDataFromSummary(Map<String, dynamic> summaryData) {
-    final totalOrders = summaryData['totalOrders'] ?? 0;
-    
+    // Return empty data - no real chart data available from summary
     return {
-      'Năm': List.generate(12, (index) => {
-        'x': index + 1,
-        'y': (totalOrders * (0.8 + (index % 3) * 0.1)).round(),
-      }),
-      'Tháng': List.generate(4, (index) => {
-        'x': index + 1,
-        'y': (totalOrders * (0.9 + (index % 2) * 0.2)).round(),
-      }),
-      'Tuần': List.generate(7, (index) => {
-        'x': index + 1,
-        'y': (totalOrders * (0.8 + (index % 4) * 0.15)).round(),
-      }),
+      'Năm': [],
+      'Tháng': [],
+      'Tuần': [],
       'Hôm nay': _generateHourlyChartData(summaryData),
     };
   }

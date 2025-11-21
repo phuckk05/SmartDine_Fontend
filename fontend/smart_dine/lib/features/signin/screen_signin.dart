@@ -5,7 +5,6 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
-import 'package:mart_dine/features/bottom_Navigation/bottom_navigation.dart';
 import 'package:mart_dine/features/forgot_passwork/screens/screen_findaccuont.dart';
 import 'package:mart_dine/features/signup/screen_select_signup.dart';
 // import 'package:mart_dine/features/staff/screen_choose_table.dart'; // Tạm ẩn
@@ -148,76 +147,14 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
           'Đăng nhập thành công!\nVai trò: $roleName ${branchId != null ? "- Chi nhánh: $branchId" : ""}',
         );
 
-        // Điều hướng dựa theo role
-        if (user.role == 1) {
-          // Admin
-          Routes.pushRightLeftConsumerFul(
-            context,
-            const ScreenBottomNavigation(index: 2),
-          );
-        } else if (user.role == 2) {
-          // Manager -> Màn hình quản lý chi nhánh
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const BranchManagementNavigation(),
-            ),
-          );
-        } else if (user.role == 3) {
-          // Staff -> Tạm thời chuyển về Bottom Navigation (có thể thay đổi sau)
-          Constrats.showThongBao(
-            context,
-            'Chức năng nhân viên đang được phát triển. Chuyển về màn hình chính.',
-          );
-          
-          // Tạm thời chuyển về bottom navigation với index 0 (Home)
-          Routes.pushRightLeftConsumerFul(
-            context,
-            const ScreenBottomNavigation(index: 0),
-          );
-
-          /* TODO: Sẽ mở lại khi có màn hình chọn bàn
-          // Try to resolve companyId from branchId if available
-          int? companyId;
-          if (branchId != null) {
-            final cid = await ref
-                .read(branchNotifierProvider.notifier)
-                .getCompanyIdByBranchId(branchId);
-            if (cid != null) companyId = cid;
-          }
-
-          Routes.pushRightLeftConsumerFul(
-            context,
-            ScreenChooseTable(
-              branchId: branchId ?? 0,
-              userId: user.id ?? 0,
-              companyId: companyId ?? 0,
-            ),
-          );
-          */
-        } else if (user.role == 4) {
-          // Chef
-          Routes.pushRightLeftConsumerFul(
-            context,
-            const ScreenBottomNavigation(index: 1),
-          );
-        } else if (user.role == 5) {
-          // Owner -> Chuyển về Bottom Navigation với quyền admin
-          Routes.pushRightLeftConsumerFul(
-            context,
-            const ScreenBottomNavigation(index: 2),
-          );
-        } else {
-          // Default fallback cho các role không xác định
-          Constrats.showThongBao(
-            context,
-            'Vai trò không xác định. Chuyển về màn hình chính.',
-          );
-          Routes.pushRightLeftConsumerFul(
-            context,
-            const ScreenBottomNavigation(index: 0),
-          );
-        }
+        // Điều hướng tất cả users đến màn hình quản lý chi nhánh
+        // Loại bỏ chức năng quản lý toàn công ty, chỉ tập trung vào một chi nhánh
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const BranchManagementNavigation(),
+          ),
+        );
       } 
     }
     else {

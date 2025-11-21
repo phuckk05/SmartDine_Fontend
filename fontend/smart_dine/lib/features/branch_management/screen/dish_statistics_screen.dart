@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/widgets/appbar.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../providers/user_session_provider.dart';
 import '../../../providers/dish_statistics_provider.dart';
 
@@ -18,71 +19,6 @@ class DishStatisticsScreen extends ConsumerStatefulWidget {
 class _DishStatisticsScreenState extends ConsumerState<DishStatisticsScreen> {
   String _selectedFilter = 'Tuần';
   int _touchedIndex = -1;
-
-  // Dữ liệu biểu đồ theo filter
-  Map<String, List<BarChartGroupData>> _getChartData() {
-    final color = Colors.blue;
-    final touchedColor = Colors.green;
-    
-    return {
-      'Năm': List.generate(12, (index) {
-        final values = [850.0, 920.0, 880.0, 1050.0, 980.0, 1120.0, 1080.0, 1250.0, 1180.0, 1320.0, 1280.0, 1450.0];
-        return BarChartGroupData(
-          x: index + 1,
-          barRods: [
-            BarChartRodData(
-              toY: values[index],
-              color: _touchedIndex == index ? touchedColor : color,
-              width: 16,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
-            ),
-          ],
-        );
-      }),
-      'Tháng': List.generate(4, (index) {
-        final values = [280.0, 320.0, 350.0, 380.0];
-        return BarChartGroupData(
-          x: index + 1,
-          barRods: [
-            BarChartRodData(
-              toY: values[index],
-              color: _touchedIndex == index ? touchedColor : color,
-              width: 40,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
-            ),
-          ],
-        );
-      }),
-      'Tuần': List.generate(7, (index) {
-        final values = [45.0, 52.0, 68.0, 72.0, 65.0, 85.0, 90.0];
-        return BarChartGroupData(
-          x: index + 1,
-          barRods: [
-            BarChartRodData(
-              toY: values[index],
-              color: _touchedIndex == index ? touchedColor : color,
-              width: 24,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
-            ),
-          ],
-        );
-      }),
-      'Hôm nay': List.generate(6, (index) {
-        final values = [5.0, 8.0, 18.0, 12.0, 22.0, 15.0];
-        return BarChartGroupData(
-          x: index,
-          barRods: [
-            BarChartRodData(
-              toY: values[index],
-              color: _touchedIndex == index ? touchedColor : color,
-              width: 32,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
-            ),
-          ],
-        );
-      }),
-    };
-  }
 
   String _getXLabel(double value, String filter) {
     if (filter == 'Năm') {
@@ -103,6 +39,8 @@ class _DishStatisticsScreenState extends ConsumerState<DishStatisticsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Style.colorLight : Style.colorDark;
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
     
     // Kiểm tra user session
     final currentBranchId = ref.watch(currentBranchIdProvider);
@@ -176,14 +114,16 @@ class _DishStatisticsScreenState extends ConsumerState<DishStatisticsScreen> {
             automaticallyImplyLeading: false,
           ),
       body: dishStatisticsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => _buildLoadingSkeleton(isDark, cardColor, textColor),
         error: (error, stackTrace) => _buildErrorState(error, isDark, cardColor, textColor, currentBranchId),
-        data: (data) => _buildContent(data ?? DishStatisticsData(dishRevenueList: [], chartData: {}, totalDishes: 0, totalRevenue: 0.0), isDark, cardColor, textColor, currentBranchId),
+        data: (data) => data?.isEmpty == true 
+          ? _buildEmptyState(isDark, cardColor, textColor)
+          : _buildContent(data ?? DishStatisticsData(dishRevenueList: [], chartData: {}, totalDishes: 0, totalRevenue: 0.0), isDark, cardColor, textColor, currentBranchId, isMobile),
       ),
     );
   }
 
-  Widget _buildContent(DishStatisticsData data, bool isDark, Color cardColor, Color textColor, int branchId) {
+  Widget _buildContent(DishStatisticsData data, bool isDark, Color cardColor, Color textColor, int branchId, bool isMobile) {
     return RefreshIndicator(
       onRefresh: () async {
         await ref.read(dishStatisticsProvider(branchId).notifier).refresh(period: _selectedFilter.toLowerCase());
@@ -194,7 +134,9 @@ class _DishStatisticsScreenState extends ConsumerState<DishStatisticsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Filter buttons
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 _buildFilterChip('Năm', _selectedFilter == 'Năm', isDark, textColor, () {
                   setState(() {
@@ -202,21 +144,18 @@ class _DishStatisticsScreenState extends ConsumerState<DishStatisticsScreen> {
                   });
                   ref.read(dishStatisticsProvider(branchId).notifier).changePeriod('year');
                 }),
-                const SizedBox(width: 8),
                 _buildFilterChip('Tháng', _selectedFilter == 'Tháng', isDark, textColor, () {
                   setState(() {
                     _selectedFilter = 'Tháng';
                   });
                   ref.read(dishStatisticsProvider(branchId).notifier).changePeriod('month');
                 }),
-                const SizedBox(width: 8),
                 _buildFilterChip('Tuần', _selectedFilter == 'Tuần', isDark, textColor, () {
                   setState(() {
                     _selectedFilter = 'Tuần';
                   });
                   ref.read(dishStatisticsProvider(branchId).notifier).changePeriod('week');
                 }),
-                const SizedBox(width: 8),
                 _buildFilterChip('Hôm nay', _selectedFilter == 'Hôm nay', isDark, textColor, () {
                   setState(() {
                     _selectedFilter = 'Hôm nay';
@@ -250,7 +189,7 @@ class _DishStatisticsScreenState extends ConsumerState<DishStatisticsScreen> {
                   ),
                   const SizedBox(height: 20),
                   SizedBox(
-                    height: 200,
+                    height: isMobile ? 180 : 200,
                     child: BarChart(
                       BarChartData(
                         alignment: BarChartAlignment.spaceAround,
@@ -692,5 +631,62 @@ class _DishStatisticsScreenState extends ConsumerState<DishStatisticsScreen> {
     
     // Fallback to empty data
     return [];
+  }
+
+  Widget _buildLoadingSkeleton(bool isDark, Color cardColor, Color textColor) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Filter buttons skeleton
+          Row(
+            children: List.generate(4, (index) => 
+              Shimmer.fromColors(
+                baseColor: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+                highlightColor: isDark ? Colors.grey[600]! : Colors.grey[100]!,
+                child: Container(
+                  width: 60,
+                  height: 36,
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Chart skeleton
+          Shimmer.fromColors(
+            baseColor: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+            highlightColor: isDark ? Colors.grey[600]! : Colors.grey[100]!,
+            child: Container(
+              height: 250,
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Table skeleton
+          Shimmer.fromColors(
+            baseColor: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+            highlightColor: isDark ? Colors.grey[600]! : Colors.grey[100]!,
+            child: Container(
+              height: 300,
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

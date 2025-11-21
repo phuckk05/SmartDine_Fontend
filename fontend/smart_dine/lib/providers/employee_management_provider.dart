@@ -69,16 +69,18 @@ class EmployeeManagementNotifier extends StateNotifier<AsyncValue<List<User>>> {
       
       final employees = fallbackEmployees ?? [];
       
-      // Hiển thị tất cả employees (bao gồm cả pending để có thể approve)
-      final allEmployees = employees.where((user) => 
-        user.statusId != null && user.statusId != 0  // Chỉ loại bỏ deleted (0)
+      // Hiển thị employees ở màn hình chính (loại bỏ pending và blocked)
+      final activeEmployees = employees.where((user) => 
+        user.statusId != null && 
+        user.statusId != 0 &&  // Loại bỏ deleted
+        user.statusId != 3     // Loại bỏ blocked (chỉ hiển thị ở popup duyệt)
       ).toList();
       
-      print('✅ [EMPLOYEE_PROVIDER] All employees loaded: ${allEmployees.length}');
-      for (var emp in allEmployees) {
+      print('✅ [EMPLOYEE_PROVIDER] Active employees loaded: ${activeEmployees.length}');
+      for (var emp in activeEmployees) {
         print('   - Employee: ${emp.fullName} (ID: ${emp.id}, Status: ${emp.statusId})');
       }
-      state = AsyncValue.data(allEmployees);
+      state = AsyncValue.data(activeEmployees);
     } catch (error, stackTrace) {
       print('❌ [EMPLOYEE_PROVIDER] Error loading employees: $error');
       print('❌ [EMPLOYEE_PROVIDER] Stack trace: $stackTrace');

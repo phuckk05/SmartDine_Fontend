@@ -211,9 +211,9 @@ class TableManagementAPI {
   }
 
   // Lấy danh sách loại bàn
-  Future<List<Map<String, dynamic>>?> getTableTypes() async {
+  Future<List<Map<String, dynamic>>?> getTableTypesByBranch(int branchId) async {
     try {
-      final response = await _httpService.get('$baseUrl/table-types/all');
+      final response = await _httpService.get('$baseUrl/table-types/branch/$branchId');
       final data = _parseResponse(response);
       
       if (data != null) {
@@ -289,6 +289,47 @@ class TableManagementAPI {
       return [];
     } catch (e) {
             return null;
+    }
+  }
+
+  // Tạo loại bàn mới cho chi nhánh
+  Future<Map<String, dynamic>?> createTableType(int branchId, Map<String, dynamic> tableTypeData) async {
+    try {
+      final response = await _httpService.post('$baseUrl/table-types/branch/$branchId', body: jsonEncode(tableTypeData));
+      final data = _parseResponse(response);
+      
+      if (data != null) {
+        return Map<String, dynamic>.from(data);
+      }
+      return null;
+    } catch (e) {
+            return null;
+    }
+  }
+
+  // Cập nhật loại bàn
+  Future<Map<String, dynamic>?> updateTableType(int typeId, Map<String, dynamic> tableTypeData) async {
+    try {
+      final response = await _httpService.put('$baseUrl/table-types/$typeId', body: jsonEncode(tableTypeData));
+      final data = _parseResponse(response);
+      
+      if (data != null) {
+        return Map<String, dynamic>.from(data);
+      }
+      return null;
+    } catch (e) {
+            return null;
+    }
+  }
+
+  // Xóa loại bàn
+  Future<bool> deleteTableType(int typeId) async {
+    try {
+      final response = await _httpService.delete('$baseUrl/table-types/$typeId');
+      _parseResponse(response);
+      return true;
+    } catch (e) {
+            return false;
     }
   }
 }

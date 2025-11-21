@@ -1437,143 +1437,560 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
     );
   }
 
-  // Card cho từng user chờ duyệt
+  // Card cho từng user chờ duyệt - UI cải thiện
   Widget _buildPendingUserCard(BuildContext context, User user, int branchId, bool isDark) {
-    return Card(
-      color: isDark ? Colors.grey[800] : Colors.white,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[850] : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(
+          color: user.statusId == 0 ? Colors.orange.withOpacity(0.3) : Colors.transparent,
+          width: 1.5,
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: Colors.orange,
-                  child: Text(
-                    user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : '?',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        user.fullName,
-                        style: Style.fontTitleMini.copyWith(
-                          color: isDark ? Colors.white : Colors.black,
-                        ),
-                      ),
-                      Text(
-                        user.email,
-                        style: Style.fontContent.copyWith(
-                          color: isDark ? Colors.grey[300] : Colors.grey[600],
-                        ),
-                      ),
-                      Text(
-                        user.phone,
-                        style: Style.fontContent.copyWith(
-                          color: isDark ? Colors.grey[300] : Colors.grey[600],
-                        ),
-                      ),
-                      // Hiển thị trạng thái
-                      Container(
-                        margin: const EdgeInsets.only(top: 4),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: user.statusId == 0 
-                              ? Colors.orange.withOpacity(0.2)
-                              : user.statusId == 3
-                                  ? Colors.red.withOpacity(0.2)
-                                  : Colors.green.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          user.statusId == 0 
-                              ? 'Chờ duyệt' 
-                              : user.statusId == 3 
-                                  ? 'Bị khóa' 
-                                  : 'Hoạt động',
-                          style: TextStyle(
-                            color: user.statusId == 0 
-                                ? Colors.orange 
-                                : user.statusId == 3 
-                                    ? Colors.red 
-                                    : Colors.green,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
-                  onPressed: () => _rejectUser(context, user.id!, branchId),
-                  icon: const Icon(Icons.close, color: Colors.red),
-                  label: const Text('Từ chối', style: TextStyle(color: Colors.red)),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: () => _showApprovalDialog(context, user, branchId),
-                  icon: const Icon(Icons.check, color: Colors.white),
-                  label: const Text('Duyệt', style: TextStyle(color: Colors.white)),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                ),
-              ],
-            ),
+            // Header với avatar và thông tin chính
+            _buildUserHeader(user, isDark),
+            const SizedBox(height: 16),
+
+            // Thông tin chi tiết
+            _buildUserDetails(user, isDark),
+            const SizedBox(height: 16),
+
+            // Hình ảnh CCCD (nếu có)
+            if (user.fontImage != null || user.backImage != null)
+              _buildDocumentSection(user, isDark),
+
+            const SizedBox(height: 20),
+
+            // Action buttons cải thiện
+            _buildActionButtons(context, user, branchId, isDark),
           ],
         ),
       ),
     );
   }
 
-  // Dialog xác nhận duyệt nhân viên
+  Widget _buildUserHeader(User user, bool isDark) {
+    return Row(
+      children: [
+        // Avatar với gradient background
+        Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blue[400]!, Colors.blue[600]!],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.blue.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : '?',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                user.fullName,
+                style: Style.fontTitle.copyWith(
+                  fontSize: 18,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(Icons.email, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      user.email,
+                      style: Style.fontContent.copyWith(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Status badge cải thiện
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: user.statusId == 0
+                      ? Colors.orange.withOpacity(0.1)
+                      : user.statusId == 3
+                          ? Colors.red.withOpacity(0.1)
+                          : Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: user.statusId == 0
+                        ? Colors.orange
+                        : user.statusId == 3
+                            ? Colors.red
+                            : Colors.green,
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      user.statusId == 0
+                          ? Icons.schedule
+                          : user.statusId == 3
+                              ? Icons.block
+                              : Icons.check_circle,
+                      size: 16,
+                      color: user.statusId == 0
+                          ? Colors.orange
+                          : user.statusId == 3
+                              ? Colors.red
+                              : Colors.green,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      user.statusId == 0
+                          ? 'Chờ duyệt'
+                          : user.statusId == 3
+                              ? 'Bị khóa'
+                              : 'Hoạt động',
+                      style: TextStyle(
+                        color: user.statusId == 0
+                            ? Colors.orange
+                            : user.statusId == 3
+                                ? Colors.red
+                                : Colors.green,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUserDetails(User user, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[800] : Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          _buildInfoRow(Icons.phone, 'SĐT', user.phone, isDark),
+          const SizedBox(height: 8),
+          if (user.roleName != null)
+            _buildInfoRow(Icons.work, 'Vai trò', user.roleName!, isDark),
+          const SizedBox(height: 8),
+          if (user.companyName != null)
+            _buildInfoRow(Icons.business, 'Công ty', user.companyName!, isDark),
+          const SizedBox(height: 8),
+          _buildInfoRow(Icons.calendar_today, 'Ngày tạo',
+            user.createdAt.toLocal().toString().split(' ')[0], isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value, bool isDark) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: Colors.grey[600]),
+        const SizedBox(width: 8),
+        Text(
+          '$label: ',
+          style: Style.fontContent.copyWith(
+            color: Colors.grey[600],
+            fontSize: 14,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: Style.fontContent.copyWith(
+              color: isDark ? Colors.white : Colors.black87,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDocumentSection(User user, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[800] : Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.document_scanner, color: Colors.blue[600]),
+              const SizedBox(width: 8),
+              Text(
+                'Tài liệu định danh',
+                style: Style.fontTitleMini.copyWith(
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              if (user.fontImage != null)
+                Expanded(
+                  child: _buildDocumentImage(user.fontImage!, 'Mặt trước', isDark),
+                ),
+              if (user.fontImage != null && user.backImage != null)
+                const SizedBox(width: 12),
+              if (user.backImage != null)
+                Expanded(
+                  child: _buildDocumentImage(user.backImage!, 'Mặt sau', isDark),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDocumentImage(String imageUrl, String label, bool isDark) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: Style.fontContent.copyWith(
+            color: Colors.grey[600],
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (_) => Dialog(
+                backgroundColor: Colors.black,
+                child: InteractiveViewer(
+                  child: Image.network(imageUrl),
+                ),
+              ),
+            );
+          },
+          child: Container(
+            height: 80,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                          : null,
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey[200],
+                    child: const Icon(Icons.broken_image, color: Colors.grey),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext context, User user, int branchId, bool isDark) {
+    return Row(
+      children: [
+        // Reject button
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => _rejectUser(context, user.id!, branchId),
+            icon: const Icon(Icons.close, size: 18),
+            label: const Text('Từ chối'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red,
+              side: const BorderSide(color: Colors.red),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Approve button
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () => _showApprovalDialog(context, user, branchId),
+            icon: const Icon(Icons.check, size: 18),
+            label: const Text('Duyệt'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 2,
+              shadowColor: Colors.green.withOpacity(0.3),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Dialog xác nhận duyệt nhân viên - UI cải thiện
   void _showApprovalDialog(BuildContext context, User user, int branchId) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Xác nhận duyệt nhân viên'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Bạn có chắc chắn muốn duyệt nhân viên này không?'),
-              const SizedBox(height: 8),
-              Text('Tên: ${user.fullName}', style: const TextStyle(fontWeight: FontWeight.bold)),
-              Text('Email: ${user.email}'),
-              Text('Điện thoại: ${user.phone}'),
-              const SizedBox(height: 8),
-              const Text('Sau khi duyệt, nhân viên sẽ có thể đăng nhập và làm việc.'),
-            ],
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.grey[850] : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header với icon
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.green[400]!, Colors.green[600]!],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_outline,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Title
+                  Text(
+                    'Xác nhận duyệt nhân viên',
+                    style: Style.fontTitle.copyWith(
+                      fontSize: 20,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Content
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.grey[800] : Colors.grey[50],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Bạn có chắc chắn muốn duyệt nhân viên này không?',
+                          style: Style.fontContent.copyWith(
+                            color: isDark ? Colors.grey[300] : Colors.grey[700],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildUserInfoRow(Icons.person, 'Tên', user.fullName, isDark),
+                        _buildUserInfoRow(Icons.email, 'Email', user.email, isDark),
+                        _buildUserInfoRow(Icons.phone, 'Điện thoại', user.phone, isDark),
+                        if (user.roleName != null)
+                          _buildUserInfoRow(Icons.work, 'Vai trò', user.roleName!, isDark),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Warning message
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.blue[600], size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Sau khi duyệt, nhân viên sẽ có thể đăng nhập và làm việc trong chi nhánh.',
+                            style: Style.fontContent.copyWith(
+                              color: Colors.blue[700],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Action buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            side: BorderSide(color: Colors.grey[400]!),
+                          ),
+                          child: Text(
+                            'Hủy',
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            _approveUser(context, user.id!, branchId);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 2,
+                            shadowColor: Colors.green.withOpacity(0.3),
+                          ),
+                          child: const Text(
+                            'Duyệt nhân viên',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Hủy'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _approveUser(context, user.id!, branchId);
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-              child: const Text('Duyệt', style: TextStyle(color: Colors.white)),
-            ),
-          ],
         );
       },
+    );
+  }
+
+  Widget _buildUserInfoRow(IconData icon, String label, String value, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: Colors.grey[600]),
+          const SizedBox(width: 8),
+          Text(
+            '$label: ',
+            style: Style.fontContent.copyWith(
+              color: Colors.grey[600],
+              fontSize: 14,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: Style.fontContent.copyWith(
+                color: isDark ? Colors.white : Colors.black87,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

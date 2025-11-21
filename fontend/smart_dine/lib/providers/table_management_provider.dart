@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../API/table_management_API.dart';
 import '../models/table.dart' as table_model;
+import 'user_session_provider.dart';
 
 // Provider cho table management theo branch
 final tableManagementProvider = StateNotifierProvider.family<TableManagementNotifier, AsyncValue<List<table_model.Table>>, int>((ref, branchId) {
@@ -96,3 +97,92 @@ final tableDetailProvider = FutureProvider.family<table_model.Table?, int>((ref,
   final api = ref.read(tableManagementApiProvider);
   return api.getTableById(tableId);
 });
+
+// Provider cho table types theo branch
+final tableTypesProvider = StateNotifierProvider.family<TableTypesNotifier, AsyncValue<List<table_model.TableType>>, int>((ref, branchId) {
+  final companyId = ref.watch(currentCompanyIdProvider);
+  return TableTypesNotifier(
+    ref.read(tableManagementApiProvider),
+    branchId,
+    companyId,
+  );
+});
+
+class TableTypesNotifier extends StateNotifier<AsyncValue<List<table_model.TableType>>> {
+  final TableManagementAPI _api;
+  final int _branchId;
+  final int? _companyId;
+
+  TableTypesNotifier(this._api, this._branchId, this._companyId) : super(const AsyncValue.loading()) {
+    loadTableTypes();
+  }
+
+  Future<void> loadTableTypes() async {
+    try {
+      state = const AsyncValue.loading();
+      final types = await _api.getTableTypesByBranch(_branchId);
+      
+      if (types != null) {
+        final tableTypes = types.map((type) => table_model.TableType.fromJson(type)).toList();
+        state = AsyncValue.data(tableTypes);
+      } else {
+        state = const AsyncValue.data([]);
+      }
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
+
+  Future<bool> createTableType(String name, String code) async {
+    try {
+      final tableTypeData = {
+        'name': name,
+        'code': code,
+        'branchId': _branchId,
+        if (_companyId != null) 'companyId': _companyId,
+      };
+      
+      final result = await _api.createTableType(_branchId, tableTypeData);
+      if (result != null) {
+        await loadTableTypes(); // Refresh list
+        return true;
+      }
+      return false;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  Future<bool> updateTableType(int typeId, String name, String code) async {
+    try {
+      final tableTypeData = {
+        'name': name,
+        'code': code,
+        'branchId': _branchId,
+        if (_companyId != null) 'companyId': _companyId,
+      };
+      
+      final result = await _api.updateTableType(typeId, tableTypeData);
+      if (result != null) {
+        await loadTableTypes(); // Refresh list
+        return true;
+      }
+      return false;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteTableType(int typeId) async {
+    try {
+      final success = await _api.deleteTableType(typeId);
+      if (success) {
+        await loadTableTypes(); // Refresh list
+        return true;
+      }
+      return false;
+    } catch (error) {
+      return false;
+    }
+  }
+}

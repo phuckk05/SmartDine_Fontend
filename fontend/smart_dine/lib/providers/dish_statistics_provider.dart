@@ -59,9 +59,8 @@ class DishStatisticsNotifier extends StateNotifier<AsyncValue<DishStatisticsData
           final quantity = int.tryParse(dish['quantity']?.toString() ?? '0') ?? 0;
           totalDishes += quantity;
           
-          // Parse revenue (remove "triệu" and convert)
-          final revenueStr = dish['revenue']?.toString() ?? '0';
-          final revenueNum = double.tryParse(revenueStr.replaceAll(' triệu', '').replaceAll(',', '.')) ?? 0.0;
+          // Use raw revenue value from API (no need to parse "triệu")
+          final revenueNum = double.tryParse(dish['revenue']?.toString() ?? '0') ?? 0.0;
           totalRevenue += revenueNum;
         }
         
