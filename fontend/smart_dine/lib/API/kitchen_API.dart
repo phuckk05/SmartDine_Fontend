@@ -20,7 +20,7 @@ class KitchenApi {
           .map((item) => OrderItem.fromMap(item as Map<String, dynamic>))
           .toList();
     }
-        return [];
+    return [];
   }
 
   Future<List<OrderItem>> getOrderItemsByBranch(int branchId) async {
@@ -34,7 +34,7 @@ class KitchenApi {
           .map((item) => OrderItem.fromMap(item as Map<String, dynamic>))
           .toList();
     }
-        return [];
+    return [];
   }
 
   //Cập nhật trạng thái order item

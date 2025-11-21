@@ -5,20 +5,27 @@ import 'package:mart_dine/API/user_API.dart';
 import 'package:mart_dine/API/user_branch_API.dart';
 import 'package:mart_dine/models/branch.dart';
 
-class BranchNotifier extends StateNotifier<Branch?> {
+class BranchNotifier extends StateNotifier<AsyncValue<List<Branch>>> {
   final BranchAPI branchAPI;
   final UserAPI userAPI;
   final CompanyAPI companyAPI;
   final UserBranchAPI userBranchAPI;
   BranchNotifier(
     this.branchAPI,
+    this.userAPI,
     this.companyAPI,
     this.userBranchAPI,
-    this.userAPI,
-  ) : super(null);
+  ) : super(const AsyncValue.data([]));
 
-  Set<Branch> build() {
-    return const {};
+  // Load branches by company ID
+  Future<void> loadBranchesByCompanyId(int companyId) async {
+    state = const AsyncValue.loading();
+    try {
+      final branches = await branchAPI.getBranchesByCompanyId(companyId);
+      state = AsyncValue.data(branches ?? []);
+    } catch (e) {
+      state = AsyncValue.error(e, StackTrace.current);
+    }
   }
 
   //Đăng kí chi nhánh
@@ -44,10 +51,7 @@ class BranchNotifier extends StateNotifier<Branch?> {
         final response = await branchAPI.create(branchCreate);
         if (response != null) {
           //Cập nhạt state
-          state = response;
-          //Cập nhật bảng user_branch
-          // await userBranchAPI.create(userId, response.id!);
-          await userAPI.updateCompanyId(userId, responseCompany.id!);
+          state = AsyncValue.data([...state.value!, response]);
           return 1;
         }
       } else {
@@ -96,15 +100,29 @@ class BranchNotifier extends StateNotifier<Branch?> {
       return null;
     }
   }
+
+  //   // Lấy branchId theo userId
+  //   Future<int?> getBranchIdByUserId(int userId) async {
+  //     try {
+  //       final userBranchData = await userBranchAPI.getBranchByUserId(userId);
+  //       if (userBranchData != null && userBranchData['branchId'] != null) {
+  //         return userBranchData['branchId'] as int;
+  //       }
+  //       print('Không tìm thấy branchId cho userId: $userId');
+  //       return null;
+  //     } catch (e) {
+  //       print('Lỗi lấy branchId: $e');
+  //       return null;
+  //     }
+  //   }
 }
 
-final branchNotifierProvider = StateNotifierProvider<BranchNotifier, Branch?>((
-  ref,
-) {
-  return BranchNotifier(
-    ref.watch(branchApiProvider),
-    ref.watch(companyApiProvider),
-    ref.watch(userBranchApiProvider),
-    ref.watch(userApiProvider),
-  );
-});
+final branchNotifierProvider =
+    StateNotifierProvider<BranchNotifier, AsyncValue<List<Branch>>>((ref) {
+      return BranchNotifier(
+        ref.watch(branchApiProvider),
+        ref.watch(userApiProvider),
+        ref.watch(companyApiProvider),
+        ref.watch(userBranchApiProvider),
+      );
+    });

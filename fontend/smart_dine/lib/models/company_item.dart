@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:mart_dine/features/admin/screen_company_detail.dart';
 import 'package:mart_dine/models/pending_company.dart';
 
 class CompanyItem extends StatelessWidget {
@@ -27,19 +26,7 @@ class CompanyItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder:
-                (_) => ScreenCompanyDetail(
-                  company: company,
-                  onApprove: onApprove,
-                  onReject: onReject,
-                ),
-          ),
-        );
-      },
+      onTap: () {},
 
       child: Card(
         elevation: 2,

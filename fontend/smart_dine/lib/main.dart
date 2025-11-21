@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:mart_dine/features/signin/screen_signin.dart';
 // import 'package:mart_dine/features/staff/screen_choose_table.dart';
 import 'package:mart_dine/providers/mode_provider.dart';
+import 'package:mart_dine/features/staff/screen_choose_table.dart';
 // import 'providers/user_session_provider.dart';
 
 Future<void> main() async {
@@ -32,7 +32,7 @@ class SmartDineApp extends ConsumerWidget {
         ),
       ),
       // Smart routing: Login hoặc Branch Management dựa trên config
-      home: ScreenSignIn(), // Development: Thẳng branch management
+      home: ScreenChooseTable(), // Development: Thẳng branch management
     );
   }
 }

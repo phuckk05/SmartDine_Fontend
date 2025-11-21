@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:mart_dine/models/order.dart';
+// import 'package:mart_dine/models/order_item.dart';
 
 final uri1 = 'https://spring-boot-smartdine.onrender.com/api/orders';
 final uri2 = 'https://smartdine-backend-oq2x.onrender.com/api/orders';
@@ -27,7 +28,7 @@ class OrderAPI {
         return null;
       }
     } catch (e) {
-            return null;
+      return null;
     }
   }
 
@@ -44,7 +45,7 @@ class OrderAPI {
           .map((item) => Order.fromMap(item as Map<String, dynamic>))
           .toList();
     } else {
-            return [];
+      return [];
     }
   }
 
@@ -61,7 +62,7 @@ class OrderAPI {
           .map((item) => Order.fromMap(item as Map<String, dynamic>))
           .toList();
     } else {
-            throw Exception('Lỗi lấy danh sách order');
+      throw Exception('Lỗi lấy danh sách order');
     }
   }
 
@@ -78,7 +79,7 @@ class OrderAPI {
           .map((item) => Order.fromMap(item as Map<String, dynamic>))
           .toList();
     } else {
-            return []; // Trả về rỗng nếu không có hoặc lỗi
+      return []; // Trả về rỗng nếu không có hoặc lỗi
     }
   }
 
@@ -93,7 +94,7 @@ class OrderAPI {
       final List<dynamic> data = json.decode(response.body) as List<dynamic>;
       return data.map((item) => item as int).toList();
     } else {
-            return [];
+      return [];
     }
   }
 
@@ -123,7 +124,7 @@ class OrderAPI {
           .map((item) => Order.fromMap(item as Map<String, dynamic>))
           .toList();
     } else {
-            return [];
+      return [];
     }
   }
 
@@ -140,9 +141,9 @@ class OrderAPI {
         return Order.fromMap(data);
       }
 
-            return null;
+      return null;
     } catch (e) {
-            return null;
+      return null;
     }
   }
 
@@ -167,9 +168,9 @@ class OrderAPI {
             .toList();
       }
 
-            return [];
+      return [];
     } catch (e) {
-            return [];
+      return [];
     }
   }
 }

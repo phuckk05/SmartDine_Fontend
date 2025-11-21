@@ -20,7 +20,7 @@ class TableApi {
           .map((table) => Table.fromMap(table as Map<String, dynamic>))
           .toList();
     }
-        return [];
+    return [];
   }
 
   //Lấy table by id
@@ -33,7 +33,7 @@ class TableApi {
       final Map<String, dynamic> data = jsonDecode(response.body);
       return Table.fromMap(data);
     }
-        return null;
+    return null;
   }
 
   Future<List<Table>> fetchTables() async {
@@ -51,8 +51,8 @@ class TableApi {
           .map((item) => Table.fromMap(item as Map<String, dynamic>))
           .toList();
     } else {
-            // In ra nội dung lỗi để xem chi tiết
-            return [];
+      // In ra nội dung lỗi để xem chi tiết
+      return [];
     }
   }
 
@@ -69,7 +69,7 @@ class TableApi {
           .map((item) => Table.fromMap(item as Map<String, dynamic>))
           .toList();
     } else {
-            return []; // Trả về rỗng nếu không có hoặc lỗi
+      return []; // Trả về rỗng nếu không có hoặc lỗi
     }
   }
 }

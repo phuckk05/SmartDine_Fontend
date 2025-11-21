@@ -5,11 +5,7 @@ class TableStatus {
   final String code; // ACTIVE, MAINTENANCE, INACTIVE, DELETED
   final String name;
 
-  TableStatus({
-    required this.id,
-    required this.code,
-    required this.name,
-  });
+  TableStatus({required this.id, required this.code, required this.name});
 
   factory TableStatus.fromJson(Map<String, dynamic> json) {
     return TableStatus(
@@ -20,11 +16,7 @@ class TableStatus {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'code': code,
-      'name': name,
-    };
+    return {'id': id, 'code': code, 'name': name};
   }
 }
 
@@ -33,11 +25,7 @@ class TableType {
   final String code;
   final String name;
 
-  TableType({
-    required this.id,
-    required this.code,
-    required this.name,
-  });
+  TableType({required this.id, required this.code, required this.name});
 
   factory TableType.fromJson(Map<String, dynamic> json) {
     return TableType(
@@ -48,11 +36,7 @@ class TableType {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'code': code,
-      'name': name,
-    };
+    return {'id': id, 'code': code, 'name': name};
   }
 }
 
@@ -157,13 +141,18 @@ class Table {
       statusId: _parseInt(json['statusId']) ?? _parseInt(json['status_id']),
       createdAt: _parseDate(json['createdAt'] ?? json['created_at']),
       updatedAt: _parseDate(json['updatedAt'] ?? json['updated_at']),
-      status: json['status'] != null ? TableStatus.fromJson(json['status']) : null,
+      status:
+          json['status'] != null ? TableStatus.fromJson(json['status']) : null,
       type: json['type'] != null ? TableType.fromJson(json['type']) : null,
-      branchName: json['branchName']?.toString() ?? json['branch_name']?.toString(),
+      branchName:
+          json['branchName']?.toString() ?? json['branch_name']?.toString(),
       typeName: json['typeName']?.toString() ?? json['type_name']?.toString(),
-      statusName: json['statusName']?.toString() ?? json['status_name']?.toString(),
-      currentOrders: _parseInt(json['currentOrders']) ?? _parseInt(json['current_orders']),
-      isAvailable: json['isAvailable'] as bool? ?? json['is_available'] as bool?,
+      statusName:
+          json['statusName']?.toString() ?? json['status_name']?.toString(),
+      currentOrders:
+          _parseInt(json['currentOrders']) ?? _parseInt(json['current_orders']),
+      isAvailable:
+          json['isAvailable'] as bool? ?? json['is_available'] as bool?,
     );
   }
 

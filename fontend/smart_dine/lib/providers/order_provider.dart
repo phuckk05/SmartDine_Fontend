@@ -13,7 +13,7 @@ class OrderProvider extends StateNotifier<List<Order>> {
       final orders = await orderApi.fetchOrders();
       state = orders;
     } catch (e) {
-            state = [];
+      state = [];
     }
   }
 
@@ -23,7 +23,7 @@ class OrderProvider extends StateNotifier<List<Order>> {
       final orders = await orderApi.fetchOrdersByTableIdToday(tableId);
       state = orders;
     } catch (e) {
-            state = [];
+      state = [];
     }
   }
 
@@ -32,7 +32,7 @@ class OrderProvider extends StateNotifier<List<Order>> {
     try {
       return await orderApi.fetchUnpaidTableIdsToday();
     } catch (e) {
-            return [];
+      return [];
     }
   }
 
@@ -41,7 +41,7 @@ class OrderProvider extends StateNotifier<List<Order>> {
     try {
       return await orderApi.getOrderById(id);
     } catch (e) {
-            return null;
+      return null;
     }
   }
 
@@ -56,8 +56,8 @@ class OrderProvider extends StateNotifier<List<Order>> {
 
   //Kiểm tra orderId nếu có lấy tableOrderId
   int? checkOrderExists(int orderId) {
-        for (final order in state) {
-            // ignore: unrelated_type_equality_checks
+    for (final order in state) {
+      // ignore: unrelated_type_equality_checks
       if (order.id == orderId) {
         return order.tableId;
       }
