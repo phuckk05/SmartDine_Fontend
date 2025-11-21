@@ -537,7 +537,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
     );
   }
 
-  Future<void> _confirmAndDeleteItem(
+  Future<void> _confirmAndCancelItem(
     Item item,
     List<int> pendingOrderItemIds,
   ) async {
@@ -549,9 +549,9 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
           context: context,
           builder:
               (context) => AlertDialog(
-                title: const Text('Xóa món chờ xác nhận?'),
+                title: const Text('Hủy món chờ xác nhận?'),
                 content: Text(
-                  'Các phần "${item.name}" đang chờ xác nhận sẽ bị xóa khỏi order.',
+                  'Các phần "${item.name}" đang chờ xác nhận sẽ được chuyển sang trạng thái đã hủy.',
                 ),
                 actions: [
                   TextButton(
@@ -560,7 +560,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                   ),
                   ElevatedButton(
                     onPressed: () => Navigator.of(context).pop(true),
-                    child: const Text('XÓA'),
+                    child: const Text('ĐỒNG Ý'),
                   ),
                 ],
               ),
@@ -577,7 +577,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
 
     try {
       for (final orderItemId in pendingOrderItemIds) {
-        await orderItemApi.deleteOrderItem(orderItemId);
+        await orderItemApi.updateOrderItemStatus(orderItemId, 4);
       }
 
       final currentOrder = ref.read(_currentOrderProvider);
@@ -590,13 +590,13 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
       if (!mounted) return;
       Constrats.showThongBao(
         context,
-        'Đã xóa ${pendingOrderItemIds.length} phần.',
+        'Đã hủy ${pendingOrderItemIds.length} phần.',
       );
     } catch (e) {
       if (mounted) {
         Constrats.showThongBao(
           context,
-          'Không thể xóa món: ${e.toString().replaceFirst('Exception: ', '')}',
+          'Không thể hủy món: ${e.toString().replaceFirst('Exception: ', '')}',
         );
       }
     } finally {
@@ -1070,12 +1070,12 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                                                   ),
                                           tooltip:
                                               canDelete
-                                                  ? 'Xóa các phần chờ xác nhận'
-                                                  : 'Chỉ xóa được món đang chờ xác nhận',
+                                                  ? 'Hủy các phần chờ xác nhận'
+                                                  : 'Chỉ hủy được món đang chờ xác nhận',
                                           onPressed:
                                               (!canDelete || isDeleting)
                                                   ? null
-                                                  : () => _confirmAndDeleteItem(
+                                                  : () => _confirmAndCancelItem(
                                                     item,
                                                     entry.pendingOrderItemIds,
                                                   ),

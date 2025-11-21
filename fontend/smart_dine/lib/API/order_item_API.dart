@@ -86,6 +86,22 @@ class OrderItemAPI {
       'Lỗi xóa order item: ${response.statusCode} - ${response.body}',
     );
   }
+
+  Future<void> updateOrderItemStatus(int orderItemId, int statusId) async {
+    final response = await http.put(
+      Uri.parse('$uri2/$orderItemId/status'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'statusId': statusId}),
+    );
+
+    if (response.statusCode == 200) {
+      return;
+    }
+
+    throw Exception(
+      'Lỗi cập nhật trạng thái order item: ${response.statusCode} - ${response.body}',
+    );
+  }
 }
 
 final orderItemApiProvider = Provider<OrderItemAPI>((ref) {
