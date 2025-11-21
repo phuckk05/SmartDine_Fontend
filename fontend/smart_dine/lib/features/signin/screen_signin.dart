@@ -12,6 +12,7 @@ import 'package:mart_dine/features/signup/screen_select_signup.dart';
 import 'package:mart_dine/features/owner/screen_dashboard.dart';
 // import 'package:mart_dine/features/staff/screen_choose_table.dart'; // Tạm ẩn
 import 'package:mart_dine/features/branch_management/screen/branch_navigation.dart';
+import 'package:mart_dine/features/staff/screen_choose_table.dart';
 import 'package:mart_dine/providers/branch_provider.dart';
 import 'package:mart_dine/providers/loading_provider.dart';
 import 'package:mart_dine/providers/user_provider.dart';
@@ -187,10 +188,7 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
         } else if (user.role == 3) {
           // Staff -> Màn hình chọn bàn (Tạm ẩn)
           // TODO: Sẽ mở lại khi cần thiết
-          Constrats.showThongBao(
-            context,
-            'Chức năng nhân viên đang được phát triển.',
-          );
+          Routes.pushRightLeftConsumerFul(context, ScreenChooseTable());
         } else if (user.role == 4) {
           // Chef
           Routes.pushRightLeftConsumerFul(
