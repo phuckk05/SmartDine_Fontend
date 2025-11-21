@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:mart_dine/features/signin/screen_signin.dart';
 import 'package:mart_dine/services/auth_service.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -322,12 +321,7 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
                               ),
                             );
 
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const ScreenSignIn(),
-                              ),
-                            );
+                            
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
