@@ -1,8 +1,28 @@
 import 'dart:convert';
 
+class BranchStatus {
+  final int id;
+  final String code; // ACTIVE, INACTIVE, MAINTENANCE
+  final String name;
+
+  BranchStatus({required this.id, required this.code, required this.name});
+
+  factory BranchStatus.fromJson(Map<String, dynamic> json) {
+    return BranchStatus(
+      id: json['id'] ?? 0,
+      code: json['code'] ?? '',
+      name: json['name'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'code': code, 'name': name};
+  }
+}
+
 class Branch {
   //Properties
-  final int? id;
+  int? id;
   final int companyId;
   final String name;
   final String branchCode;
@@ -12,6 +32,14 @@ class Branch {
   final int managerId;
   final DateTime createdAt;
   final DateTime updatedAt;
+
+  // Relations - thông tin từ JOIN query
+  BranchStatus? status;
+  String? managerName;
+  String? managerEmail;
+  String? managerPhone;
+  String? companyName;
+
   //Constructor
   Branch({
     this.id,
@@ -24,6 +52,11 @@ class Branch {
     required this.managerId,
     required this.createdAt,
     required this.updatedAt,
+    this.status,
+    this.managerName,
+    this.managerEmail,
+    this.managerPhone,
+    this.companyName,
   });
   factory Branch.create({
     required int companyId,
@@ -40,6 +73,7 @@ class Branch {
       branchCode: branchCode,
       address: address,
       image: image,
+
       statusId: 3,
       managerId: managerId,
       createdAt: now,
@@ -57,6 +91,11 @@ class Branch {
     int? managerId,
     DateTime? createdAt,
     DateTime? updatedAt,
+    BranchStatus? status,
+    String? managerName,
+    String? managerEmail,
+    String? managerPhone,
+    String? companyName,
   }) {
     return Branch(
       id: id ?? this.id,
@@ -65,16 +104,21 @@ class Branch {
       branchCode: branchCode ?? this.branchCode,
       address: address ?? this.address,
       image: image ?? this.image,
+
       statusId: statusId ?? this.statusId,
       managerId: managerId ?? this.managerId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      status: status ?? this.status,
+      managerName: managerName ?? this.managerName,
+      managerEmail: managerEmail ?? this.managerEmail,
+      managerPhone: managerPhone ?? this.managerPhone,
+      companyName: companyName ?? this.companyName,
     );
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      'id': id,
+    final map = <String, dynamic>{
       'companyId': companyId,
       'name': name,
       'branchCode': branchCode,
@@ -85,6 +129,12 @@ class Branch {
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
+
+    if (id != 0) {
+      map['id'] = id;
+    }
+
+    return map;
   }
 
   factory Branch.fromMap(Map<String, dynamic> map) {
@@ -95,6 +145,7 @@ class Branch {
       branchCode: map['branchCode'] ?? '',
       address: map['address'] ?? '',
       image: map['image'] ?? '',
+
       statusId: int.tryParse(map['statusId'].toString()) ?? 0,
       managerId: int.tryParse(map['managerId'].toString()) ?? 0,
       createdAt: DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
@@ -105,6 +156,12 @@ class Branch {
   String toJson() => json.encode(toMap());
 
   factory Branch.fromJson(String source) => Branch.fromMap(json.decode(source));
+
+  // Helper methods
+  bool isActive() => status?.code == 'ACTIVE';
+  bool isInactive() => status?.code == 'INACTIVE';
+
+  String getStatusName() => status?.name ?? 'Unknown';
 
   @override
   String toString() {

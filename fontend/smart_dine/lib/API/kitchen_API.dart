@@ -20,7 +20,6 @@ class KitchenApi {
           .map((item) => OrderItem.fromMap(item as Map<String, dynamic>))
           .toList();
     }
-    print("loi lấy order item chua phuc vu: ${response.statusCode}");
     return [];
   }
 
@@ -35,7 +34,6 @@ class KitchenApi {
           .map((item) => OrderItem.fromMap(item as Map<String, dynamic>))
           .toList();
     }
-    print('loi lay order item theo branch: ${response.statusCode}');
     return [];
   }
 

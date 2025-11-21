@@ -21,8 +21,7 @@ class UserBranchAPI {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return true;
     }
-    print("loi crated uerbranch : ${response.statusCode}");
-    return false;
+        return false;
   }
 
   //Lấy userBranch theo userId
@@ -35,8 +34,7 @@ class UserBranchAPI {
       final Map<String, dynamic> data = jsonDecode(response.body);
       return data;
     }
-    print("loi lấy branch bằng userId: ${response.statusCode}");
-    return null;
+        return null;
   }
 
   //Update password userBranch
@@ -52,8 +50,7 @@ class UserBranchAPI {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return true;
     }
-    print("loi update password : ${response.statusCode}");
-    return false;
+        return false;
   }
 }
 

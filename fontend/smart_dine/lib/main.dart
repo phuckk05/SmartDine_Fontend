@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:mart_dine/features/staff/screen_choose_table.dart';
+// import 'package:mart_dine/features/staff/screen_choose_table.dart';
 import 'package:mart_dine/providers/mode_provider.dart';
+import 'package:mart_dine/features/staff/screen_choose_table.dart';
+// import 'providers/user_session_provider.dart';
 
 Future<void> main() async {
   //Cấu hình để sử dụng firebase
@@ -29,28 +31,8 @@ class SmartDineApp extends ConsumerWidget {
               ref.watch(modeProvider) ? Brightness.dark : Brightness.light,
         ),
       ),
-      home: const ScreenChooseTable(branchId: 1),
+      // Smart routing: Login hoặc Branch Management dựa trên config
+      home: ScreenChooseTable(), // Development: Thẳng branch management
     );
   }
 }
-
-// class AuthWrapper extends ConsumerWidget {
-//   const AuthWrapper({super.key});
-
-//   @override
-//   Widget build(BuildContext context, WidgetRef ref) {
-//     final currentUser = ref.watch(userNotifierProvider);
-
-//     if (currentUser == null) {
-//       return const ScreenSignIn();
-//     } else {
-//       if (currentUser.role == 3) {
-//         return const ScreenChooseTable();
-//       } else if (currentUser.role == 4) {
-//         return const ScreenBottomNavigation(index: 1);
-//       } else {
-//         return const ScreenChooseTable();
-//       }
-//     }
-//   }
-// }

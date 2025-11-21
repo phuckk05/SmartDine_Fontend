@@ -13,7 +13,6 @@ class OrderProvider extends StateNotifier<List<Order>> {
       final orders = await orderApi.fetchOrders();
       state = orders;
     } catch (e) {
-      print('Error fetching orders: $e');
       state = [];
     }
   }
@@ -24,7 +23,6 @@ class OrderProvider extends StateNotifier<List<Order>> {
       final orders = await orderApi.fetchOrdersByTableIdToday(tableId);
       state = orders;
     } catch (e) {
-      print('Error fetching orders for table $tableId: $e');
       state = [];
     }
   }
@@ -34,7 +32,6 @@ class OrderProvider extends StateNotifier<List<Order>> {
     try {
       return await orderApi.fetchUnpaidTableIdsToday();
     } catch (e) {
-      print('Lỗi ko lấy đ ược: $e');
       return [];
     }
   }
@@ -44,7 +41,6 @@ class OrderProvider extends StateNotifier<List<Order>> {
     try {
       return await orderApi.getOrderById(id);
     } catch (e) {
-      print('Error fetching order $id: $e');
       return null;
     }
   }
@@ -60,9 +56,7 @@ class OrderProvider extends StateNotifier<List<Order>> {
 
   //Kiểm tra orderId nếu có lấy tableOrderId
   int? checkOrderExists(int orderId) {
-    print('Checking existence for order ID: $orderId');
     for (final order in state) {
-      print('Checking order ID: ${order.id} against $orderId');
       // ignore: unrelated_type_equality_checks
       if (order.id == orderId) {
         return order.tableId;

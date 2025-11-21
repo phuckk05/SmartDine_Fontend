@@ -4,11 +4,11 @@ import 'package:mart_dine/API/reservation_API.dart';
 import 'package:mart_dine/API/table_API.dart';
 import 'package:mart_dine/models/table.dart';
 
-class TableNotifier extends StateNotifier<List<DiningTable>> {
+class TableNotifier extends StateNotifier<List<Table>> {
   final TableApi tableAPI;
   TableNotifier(this.tableAPI) : super([]);
 
-  Set<DiningTable> build() {
+  Set<Table> build() {
     return const {};
   }
 
@@ -21,32 +21,42 @@ class TableNotifier extends StateNotifier<List<DiningTable>> {
   //Lấy name table by id
   String? getTableNameById(int? tableId) {
     if (tableId == null) return null;
-    try {
-      final table = state.firstWhere((table) => table.id == tableId);
-      return table.name;
-    } catch (_) {
-      return null;
-    }
+    final table = state.firstWhere(
+      (table) => table.id == tableId,
+      orElse:
+          () => Table(
+            id: null,
+            branchId: null,
+            name: '',
+            typeId: null,
+            description: null,
+            statusId: null,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+    );
+    return table.name.isNotEmpty ? table.name : null;
   }
 }
 
-final tableNotifierProvider =
-    StateNotifierProvider<TableNotifier, List<DiningTable>>((ref) {
-      return TableNotifier(ref.read(tableApiProvider));
-    });
-final unpaidTablesByBranchProvider = FutureProvider.family<Map<int, int>, int>((
+final tableNotifierProvider = StateNotifierProvider<TableNotifier, List<Table>>(
+  (ref) {
+    return TableNotifier(ref.read(tableApiProvider));
+  },
+);
+final unpaidTablesByBranchProvider = FutureProvider.family<Set<int>, int>((
   ref,
   branchId,
 ) async {
   final orderApi = ref.watch(orderApiProvider);
   final orders = await orderApi.fetchOrdersByBranchIdToday(branchId);
-  final activeTableStatus = <int, int>{};
-  for (final order in orders) {
-    if (order.statusId == 2 || order.statusId == 4) {
-      activeTableStatus[order.tableId] = order.statusId;
-    }
-  }
-  return activeTableStatus;
+  final activeTableIds =
+      orders
+          .where((order) => order.statusId == 2 || order.statusId == 4)
+          .map((order) => order.tableId)
+          .whereType<int>()
+          .toSet();
+  return activeTableIds;
 });
 final reservedTablesByBranchProvider =
     FutureProvider.family<Map<String, dynamic>, int>((ref, branchId) async {

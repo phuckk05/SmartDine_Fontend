@@ -21,7 +21,6 @@ class OrderItemAPI {
           .map((item) => OrderItem.fromMap(item as Map<String, dynamic>))
           .toList();
     } else {
-      print("Loi lay order item: ${response.statusCode}");
       throw Exception('Lỗi lấy danh sách order item');
     }
   }
@@ -31,9 +30,7 @@ class OrderItemAPI {
     final response = await http.post(
       Uri.parse('$uri2/save'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(
-        newOrderItem.map((item) => item.toCreatePayload()).toList(),
-      ),
+      body: jsonEncode(newOrderItem.map((item) => item.toMap()).toList()),
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -63,43 +60,6 @@ class OrderItemAPI {
 
     throw Exception(
       'Loi lay order item theo orderId: ${response.statusCode} - ${response.body}',
-    );
-  }
-
-  Future<void> deleteOrderItem(int orderItemId) async {
-    final response = await http.delete(
-      Uri.parse('$uri2/$orderItemId'),
-      headers: {'Content-Type': 'application/json'},
-    );
-
-    if (response.statusCode == 204) {
-      return;
-    }
-
-    if (response.statusCode == 400 || response.statusCode == 404) {
-      throw Exception(
-        response.body.isEmpty ? 'Không thể xóa order item.' : response.body,
-      );
-    }
-
-    throw Exception(
-      'Lỗi xóa order item: ${response.statusCode} - ${response.body}',
-    );
-  }
-
-  Future<void> updateOrderItemStatus(int orderItemId, int statusId) async {
-    final response = await http.put(
-      Uri.parse('$uri2/$orderItemId/status'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'statusId': statusId}),
-    );
-
-    if (response.statusCode == 200) {
-      return;
-    }
-
-    throw Exception(
-      'Lỗi cập nhật trạng thái order item: ${response.statusCode} - ${response.body}',
     );
   }
 }

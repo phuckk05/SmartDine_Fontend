@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:mart_dine/models/item.dart';
-import 'package:mart_dine/models/menu.dart';
+// import 'package:mart_dine/models/menu.dart';
 
 final uri1 = 'https://spring-boot-smartdine.onrender.com/api/items';
 final uri2 = 'https://smartdine-backend-oq2x.onrender.com/api/items';
@@ -21,8 +21,20 @@ class MenuItemAPI {
           .map((item) => Item.fromMap(item as Map<String, dynamic>))
           .toList();
     }
-    print("loi lấy menu items: ${response.statusCode}");
     return [];
+  }
+
+  // Lấy item by ID
+  Future<Item?> getItemById(int itemId) async {
+    final response = await http.get(
+      Uri.parse('$uri2/$itemId'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      return Item.fromMap(data);
+    }
+    return null;
   }
 }
 
@@ -43,7 +55,6 @@ class MenuItemApi {
           .map((item) => Item.fromMap(item as Map<String, dynamic>))
           .toList();
     } else {
-      print("Loi lay menu: ${response.statusCode}");
       throw Exception('Lỗi lấy danh sách menu');
     }
   }
@@ -61,26 +72,8 @@ class MenuItemApi {
           .map((item) => Item.fromMap(item as Map<String, dynamic>))
           .toList();
     } else {
-      print("Loi lay menu theo companyId: ${response.statusCode}");
       return []; // Trả về rỗng nếu không có hoặc lỗi
     }
-  }
-
-  Future<void> deleteMenuItem(int itemId) async {
-    final response = await http.delete(
-      Uri.parse('$uri2/$itemId'),
-      headers: {'Content-Type': 'application/json'},
-    );
-
-    if (response.statusCode == 200 || response.statusCode == 204) {
-      return;
-    }
-
-    final message =
-        response.body.isNotEmpty
-            ? response.body
-            : 'Không thể xóa món ăn (mã trạng thái: ${response.statusCode}).';
-    throw Exception(message);
   }
 }
 

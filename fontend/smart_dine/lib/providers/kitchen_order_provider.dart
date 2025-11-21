@@ -13,12 +13,10 @@ class KitchenOrderNotifier extends StateNotifier<AsyncValue<List<OrderItem>>> {
       final orders = await _api.getPendingOrderItems(branchId);
       // Log fetch results to help diagnose empty UI states.
       // ignore: avoid_print
-      print('Kitchen orders fetched: ${orders.length}');
       state = AsyncValue.data(orders);
     } catch (error, stackTrace) {
       //kitchen- 3
       // ignore: avoid_print
-      print('Kitchen orders load failed: $error');
       state = AsyncValue.error(error, stackTrace);
     }
   }
@@ -28,11 +26,9 @@ class KitchenOrderNotifier extends StateNotifier<AsyncValue<List<OrderItem>>> {
     try {
       final orders = await _api.getOrderItemsByBranch(branchId);
       // ignore: avoid_print
-      print('All order items fetched: ${orders.length}');
       state = AsyncValue.data(orders);
     } catch (error, stackTrace) {
       // ignore: avoid_print
-      print('Order items by branch load failed: $error');
       state = AsyncValue.error(error, stackTrace);
     }
   }
@@ -55,7 +51,6 @@ class KitchenOrderNotifier extends StateNotifier<AsyncValue<List<OrderItem>>> {
       return true;
     } catch (e) {
       // ignore: avoid_print
-      print('Error updating order item status: $e');
       return false;
     }
   }

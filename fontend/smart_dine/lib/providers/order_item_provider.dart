@@ -25,9 +25,7 @@ class OrderItemNotifier extends StateNotifier<List<OrderItem>> {
       if (mounted) {
         state = [...state, ...createdItems];
       }
-    } catch (e) {
-      print('Lỗi khi thêm order items: $e');
-    }
+    } catch (e) {}
   }
 
   void removeOrderItem(OrderItem item) {

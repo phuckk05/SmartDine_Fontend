@@ -16,11 +16,9 @@ class ItemNotifier extends StateNotifier<List<Item>> {
       final items = await menuItemAPI.getMenuItemsByCompanyId(companyId);
       // Log fetch results to help diagnose empty UI states.
       // ignore: avoid_print
-      print('Menu items fetched: ${items.length}');
       state = items;
     } catch (error, stackTrace) {
       // ignore: avoid_print
-      print('Menu items load failed: $error');
     }
   }
 
