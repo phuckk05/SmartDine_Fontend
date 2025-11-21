@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:mart_dine/core/constrats.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/models/order_item.dart';
@@ -42,6 +44,35 @@ class _ScreenKitchenState extends ConsumerState<ScreenKitchen>
     5: Color(0xFF757575),
     6: Color(0xFF8E24AA),
   };
+
+  // Map để cache tên user theo userId
+  final Map<int, String> _userNames = {};
+
+  // Hàm lấy tên user theo id
+  Future<String> _getUserName(int userId) async {
+    if (_userNames.containsKey(userId)) {
+      return _userNames[userId]!;
+    }
+    try {
+      // Gọi API lấy user theo id
+      final response = await http.get(
+        Uri.parse(
+          'https://smartdine-backend-oq2x.onrender.com/api/users/get/$userId',
+        ),
+      );
+      if (response.statusCode == 200) {
+        final userData = json.decode(response.body);
+        final fullName = userData['fullName'] ?? 'Unknown';
+        _userNames[userId] = fullName;
+        return fullName;
+      }
+    } catch (e) {
+      print('Error fetching user: $e');
+    }
+    _userNames[userId] = 'Unknown';
+    return 'Unknown';
+  }
+
   //Update status order item
   void _handleStatusChange(
     BuildContext context,
@@ -306,6 +337,21 @@ class _ScreenKitchenState extends ConsumerState<ScreenKitchen>
                       ),
                       const SizedBox(height: 4),
                       Text('$tableName', style: Style.fontCaption),
+                      if (item.addedBy != null) ...[
+                        const SizedBox(height: 4),
+                        FutureBuilder<String>(
+                          future: _getUserName(item.addedBy!),
+                          builder: (context, snapshot) {
+                            final userName = snapshot.data ?? 'Đang tải...';
+                            return Text(
+                              'Người order: $userName',
+                              style: Style.fontCaption.copyWith(
+                                color: Colors.blue,
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ],
                   ),
                 ),
