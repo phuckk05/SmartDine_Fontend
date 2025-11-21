@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
-import 'package:mart_dine/models/branch.dart';
-import 'package:mart_dine/providers/branch_provider.dart';
 import 'package:mart_dine/features/staff/screen_choose_table.dart';
+import 'package:mart_dine/model_staff/branch.dart';
+import 'package:mart_dine/provider_staff/branch_provider.dart';
 import 'package:mart_dine/routes.dart';
 
 class ScreenBranchSelection extends ConsumerStatefulWidget {
@@ -24,13 +24,13 @@ class _ScreenBranchSelectionState extends ConsumerState<ScreenBranchSelection> {
 
   Future<void> _loadBranches() async {
     await ref
-        .read(branchNotifierProvider.notifier)
+        .read(branchNotifierProvider2.notifier)
         .loadBranchesByCompanyId(widget.companyId);
   }
 
   @override
   Widget build(BuildContext context) {
-    final branchState = ref.watch(branchNotifierProvider);
+    final branchState = ref.watch(branchNotifierProvider2);
 
     return Scaffold(
       appBar: AppBar(
@@ -58,22 +58,24 @@ class _ScreenBranchSelectionState extends ConsumerState<ScreenBranchSelection> {
               Expanded(
                 child: branchState.when(
                   data: (branches) => _buildBranchList(branches),
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (error, stack) => Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text('Không thể tải danh sách chi nhánh'),
-                        const SizedBox(height: 8),
-                        Text('$error'),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _loadBranches,
-                          child: const Text('Thử lại'),
+                  loading:
+                      () => const Center(child: CircularProgressIndicator()),
+                  error:
+                      (error, stack) => Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text('Không thể tải danh sách chi nhánh'),
+                            const SizedBox(height: 8),
+                            Text('$error'),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: _loadBranches,
+                              child: const Text('Thử lại'),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
                 ),
               ),
             ],
@@ -103,9 +105,7 @@ class _ScreenBranchSelectionState extends ConsumerState<ScreenBranchSelection> {
   Widget _buildBranchCard(Branch branch) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () {
           Routes.pushRightLeftConsumerFul(
@@ -125,11 +125,7 @@ class _ScreenBranchSelectionState extends ConsumerState<ScreenBranchSelection> {
                   color: Colors.blue.shade100,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
-                  Icons.business,
-                  color: Colors.blue,
-                  size: 30,
-                ),
+                child: const Icon(Icons.business, color: Colors.blue, size: 30),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -151,11 +147,7 @@ class _ScreenBranchSelectionState extends ConsumerState<ScreenBranchSelection> {
                   ],
                 ),
               ),
-              const Icon(
-                Icons.arrow_forward_ios,
-                color: Colors.grey,
-                size: 20,
-              ),
+              const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 20),
             ],
           ),
         ),

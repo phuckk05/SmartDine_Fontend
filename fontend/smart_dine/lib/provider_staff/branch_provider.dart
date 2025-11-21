@@ -1,8 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mart_dine/API/branch_API.dart';
-import 'package:mart_dine/API/company_API.dart';
-import 'package:mart_dine/API/user_branch_API.dart';
-import 'package:mart_dine/models/branch.dart';
+import 'package:mart_dine/API_staff/branch_API.dart';
+import 'package:mart_dine/API_staff/company_API.dart';
+import 'package:mart_dine/API_staff/user_branch_API.dart';
+
+import 'package:mart_dine/model_staff/branch.dart';
 
 class BranchNotifier extends StateNotifier<AsyncValue<List<Branch>>> {
   final BranchAPI branchAPI;
@@ -67,10 +68,10 @@ class BranchNotifier extends StateNotifier<AsyncValue<List<Branch>>> {
   }
 }
 
-final branchNotifierProvider =
+final branchNotifierProvider2 =
     StateNotifierProvider<BranchNotifier, AsyncValue<List<Branch>>>((ref) {
       return BranchNotifier(
-        ref.watch(branchApiProvider),
+        ref.watch(branchApiProvider2),
         ref.watch(companyApiProvider),
         ref.watch(userBranchApiProvider),
       );

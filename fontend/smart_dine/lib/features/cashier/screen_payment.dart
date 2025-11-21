@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
-import 'package:mart_dine/API/order_API.dart';
-import 'package:mart_dine/API/order_item_API.dart';
-import 'package:mart_dine/API/payment_API.dart';
+import 'package:mart_dine/API_staff/order_API.dart';
+import 'package:mart_dine/API_staff/payment_API.dart';
 import 'package:mart_dine/core/style.dart';
-import 'package:mart_dine/models/item.dart';
-import 'package:mart_dine/models/order.dart';
-import 'package:mart_dine/models/order_item.dart';
-import 'package:mart_dine/models/payment.dart';
-import 'package:mart_dine/providers/menu_item_provider.dart';
-import 'package:mart_dine/providers/user_provider.dart';
+import 'package:mart_dine/model_staff/item.dart';
+import 'package:mart_dine/model_staff/order.dart';
+import 'package:mart_dine/model_staff/order_item.dart';
+import 'package:mart_dine/model_staff/payment.dart';
+import 'package:mart_dine/provider_staff/menu_item_provider.dart';
+import 'package:mart_dine/provider_staff/user_provider.dart';
 
 class ScreenPayment extends ConsumerStatefulWidget {
   final int tableId;

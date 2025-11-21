@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:mart_dine/API/order_API.dart';
-import 'package:mart_dine/API/order_item_API.dart';
+import 'package:mart_dine/API_staff/order_API.dart';
+import 'package:mart_dine/API_staff/order_item_API.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/cashier/screen_payment.dart';
 import 'package:mart_dine/features/revervation/screen_reservation.dart';
 import 'package:mart_dine/features/staff/screen_menu.dart';
 import 'package:mart_dine/features/staff/screen_notifications.dart';
 import 'package:mart_dine/features/staff/screen_settings.dart';
-import 'package:mart_dine/models/order.dart';
-import 'package:mart_dine/models/order_item.dart';
-import 'package:mart_dine/models/table.dart';
-import 'package:mart_dine/providers/table_provider.dart';
-import 'package:mart_dine/providers/user_provider.dart';
+import 'package:mart_dine/model_staff/order.dart';
+import 'package:mart_dine/model_staff/order_item.dart';
+import 'package:mart_dine/model_staff/table.dart';
+import 'package:mart_dine/provider_staff/table_provider.dart';
+import 'package:mart_dine/provider_staff/user_provider.dart';
 import 'package:mart_dine/routes.dart';
 
 class ScreenChooseTable extends ConsumerStatefulWidget {
