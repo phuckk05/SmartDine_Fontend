@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:mart_dine/features/signin/screen_signin.dart';
+import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/services/auth_service.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -320,8 +322,8 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
                                 duration: Duration(seconds: 2),
                               ),
                             );
-
-                            
+                            // Chuyển về màn hình đăng nhập hoặc màn hình đầu tiên
+                            Routes.pushAndRemoveUntil(context, ScreenSignIn());
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
