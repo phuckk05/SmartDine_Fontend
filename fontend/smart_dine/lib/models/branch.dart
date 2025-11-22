@@ -145,11 +145,15 @@ class Branch {
       branchCode: map['branchCode'] ?? '',
       address: map['address'] ?? '',
       image: map['image'] ?? '',
-
       statusId: int.tryParse(map['statusId'].toString()) ?? 0,
       managerId: int.tryParse(map['managerId'].toString()) ?? 0,
       createdAt: DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(map['updatedAt'] ?? '') ?? DateTime.now(),
+      // Parse relation fields
+      managerName: map['managerName'] ?? map['manager_name'],
+      managerEmail: map['managerEmail'] ?? map['manager_email'],
+      managerPhone: map['managerPhone'] ?? map['manager_phone'],
+      companyName: map['companyName'] ?? map['company_name'],
     );
   }
 

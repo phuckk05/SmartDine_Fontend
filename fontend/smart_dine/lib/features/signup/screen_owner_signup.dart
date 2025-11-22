@@ -376,7 +376,7 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
         padding: EdgeInsets.zero, // Padding handled by MaterialButton
         child: MaterialButton(
           onPressed: () async {
-            final anh = ref.watch(_imageUrlProvider);
+            // final anh = ref.watch(_imageUrlProvider); // Unused variable
                         Company company = Company.create(
               name: _nameController.text,
               address: _addressController.text,

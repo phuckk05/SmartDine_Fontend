@@ -10,7 +10,7 @@ class RoleAPI {
   //Lấy tất cả role
   Future<List<Role>?> getAll() async {
     final response = await http.get(
-      Uri.parse(uri2),
+      Uri.parse('$uri2/all'),
       headers: {'Content-Type': 'application/json'},
     );
     if (response.statusCode == 200 || response.statusCode == 201) {

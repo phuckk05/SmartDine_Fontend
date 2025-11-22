@@ -167,4 +167,45 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
 
   // Kiểm tra có phải manager không
   bool get isManager => state.isManager;
+
+  // Validate session và refresh nếu cần
+  Future<bool> validateSession() async {
+    try {
+      // Kiểm tra session cơ bản
+      if (!state.isAuthenticated || state.userId == null) {
+        return false;
+      }
+
+      // Kiểm tra currentBranchId có hợp lệ không
+      if (state.currentBranchId == null && state.branchIds.isNotEmpty) {
+        // Tự động set branch đầu tiên nếu chưa có
+        await switchBranch(state.branchIds.first);
+      }
+
+      return true;
+    } catch (e) {
+      print('Session validation error: $e');
+      return false;
+    }
+  }
+
+  // Refresh user info từ server (sẵn sàng cho tương lai)
+  Future<void> refreshUserInfo() async {
+    try {
+      if (state.userId == null) return;
+      
+      // TODO: Implement khi có API endpoint để refresh user info
+      // final userInfo = await _authService.getUserInfo(state.userId!);
+      // if (userInfo != null) {
+      //   state = state.copyWith(
+      //     userName: userInfo.userName,
+      //     userRole: userInfo.userRole,
+      //     branchIds: userInfo.branchIds,
+      //   );
+      //   await _saveSession();
+      // }
+    } catch (e) {
+      print('Error refreshing user info: $e');
+    }
+  }
 }

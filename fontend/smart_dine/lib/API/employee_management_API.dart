@@ -47,8 +47,13 @@ class EmployeeManagementAPI {
   // Lấy danh sách nhân viên theo chi nhánh
   Future<List<User>?> getEmployeesByBranch(int branchId) async {
     try {
+      print('🔍 [EmployeeAPI] Fetching employees for branchId: $branchId');
       final response = await _httpService.get('$baseUrl/employees/branch/$branchId');
+      print('🔍 [EmployeeAPI] Response status: ${response.statusCode}');
+      print('🔍 [EmployeeAPI] Response body: ${response.body}');
+      
       final data = _parseResponse(response);
+      print('🔍 [EmployeeAPI] Parsed data type: ${data.runtimeType}');
       
       if (data != null) {
         List<dynamic> employees;
@@ -57,14 +62,23 @@ class EmployeeManagementAPI {
         } else if (data is List) {
           employees = data;
         } else {
+          print('❌ [EmployeeAPI] Unexpected data structure: $data');
           return [];
         }
         
-        final users = employees.map((json) => User.fromMap(Map<String, dynamic>.from(json))).toList();
+        print('🔍 [EmployeeAPI] Found ${employees.length} employees');
+        final users = employees.map((json) {
+          print('🔍 [EmployeeAPI] Processing employee: ${json['fullName'] ?? json['full_name']}');
+          return User.fromMap(Map<String, dynamic>.from(json));
+        }).toList();
+        
+        print('✅ [EmployeeAPI] Successfully parsed ${users.length} users');
         return users;
       }
+      print('❌ [EmployeeAPI] No data returned');
       return [];
     } catch (e) {
+      print('❌ [EmployeeAPI] Error: $e');
       return null;
     }
   }
@@ -193,7 +207,7 @@ class EmployeeManagementAPI {
   // Lấy danh sách vai trò
   Future<List<Map<String, dynamic>>?> getRoles() async {
     try {
-      final response = await _httpService.get('$baseUrl/roles');
+      final response = await _httpService.get('$baseUrl/roles/all');
       final data = _parseResponse(response);
       
       if (data != null) {
