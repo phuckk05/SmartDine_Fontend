@@ -1,22 +1,27 @@
 package com.smartdine.services;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-import com.smartdine.models.Branch;
-import com.smartdine.models.UserBranch;
-import com.smartdine.repository.UserBranchRepository;
-import com.smartdine.response.CompanyBranchResponse;
-import com.smartdine.response.GetListCompanyAndOwnerResponse;
-import com.smartdine.response.GetListPendingCompanyAndOwnerResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.smartdine.models.Branch;
 import com.smartdine.models.Company;
 import com.smartdine.models.User;
+import com.smartdine.models.UserBranch;
 import com.smartdine.repository.BranchRepository;
 import com.smartdine.repository.CompanyRepository;
+import com.smartdine.repository.UserBranchRepository;
 import com.smartdine.repository.UserRepository;
+import com.smartdine.response.CompanyBranchResponse;
+import com.smartdine.response.GetListCompanyAndOwnerResponse;
+import com.smartdine.response.GetListPendingCompanyAndOwnerResponse;
+
 import jakarta.transaction.Transactional;
 
 @Service

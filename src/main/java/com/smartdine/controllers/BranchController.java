@@ -58,7 +58,7 @@ public class BranchController {
     }
 
     // Lấy thông tin branch theo mã code
-    @GetMapping("/{branchCode}")
+    @GetMapping("/code/{branchCode}")
     public ResponseEntity<Branch> getBranchByCode(@PathVariable String branchCode) {
         Branch branch = branchServices.findBranch(branchCode);
         if (branch == null) {
@@ -77,6 +77,20 @@ public class BranchController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(branch);
+    }
+
+    // Lấy thông tin branch theo id (endpoint tương thích với frontend)
+    @GetMapping("/{id}")
+    public ResponseEntity<Branch> getBranchByIdDirect(@PathVariable Integer id) {
+        // Kiểm tra xem id có phải là số không (để phân biệt với branchCode)
+        if (id.toString().matches("\\d+")) {
+            Branch branch = branchServices.getBranchById(id);
+            if (branch != null) {
+                return ResponseEntity.ok(branch);
+            }
+        }
+        // Nếu không phải số hoặc không tìm thấy, trả về 404
+        return ResponseEntity.notFound().build();
     }
 
     // Lấy các chi nhánh theo companyId

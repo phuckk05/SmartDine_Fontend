@@ -1,5 +1,8 @@
 package com.smartdine.controllers;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,8 +20,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.smartdine.models.Order;
 import com.smartdine.models.User;
 import com.smartdine.models.UserBranch;
+import com.smartdine.services.OrderServices;
+import com.smartdine.services.PaymentService;
 import com.smartdine.services.UserBranchSevices;
 import com.smartdine.services.UserService;
 
@@ -31,6 +37,12 @@ public class EmployeeController {
 
     @Autowired
     private UserBranchSevices userBranchServices;
+
+    @Autowired
+    private OrderServices orderServices;
+
+    @Autowired
+    private PaymentService paymentService;
 
     // Lấy tất cả nhân viên
     @GetMapping
@@ -150,7 +162,12 @@ public class EmployeeController {
         try {
             // Lấy danh sách nhân viên theo chi nhánh
             List<UserBranch> userBranches = userBranchServices.getByBranchId(branchId);
-            
+
+            // Thời gian hiện tại và khoảng thời gian (tuần này)
+            LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+            LocalDateTime startOfWeek = now.minusDays(now.getDayOfWeek().getValue() - 1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+            LocalDateTime endOfWeek = startOfWeek.plusDays(6).withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+
             List<Map<String, Object>> performance = userBranches.stream()
                 .map(ub -> {
                     User employee = userService.getUserById(ub.getUserId());
@@ -161,20 +178,30 @@ public class EmployeeController {
                         perfMap.put("email", employee.getEmail());
                         perfMap.put("role", employee.getRole());
                         perfMap.put("assignedAt", ub.getAssignedAt());
-                        
-                        // TODO: Thêm metrics thực tế như số đơn xử lý, doanh thu, etc.
-                        // Hiện tại return dữ liệu cơ bản
-                        perfMap.put("ordersHandled", 0);
-                        perfMap.put("revenue", 0.0);
-                        perfMap.put("rating", 0.0);
-                        
+
+                        // Tính toán metrics thực tế
+                        Long ordersHandled = orderServices.getOrdersHandledByEmployee(employee.getId(), branchId, startOfWeek, endOfWeek);
+                        BigDecimal revenue = paymentService.getRevenueByCashierAndBranch(employee.getId(), branchId, startOfWeek, endOfWeek);
+
+                        // Tính rating dựa trên tỷ lệ hoàn thành orders (giả định statusId = 3 là hoàn thành)
+                        List<Order> employeeOrders = orderServices.getOrdersByEmployee(employee.getId(), branchId, startOfWeek, endOfWeek);
+                        long completedOrders = employeeOrders.stream()
+                            .filter(order -> order.getStatusId() == 3) // Giả định 3 = completed
+                            .count();
+                        double rating = employeeOrders.isEmpty() ? 0.0 :
+                            (completedOrders * 1.0 / employeeOrders.size()) * 5.0; // Rating 0-5
+
+                        perfMap.put("ordersHandled", ordersHandled);
+                        perfMap.put("revenue", revenue.doubleValue());
+                        perfMap.put("rating", Math.round(rating * 10.0) / 10.0); // Làm tròn 1 chữ số thập phân
+
                         return perfMap;
                     }
                     return null;
                 })
                 .filter(perfMap -> perfMap != null)
                 .collect(Collectors.toList());
-                
+
             return ResponseEntity.ok(performance);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
