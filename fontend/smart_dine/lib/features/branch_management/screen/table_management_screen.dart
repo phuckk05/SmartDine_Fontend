@@ -42,7 +42,12 @@ class TableManagementScreen extends ConsumerStatefulWidget {
   ConsumerState<TableManagementScreen> createState() => _TableManagementScreenState();
 }
 
-class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
+enum ManagementMode { tables, tableTypes }
+
+class _TableManagementScreenState extends ConsumerState<TableManagementScreen> with TickerProviderStateMixin {
+  ManagementMode _currentMode = ManagementMode.tables;
+  late TabController _tabController;
+  
   // Hàm load lại dữ liệu bàn (invalidate provider)
   Future<void> _loadTables() async {
     final branchId = ref.read(currentBranchIdProvider);
@@ -64,6 +69,21 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   
+  // Controllers cho form thêm/sửa loại bàn
+  final TextEditingController _typeNameController = TextEditingController();
+  final TextEditingController _typeCodeController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      setState(() {
+        _currentMode = _tabController.index == 0 ? ManagementMode.tables : ManagementMode.tableTypes;
+      });
+    });
+  }
+  
   // Data
   List<TableStatus> _tableStatuses = [
     TableStatus(id: 1, name: 'Trống', code: 'EMPTY'),
@@ -71,20 +91,25 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
     TableStatus(id: 3, name: 'Đã đặt', code: 'RESERVED'),
     TableStatus(id: 4, name: 'Bảo trì', code: 'MAINTENANCE'),
   ];
-  List<TableType> _tableTypes = [
-    TableType(id: 1, name: 'Bàn thường', code: 'NORMAL'),
-    TableType(id: 2, name: 'Bàn VIP', code: 'VIP'),
-    TableType(id: 3, name: 'Bàn ngoài trời', code: 'OUTDOOR'),
-    TableType(id: 4, name: 'Bàn gia đình', code: 'FAMILY'),
-    TableType(id: 5, name: 'Bàn đôi', code: 'COUPLE'),
-  ];
+  // List<TableType> _tableTypes = [
+  //   TableType(id: 1, name: 'Bàn thường', code: 'NORMAL'),
+  //   TableType(id: 2, name: 'Bàn VIP', code: 'VIP'),
+  //   TableType(id: 3, name: 'Bàn ngoài trời', code: 'OUTDOOR'),
+  //   TableType(id: 4, name: 'Bàn gia đình', code: 'FAMILY'),
+  //   TableType(id: 5, name: 'Bàn đôi', code: 'COUPLE'),
+  // ];
+  List<TableType> _tableTypes = []; // Khởi tạo trống, sẽ load từ API
   bool _tableMetaLoaded = false;
   // Load table types and statuses from API
   Future<void> _loadTableMeta() async {
     if (_tableMetaLoaded) return;
+    
+    final branchId = ref.read(currentBranchIdProvider);
+    if (branchId == null) return;
+    
     final api = ref.read(tableManagementApiProvider);
-    // Nếu API hoạt động thì lấy động, còn không thì giữ danh sách cứng
-    final types = await api.getTableTypes();
+    // Lấy table types theo branch hiện tại
+    final types = await api.getTableTypesByBranch(branchId);
     if (types != null && types.isNotEmpty) {
       _tableTypes = types.map((e) => TableType(
         id: e['id'] ?? 0,
@@ -92,6 +117,17 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
         code: e['code'] ?? '',
       )).toList();
     }
+    // } else {
+    //   // Nếu không có table types cho branch, khởi tạo danh sách mặc định
+    //   _tableTypes = [
+    //     TableType(id: 1, name: 'Bàn thường', code: 'NORMAL'),
+    //     TableType(id: 2, name: 'Bàn VIP', code: 'VIP'),
+    //     TableType(id: 3, name: 'Bàn ngoài trời', code: 'OUTDOOR'),
+    //     TableType(id: 4, name: 'Bàn gia đình', code: 'FAMILY'),
+    //     TableType(id: 5, name: 'Bàn đôi', code: 'COUPLE'),
+    //   ];
+    // }
+    
     final statuses = await api.getTableStatuses();
     if (statuses != null && statuses.isNotEmpty) {
       _tableStatuses = statuses.map((e) => TableStatus(
@@ -100,6 +136,7 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
         code: e['code'] ?? '',
       )).toList();
     }
+    
     _tableMetaLoaded = true;
     setState(() {});
   }
@@ -112,6 +149,9 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
     _searchController.dispose();
     _nameController.dispose();
     _descriptionController.dispose();
+    _typeNameController.dispose();
+    _typeCodeController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -172,6 +212,13 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
             elevation: 0,
             centerTitle: true,
             title: Text('Quản lý bàn', style: Style.fontTitle),
+            bottom: TabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(text: 'Bàn'),
+                Tab(text: 'Loại bàn'),
+              ],
+            ),
           )
         : AppBar(
             backgroundColor: Colors.transparent,
@@ -179,46 +226,67 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
             centerTitle: true,
             automaticallyImplyLeading: false,
             title: Text('Quản lý bàn', style: Style.fontTitle),
+            bottom: TabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(text: 'Bàn'),
+                Tab(text: 'Loại bàn'),
+              ],
+            ),
           ),
-      body: tablesAsyncValue.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red[300],
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          // Tab 1: Quản lý bàn
+          tablesAsyncValue.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stack) => Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Colors.red[300],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Lỗi khi tải dữ liệu bàn',
+                    style: Style.fontTitleMini.copyWith(color: Colors.red),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    error.toString(),
+                    style: Style.fontCaption.copyWith(color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      ref.invalidate(tableManagementProvider(branchId));
+                    },
+                    child: const Text('Thử lại'),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Lỗi khi tải dữ liệu',
-                style: Style.fontTitleMini.copyWith(color: Colors.red),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                error.toString(),
-                style: Style.fontCaption.copyWith(color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  ref.invalidate(tableManagementProvider(branchId));
-                },
-                child: const Text('Thử lại'),
-              ),
-            ],
+            ),
+            data: (tables) => _buildTableListView(tables, isDark, textColor, cardColor),
           ),
-        ),
-        data: (tables) => _buildTableListView(tables, isDark, textColor, cardColor),
+          // Tab 2: Quản lý loại bàn
+          _buildTableTypesView(isDark, textColor, cardColor),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blue,
-        onPressed: () => _showAddTableDialog(context, isDark, textColor, cardColor),
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+      floatingActionButton: _currentMode == ManagementMode.tables
+        ? FloatingActionButton(
+            backgroundColor: Colors.blue,
+            onPressed: () => _showAddTableDialog(context, isDark, textColor, cardColor),
+            child: const Icon(Icons.add, color: Colors.white),
+          )
+        : FloatingActionButton(
+            backgroundColor: Colors.green,
+            onPressed: () => _showAddTableTypeDialog(context, isDark, textColor, cardColor),
+            child: const Icon(Icons.add, color: Colors.white),
+          ),
     );
   }
 
@@ -1030,6 +1098,7 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
     Color cardColor, {
     TextInputType? keyboardType,
     int maxLines = 1,
+    String? hintText,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1048,6 +1117,8 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
           maxLines: maxLines,
           style: Style.fontNormal.copyWith(color: textColor),
           decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
             filled: true,
             fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
             border: OutlineInputBorder(
@@ -1232,6 +1303,435 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> {
                     'Đóng',
                     style: TextStyle(color: Colors.white),
                   ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Màn hình danh sách loại bàn
+  Widget _buildTableTypesView(bool isDark, Color textColor, Color cardColor) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // Header
+        Text(
+          'Loại bàn của chi nhánh',
+          style: Style.fontTitle.copyWith(color: textColor),
+        ),
+        const SizedBox(height: 16),
+        
+        // Danh sách loại bàn
+        ..._tableTypes.map((type) => Card(
+          color: cardColor,
+          margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: ListTile(
+            title: Text(
+              type.name,
+              style: Style.fontNormal.copyWith(color: textColor, fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text(
+              'Mã: ${type.code}',
+              style: Style.fontCaption.copyWith(color: Colors.grey),
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.edit, color: Colors.blue),
+                  onPressed: () => _showEditTableTypeDialog(context, type, isDark, textColor, cardColor),
+                ),
+                IconButton(
+                  icon: Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => _showDeleteTableTypeDialog(context, type, isDark, textColor, cardColor),
+                ),
+              ],
+            ),
+          ),
+        )),
+        
+        if (_tableTypes.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                children: [
+                  Icon(Icons.table_restaurant, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Chưa có loại bàn nào',
+                    style: Style.fontNormal.copyWith(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Nhấn nút + để thêm loại bàn đầu tiên',
+                    style: Style.fontCaption.copyWith(color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // Dialog thêm loại bàn mới
+  void _showAddTableTypeDialog(BuildContext context, bool isDark, Color textColor, Color cardColor) {
+    _typeNameController.clear();
+    _typeCodeController.clear();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Thêm Loại Bàn Mới',
+                        style: Style.fontTitle.copyWith(color: textColor),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close, color: textColor),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Form fields
+                  _buildFormField('Tên loại bàn:', _typeNameController, isDark, textColor, cardColor),
+                  const SizedBox(height: 16),
+                  _buildFormField('Mã loại bàn:', _typeCodeController, isDark, textColor, cardColor,
+                    hintText: 'Ví dụ: VIP, NORMAL, OUTDOOR'),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Action buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            side: BorderSide(color: isDark ? Colors.grey[600]! : Colors.grey[400]!),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text(
+                            'Hủy',
+                            style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            if (_typeNameController.text.isNotEmpty && _typeCodeController.text.isNotEmpty) {
+                              final branchId = ref.read(currentBranchIdProvider);
+                              if (branchId != null) {
+                                try {
+                                  final api = ref.read(tableManagementApiProvider);
+                                  final newType = {
+                                    'name': _typeNameController.text,
+                                    'code': _typeCodeController.text.toUpperCase(),
+                                  };
+                                  
+                                  final result = await api.createTableType(branchId, newType);
+                                  if (result != null) {
+                                    Navigator.pop(context);
+                                    // Reload table types
+                                    setState(() {
+                                      _tableMetaLoaded = false;
+                                    });
+                                    _loadTableMeta();
+                                    _showSuccessDialog(context, 'Thêm Loại Bàn Thành Công', isDark, cardColor);
+                                  }
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Lỗi khi thêm loại bàn: $e'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Vui lòng điền đầy đủ thông tin'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'Thêm',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Dialog sửa loại bàn
+  void _showEditTableTypeDialog(BuildContext context, TableType type, bool isDark, Color textColor, Color cardColor) {
+    _typeNameController.text = type.name;
+    _typeCodeController.text = type.code;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Sửa Loại Bàn',
+                        style: Style.fontTitle.copyWith(color: textColor),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close, color: textColor),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Form fields
+                  _buildFormField('Tên loại bàn:', _typeNameController, isDark, textColor, cardColor),
+                  const SizedBox(height: 16),
+                  _buildFormField('Mã loại bàn:', _typeCodeController, isDark, textColor, cardColor,
+                    hintText: 'Ví dụ: VIP, NORMAL, OUTDOOR'),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Action buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            side: BorderSide(color: isDark ? Colors.grey[600]! : Colors.grey[400]!),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text(
+                            'Hủy',
+                            style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            if (_typeNameController.text.isNotEmpty && _typeCodeController.text.isNotEmpty) {
+                              try {
+                                final api = ref.read(tableManagementApiProvider);
+                                final updatedType = {
+                                  'name': _typeNameController.text,
+                                  'code': _typeCodeController.text.toUpperCase(),
+                                };
+                                
+                                final result = await api.updateTableType(type.id, updatedType);
+                                if (result != null) {
+                                  Navigator.pop(context);
+                                  // Reload table types
+                                  setState(() {
+                                    _tableMetaLoaded = false;
+                                  });
+                                  _loadTableMeta();
+                                  _showSuccessDialog(context, 'Cập Nhật Loại Bàn Thành Công', isDark, cardColor);
+                                }
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Lỗi khi cập nhật loại bàn: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Vui lòng điền đầy đủ thông tin'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'Cập Nhật',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Dialog xóa loại bàn
+  void _showDeleteTableTypeDialog(BuildContext context, TableType type, bool isDark, Color textColor, Color cardColor) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.warning,
+                  size: 48,
+                  color: Colors.red,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Xác nhận xóa loại bàn',
+                  style: Style.fontTitle.copyWith(color: textColor),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Bạn có chắc muốn xóa loại bàn "${type.name}"?',
+                  style: Style.fontNormal.copyWith(color: textColor),
+                  textAlign: TextAlign.center,
+                ),
+                Text(
+                  'Hành động này không thể hoàn tác.',
+                  style: Style.fontCaption.copyWith(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          side: BorderSide(color: isDark ? Colors.grey[600]! : Colors.grey[400]!),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: Text(
+                          'Hủy',
+                          style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          try {
+                            final api = ref.read(tableManagementApiProvider);
+                            final success = await api.deleteTableType(type.id);
+                            if (success) {
+                              Navigator.pop(context);
+                              // Reload table types
+                              setState(() {
+                                _tableMetaLoaded = false;
+                              });
+                              _loadTableMeta();
+                              _showSuccessDialog(context, 'Xóa Loại Bàn Thành Công', isDark, cardColor);
+                            }
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Lỗi khi xóa loại bàn: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'Xóa',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
