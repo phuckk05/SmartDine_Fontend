@@ -49,4 +49,18 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
                                 AND DATE(p.created_at) = CURRENT_DATE
                         """, nativeQuery = true)
         List<Payment> findByBranchIdAndToday(@Param("branchId") Integer branchId);
+
+        // Tính tổng doanh thu theo cashierId và branchId trong khoảng thời gian
+        @Query("""
+                        SELECT COALESCE(SUM(p.finalAmount), 0)
+                        FROM Payment p
+                        WHERE p.cashierId = :cashierId
+                          AND p.branchId = :branchId
+                          AND p.createdAt BETWEEN :start AND :end
+                        """)
+        BigDecimal sumFinalAmountByCashierAndBranchBetween(
+                        @Param("cashierId") Integer cashierId,
+                        @Param("branchId") Integer branchId,
+                        @Param("start") LocalDateTime start,
+                        @Param("end") LocalDateTime end);
 }
