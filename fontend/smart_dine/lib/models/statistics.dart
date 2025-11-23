@@ -7,6 +7,7 @@ class BranchMetrics {
   final int newCustomers;
   final double customerSatisfaction;
   final GrowthRates growthRates;
+  final bool isEmpty; // Flag đánh dấu empty state
 
   BranchMetrics({
     required this.period,
@@ -17,6 +18,7 @@ class BranchMetrics {
     required this.newCustomers,
     required this.customerSatisfaction,
     required this.growthRates,
+    this.isEmpty = false, // Mặc định không empty
   });
 
   factory BranchMetrics.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class BranchMetrics {
         newCustomers: json['pendingOrdersToday'] ?? 0, // Tạm dùng pending orders
         customerSatisfaction: json['completionRate'] ?? 0.0,
         growthRates: GrowthRates.fromJson({}), // Empty for now
+        isEmpty: false,
       );
     } else {
       // Old format
@@ -44,6 +47,7 @@ class BranchMetrics {
         newCustomers: json['new_customers'] ?? 0,
         customerSatisfaction: (json['customer_satisfaction'] ?? 0.0).toDouble(),
         growthRates: GrowthRates.fromJson(json['growth_rates'] ?? {}),
+        isEmpty: false,
       );
     }
   }
@@ -60,6 +64,7 @@ class BranchMetrics {
       'new_customers': newCustomers,
       'customer_satisfaction': customerSatisfaction,
       'growth_rates': growthRates.toJson(),
+      'is_empty': isEmpty,
     };
   }
 }
@@ -207,14 +212,14 @@ class EmployeePerformance {
 
   factory EmployeePerformance.fromJson(Map<String, dynamic> json) {
     return EmployeePerformance(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      position: json['position'] ?? '',
-      ordersServed: json['orders_served'] ?? 0,
-      totalRevenue: json['total_revenue'] ?? 0,
+      id: json['employeeId']?.toString() ?? '',
+      name: json['fullName'] ?? '',
+      position: json['role'] ?? '',
+      ordersServed: json['ordersHandled'] ?? 0,
+      totalRevenue: ((json['revenue'] ?? 0.0) * 1000).round(), // Convert to VND
       rating: (json['rating'] ?? 0.0).toDouble(),
-      efficiency: json['efficiency'] ?? 0,
-      bonus: json['bonus'] ?? 0,
+      efficiency: 0, // Not provided by backend
+      bonus: 0, // Not provided by backend
     );
   }
 

@@ -71,7 +71,7 @@ class UserNotifier extends StateNotifier<User?> {
                 }
                 return 4;
               } catch (e) {
-                print('Error creating user branch: $e');
+                print('Error creating user-branch: $e');
                 return 4;
               }
             } else {
@@ -79,14 +79,14 @@ class UserNotifier extends StateNotifier<User?> {
             }
           } catch (e) {
             // ignore: avoid_print
-            print('Error in user creation: $e');
+            print('Error creating user: $e');
             return 0;
           }
         }
       } catch (e) {
         // ignore: avoid_print
-        print('Error in branch lookup: $e');
-        return 0;
+        print('Error finding branch: $e');
+        return 1;
       }
     }
     return 0;
@@ -108,7 +108,7 @@ class UserNotifier extends StateNotifier<User?> {
         return null;
       }
     } catch (e) {
-      print('Error in sign in: $e');
+      print('Error signing in: $e');
       return null;
     }
   }
@@ -126,7 +126,7 @@ class UserNotifier extends StateNotifier<User?> {
         return false;
       }
     } catch (e) {
-      print('Error updating password: $e');
+      print('Error updating user: $e');
       return false;
     }
   }

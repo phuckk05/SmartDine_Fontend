@@ -127,13 +127,14 @@ class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
                   const SizedBox(height: 20),
                   _buildRevenueChart(statistics, isDark),
                   const SizedBox(height: 20),
+                  _buildOrderChart(statistics, isDark),
+                  const SizedBox(height: 20),
                   _buildGrowthRatesSection(statistics, isDark),
                   const SizedBox(height: 20),
                   _buildSummarySection(statistics, isDark),
-                ] else
-                  const Center(
-                    child: Text('Không có dữ liệu báo cáo'),
-                  ),
+                ] else ...[
+                  _buildEmptyDataState(isDark),
+                ],
               ],
             ),
           ),
@@ -522,6 +523,236 @@ class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
             ),
           ),
         ),
+      ],
+    );
+  }
+
+
+
+  // Empty state khi không có dữ liệu trong ngày
+  Widget _buildEmptyDataState(bool isDark) {
+    final cardColor = isDark ? const Color(0xFF2D2D2D) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black;
+    
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(32),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.analytics_outlined,
+              size: 40,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Chưa có dữ liệu thống kê',
+            style: Style.fontTitle.copyWith(
+              color: textColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Hệ thống chưa ghi nhận hoạt động nào\ntrong ngày hôm nay. Hãy bắt đầu nhận đơn hàng!',
+            textAlign: TextAlign.center,
+            style: Style.fontContent.copyWith(
+              color: textColor.withOpacity(0.7),
+              fontSize: 16,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 32),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  final branchIdInt = ref.read(currentBranchIdProvider)!;
+                  // ignore: unused_result
+                  ref.refresh(branchStatisticsProvider(branchIdInt));
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Làm mới'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Quay lại'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.grey[600],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Order chart giống như trong ảnh Dashboard
+  Widget _buildOrderChart(BranchMetrics statistics, bool isDark) {
+    final cardColor = isDark ? Colors.grey[900]! : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black;
+    
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with period selector
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Đơn hàng',
+                style: Style.fontTitleMini.copyWith(
+                  color: textColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Row(
+                children: [
+                  _buildPeriodButton('Tháng', false, isDark),
+                  const SizedBox(width: 8),
+                  _buildPeriodButton('Tuần', true, isDark),
+                  const SizedBox(width: 8),
+                  _buildPeriodButton('Hôm nay', false, isDark),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // Bar chart area
+          SizedBox(
+            height: 200,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildOrderBar('Tuần 2', 30, 100, Colors.blue),
+                _buildOrderBar('Tuần 3', 80, 100, Colors.black),
+                _buildOrderBar('Tuần 4', 50, 100, Colors.blue),
+                _buildOrderBar('', 90, 100, Colors.black),
+                _buildOrderBar('', 65, 100, Colors.blue),
+                _buildOrderBar('', 85, 100, Colors.black),
+              ],
+            ),
+          ),
+          
+          // Y-axis labels
+          Padding(
+            padding: const EdgeInsets.only(left: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('10k', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                const SizedBox(height: 20),
+                Text('5k', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                const SizedBox(height: 20),
+                Text('1k', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                const SizedBox(height: 20),
+                Text('0', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPeriodButton(String text, bool isSelected, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: isSelected ? Colors.blue : Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black54),
+          fontSize: 12,
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrderBar(String label, double value, double maxValue, Color color) {
+    final height = (value / maxValue) * 150; // Max height 150
+    
+    return Column(
+      children: [
+        Expanded(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              width: 24,
+              height: height,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (label.isNotEmpty)
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 11,
+            ),
+          ),
       ],
     );
   }

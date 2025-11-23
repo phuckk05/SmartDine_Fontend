@@ -19,8 +19,14 @@ class SettingsScreen extends ConsumerWidget {
     final textColor = isDark ? Style.colorLight : Style.colorDark;
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
     
-    // Lấy thông tin user session
+    // Lấy thông tin user session và validate
     final userSession = ref.watch(userSessionProvider);
+    final userSessionNotifier = ref.read(userSessionProvider.notifier);
+    
+    // Validate session ngay khi build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      userSessionNotifier.validateSession();
+    });
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
@@ -98,6 +104,13 @@ class SettingsScreen extends ConsumerWidget {
                     textColor, 
                     label: 'Thời gian đăng nhập'
                   ),
+                  const SizedBox(height: 8),
+                  _buildInfoItem(
+                    Icons.apartment, 
+                    'Company ID: ${userSession.companyId ?? 'N/A'}', 
+                    textColor, 
+                    label: 'Công ty'
+                  ),
 
                 ],
               ),
@@ -111,10 +124,13 @@ class SettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             
-            // Lấy thông tin branch thực tế
-            userSession.currentBranchId != null 
+            // Lấy thông tin chi nhánh với fallback tốt hơn
+            userSession.currentBranchId != null
               ? FutureBuilder<Branch?>(
-                  future: BranchAPI().getBranchById(userSession.currentBranchId.toString()),
+                  future: BranchAPI().getBranchById(
+                    userSession.currentBranchId.toString(),
+                    userId: userSession.userId,
+                  ),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return Container(
@@ -131,6 +147,45 @@ class SettingsScreen extends ConsumerWidget {
                           ],
                         ),
                         child: const Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    
+                    if (snapshot.hasError) {
+                      return Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: cardColor,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Thông tin chi nhánh',
+                              style: Style.fontNormal.copyWith(
+                                color: textColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Chi nhánh: ${userSession.currentBranchId ?? 'N/A'}',
+                              style: Style.fontTitleMini.copyWith(color: Colors.orange),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Đang tải thông tin chi nhánh từ server...',
+                              style: Style.fontCaption.copyWith(color: Colors.grey),
+                            ),
+                          ],
+                        ),
                       );
                     }
                     
@@ -166,13 +221,15 @@ class SettingsScreen extends ConsumerWidget {
                           const SizedBox(height: 16),
                           _buildInfoItem(Icons.business, branch?.branchCode ?? 'N/A', textColor, label: 'Mã chi nhánh'),
                           const SizedBox(height: 8),
-                          _buildInfoItem(Icons.location_on, branch?.address ?? 'Chưa cập nhật', textColor),
+                          _buildInfoItem(Icons.location_on, branch?.address ?? 'Chưa cập nhật', textColor, label: 'Địa chỉ'),
+                          const SizedBox(height: 8),
+                          _buildInfoItem(Icons.phone, branch?.managerPhone ?? 'Chưa cập nhật', textColor, label: 'SĐT quản lý'),
+                          const SizedBox(height: 8),
+                          _buildInfoItem(Icons.info, 'Chi nhánh ID: ${branch?.id ?? userSession.currentBranchId}', textColor, label: 'Mã chi nhánh'),
+                          const SizedBox(height: 8),
+                          _buildInfoItem(Icons.apartment, '${branch?.companyName ?? 'Company'} (ID: ${branch?.companyId ?? userSession.companyId ?? 'N/A'})', textColor, label: 'Công ty'),
                           const SizedBox(height: 8),
                           _buildInfoItem(Icons.calendar_today, branch?.createdAt.year.toString() ?? 'N/A', textColor, label: 'Năm thành lập'),
-                          const SizedBox(height: 8),
-                          _buildInfoItem(Icons.info, 'ID: ${branch?.id ?? userSession.currentBranchId}', textColor, label: 'Mã chi nhánh'),
-                          const SizedBox(height: 8),
-                          _buildInfoItem(Icons.apartment, 'ID: ${userSession.companyId ?? 'N/A'}', textColor, label: 'Công ty'),
                         ],
                       ),
                     );

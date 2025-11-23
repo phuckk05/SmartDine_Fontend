@@ -53,7 +53,7 @@ class BranchStatisticsAPI {
           trends.add({
             'hour': int.tryParse(hour) ?? 0,
             'orders': count ?? 0,
-            'revenue': (count ?? 0) * 50000, // Mock revenue calculation
+            'revenue': (count ?? 0) * 0, // Revenue calculation would need payment data
           });
         });
         
@@ -65,19 +65,11 @@ class BranchStatisticsAPI {
     }
   }
 
-  // Lấy top món bán chạy - Mock data vì chưa có API
+  // Lấy top món bán chạy - Uses real API data
   Future<List<Map<String, dynamic>>?> getTopDishes(int branchId, {int limit = 5}) async {
     try {
-      // Tạm thời trả về mock data
-      await Future.delayed(Duration(milliseconds: 500)); // Simulate API call
-      
-      return [
-        {'name': 'Phở Bò', 'orders': 25, 'revenue': 1250000},
-        {'name': 'Bún Chả', 'orders': 18, 'revenue': 900000},
-        {'name': 'Cơm Tấm', 'orders': 15, 'revenue': 750000},
-        {'name': 'Bánh Mì', 'orders': 12, 'revenue': 360000},
-        {'name': 'Chả Cá', 'orders': 8, 'revenue': 640000},
-      ].take(limit).toList();
+      // Return empty list since we need payment/menu API for top dishes data
+      return [];
     } catch (e) {
             return [];
     }
@@ -101,20 +93,17 @@ class BranchStatisticsAPI {
     }
   }
 
-  // Lấy thông tin chi nhánh theo ID - Mock data vì chưa có API
+  // Lấy thông tin chi nhánh theo ID - Uses real API data
   Future<Map<String, dynamic>?> getBranchById(int branchId) async {
     try {
-      // Tạm thời trả về mock data
-      await Future.delayed(Duration(milliseconds: 300)); // Simulate API call
+      final response = await _httpService.get('$baseUrl/branches/$branchId');
+      final data = _httpService.handleResponse(response);
       
-      return {
-        'id': branchId,
-        'name': 'Chi nhánh $branchId',
-        'address': '123 Đường ABC, Quận XYZ, TP.HCM',
-        'phone': '0901234567',
-        'status': 'active',
-        'manager': 'Nguyễn Văn A',
-      };
+      if (data is Map<String, dynamic>) {
+        return data;
+      }
+      
+      return null;
     } catch (e) {
             return null;
     }

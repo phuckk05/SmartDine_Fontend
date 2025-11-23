@@ -45,17 +45,64 @@ class BranchAPI {
     return [];
   }
 
-  // Lấy branch theo ID
-  Future<Branch?> getBranchById(String branchId) async {
+  // Lấy branch theo ID với permission check và fallback tốt hơn
+  Future<Branch?> getBranchById(String branchId, {int? userId}) async {
     try {
+      final targetBranchId = int.tryParse(branchId) ?? 0;
+
+      // Nếu có userId, thử sử dụng permission-based endpoint trước
+      if (userId != null) {
+        try {
+          final response = await http.get(
+            Uri.parse(
+              'https://smartdine-backend-oq2x.onrender.com/api/users/$userId/branches/$targetBranchId/full',
+            ),
+            headers: {'Content-Type': 'application/json'},
+          );
+
+          if (response.statusCode == 200) {
+            final data = jsonDecode(response.body);
+            return Branch.fromMap(Map<String, dynamic>.from(data));
+          }
+
+          // Nếu permission endpoint fail, log nhưng vẫn fallback
+          print(
+            'Permission endpoint failed with status: ${response.statusCode}',
+          );
+        } catch (permissionError) {
+          print('Permission endpoint error: $permissionError');
+        }
+      }
+
+      // Fallback: Lấy tất cả branches và tìm branch cần thiết
       final response = await http.get(
-        Uri.parse('$_uri/$branchId'),
+        Uri.parse(_uri),
         headers: {'Content-Type': 'application/json'},
       );
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body);
-        return Branch.fromMap(data);
+        final List<dynamic> data = jsonDecode(response.body);
+
+        // Tìm branch có ID khớp
+        final branchData = data.firstWhere(
+          (branch) => (branch['id'] ?? 0) == targetBranchId,
+          orElse: () => null,
+        );
+
+        if (branchData != null) {
+          return Branch.fromMap(Map<String, dynamic>.from(branchData));
+        }
+      }
+
+      // Nếu không tìm được, thử endpoint branch cụ thể
+      final singleResponse = await http.get(
+        Uri.parse('$_uri/$targetBranchId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (singleResponse.statusCode == 200) {
+        final data = jsonDecode(singleResponse.body);
+        return Branch.fromMap(Map<String, dynamic>.from(data));
       }
     } catch (e) {}
     return null;
@@ -94,19 +141,15 @@ class BranchAPI {
 
   // Lấy thống kê branch
   Future<Map<String, dynamic>?> getBranchStatistics(int branchId) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_uri/$branchId/statistics'),
-        headers: {'Content-Type': 'application/json'},
-      );
+    final response = await http.get(
+      Uri.parse('$_uri/$branchId/statistics'),
+      headers: {'Content-Type': 'application/json'},
+    );
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      }
-      return null;
-    } catch (e) {
-      return null;
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
     }
+    return null;
   }
 }
 

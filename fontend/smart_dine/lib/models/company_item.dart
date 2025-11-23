@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:mart_dine/features/admin/screen_company_detail.dart';
-import 'package:mart_dine/models/pending_company.dart';
+import 'package:mart_dine/models/company.dart';
 
 class CompanyItem extends StatelessWidget {
   final PendingCompany company;
@@ -14,7 +13,6 @@ class CompanyItem extends StatelessWidget {
     required this.onApprove,
     required this.onReject,
   });
-
   String _formatDate(String dateString) {
     try {
       final date = DateTime.parse(dateString);

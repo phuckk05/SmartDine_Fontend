@@ -43,11 +43,11 @@ class HttpService {
     for (int attempt = 1; attempt <= _maxRetries; attempt++) {
       try {
         return await request();
-      } on SocketException catch (e) {
+      } on SocketException {
         lastException = Exception('Không có kết nối internet. Vui lòng kiểm tra mạng và thử lại.');
-              } on HttpException catch (e) {
+              } on HttpException {
         lastException = Exception('Lỗi kết nối server. Vui lòng thử lại sau.');
-              } on FormatException catch (e) {
+              } on FormatException {
         lastException = Exception('Dữ liệu trả về không hợp lệ.');
                 break; // Don't retry for format exceptions
       } catch (e) {

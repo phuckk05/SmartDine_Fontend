@@ -5,98 +5,11 @@ import '../models/notification.dart' as model;
 final uri2 = 'https://smartdine-backend-oq2x.onrender.com/api';
 
 class NotificationManagementAPI {
-  // Mock method to get all notifications (since we don't have backend endpoint yet)
+  // Get all notifications from real API
   Future<List<model.Notification>?> getAllNotifications(String branchId, String companyId) async {
     try {
-      // Mock data since backend doesn't have this endpoint yet
-      await Future.delayed(const Duration(milliseconds: 200)); // Giảm từ 800ms xuống 200ms
-      
-      return [
-        model.Notification(
-          category: 'Đơn hàng',
-          type: 'Đơn hàng mới',
-          message: 'Có đơn hàng mới tại bàn 5',
-          icon: Icons.add_circle,
-          iconColor: Colors.green,
-          isNew: true,
-          priority: 3,
-          branchId: branchId,
-          companyId: companyId,
-          createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
-        ),
-        model.Notification(
-          category: 'Thanh toán',
-          type: 'Thanh toán thành công',
-          message: 'Đơn hàng #123 đã được thanh toán',
-          icon: Icons.payment,
-          iconColor: Colors.blue,
-          isNew: false,
-          priority: 2,
-          branchId: branchId,
-          companyId: companyId,
-          createdAt: DateTime.now().subtract(const Duration(hours: 1)),
-        ),
-        model.Notification(
-          category: 'Menu',
-          type: 'Hết món',
-          message: 'Món Phở Bò đã hết trong menu',
-          icon: Icons.restaurant_menu,
-          iconColor: Colors.orange,
-          isNew: true,
-          priority: 2,
-          branchId: branchId,
-          companyId: companyId,
-          createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-        ),
-        model.Notification(
-          category: 'Khách hàng',
-          type: 'Feedback',
-          message: 'Nhận được đánh giá 5 sao từ khách hàng',
-          icon: Icons.star,
-          iconColor: Colors.amber,
-          isNew: false,
-          priority: 1,
-          branchId: branchId,
-          companyId: companyId,
-          createdAt: DateTime.now().subtract(const Duration(days: 1)),
-        ),
-        model.Notification(
-          category: 'Báo cáo',
-          type: 'Báo cáo doanh thu',
-          message: 'Báo cáo doanh thu tuần đã sẵn sàng',
-          icon: Icons.analytics,
-          iconColor: Colors.purple,
-          isNew: true,
-          priority: 2,
-          branchId: branchId,
-          companyId: companyId,
-          createdAt: DateTime.now().subtract(const Duration(days: 2)),
-        ),
-        model.Notification(
-          category: 'Hệ thống',
-          type: 'Cảnh báo',
-          message: 'Kết nối mạng không ổn định',
-          icon: Icons.warning,
-          iconColor: Colors.red,
-          isNew: true,
-          priority: 3,
-          branchId: branchId,
-          companyId: companyId,
-          createdAt: DateTime.now().subtract(const Duration(minutes: 15)),
-        ),
-        model.Notification(
-          category: 'Bàn ăn',
-          type: 'Bàn mới',
-          message: 'Khách vừa ngồi vào bàn 12',
-          icon: Icons.table_restaurant,
-          iconColor: Colors.blue,
-          isNew: true,
-          priority: 1,
-          branchId: branchId,
-          companyId: companyId,
-          createdAt: DateTime.now().subtract(const Duration(minutes: 2)),
-        ),
-      ];
+      // Return empty list until notification endpoints are implemented
+      return [];
     } catch (e) {
             return null;
     }

@@ -7,6 +7,7 @@ import '../../../models/user.dart';
 import '../../../providers/employee_management_provider.dart';
 import '../../../providers/user_session_provider.dart';
 import '../../../providers/user_approval_provider.dart';
+import '../../../providers/branch_access_provider.dart';
 
 // Status class for user statuses
 class UserStatus {
@@ -134,42 +135,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
     final branchId = currentBranchId;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    // Debug: Kiểm tra session
-    print('🔍 [EMPLOYEE_MGR] currentBranchId: $currentBranchId');
-    print('🔍 [EMPLOYEE_MGR] isAuthenticated: $isAuthenticated');
-    
-    // Debug: Hiển thị thông tin session trên màn hình
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final session = ref.read(userSessionProvider);
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Debug Session Info'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('isAuthenticated: ${session.isAuthenticated}'),
-              Text('userId: ${session.userId}'),
-              Text('userRole: ${session.userRole}'),
-              Text('companyId: ${session.companyId}'),
-              Text('currentBranchId: ${session.currentBranchId}'),
-              Text('branchIds: ${session.branchIds}'),
-              SizedBox(height: 10),
-              Text('Provider values:', style: TextStyle(fontWeight: FontWeight.bold)),
-              Text('currentBranchIdProvider: $currentBranchId'),
-              Text('isAuthenticatedProvider: $isAuthenticated'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Close'),
-            ),
-          ],
-        ),
-      );
-    });
+
     
     if (branchId == null) {
       return Scaffold(
@@ -194,11 +160,69 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
       );
     }
 
-    final employeesAsyncValue = ref.watch(employeeManagementProvider(branchId));
-    final textColor = isDark ? Style.colorLight : Style.colorDark;
-    final cardColor = isDark ? Colors.grey[900]! : Colors.white;
+    // Kiểm tra quyền truy cập branch trước
+    final branchAccessAsync = ref.watch(branchAccessProvider(branchId));
+    
+    return branchAccessAsync.when(
+      loading: () => Scaffold(
+        backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          title: Text('Quản lý nhân viên', style: Style.fontTitle),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stack) => Scaffold(
+        backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          title: Text('Quản lý nhân viên', style: Style.fontTitle),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error, size: 64, color: Colors.red),
+              SizedBox(height: 16),
+              Text('Lỗi kiểm tra quyền truy cập'),
+              Text('$error'),
+            ],
+          ),
+        ),
+      ),
+      data: (hasAccess) {
+        if (!hasAccess) {
+          return Scaffold(
+            backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              title: Text('Quản lý nhân viên', style: Style.fontTitle),
+            ),
+            body: const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.block, size: 64, color: Colors.red),
+                  SizedBox(height: 16),
+                  Text('Không có quyền truy cập'),
+                  Text('Bạn không được phép quản lý nhân viên chi nhánh này'),
+                ],
+              ),
+            ),
+          );
+        }
 
-    return Scaffold(
+        final employeesAsyncValue = ref.watch(employeeManagementProvider(branchId));
+        final textColor = isDark ? Style.colorLight : Style.colorDark;
+        final cardColor = isDark ? Colors.grey[900]! : Colors.white;
+
+        return Scaffold(
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
       appBar: widget.showBackButton
         ? AppBar(
@@ -249,13 +273,15 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
             ],
           ),
         ),
-        data: (employees) => _buildEmployeeListView(employees, isDark, textColor, cardColor),
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blue,
-        onPressed: () => _showAddEmployeeDialog(context, isDark, textColor, cardColor),
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+          data: (employees) => _buildEmployeeListView(employees, isDark, textColor, cardColor),
+        ),
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: Colors.blue,
+          onPressed: () => _showAddEmployeeDialog(context, isDark, textColor, cardColor),
+          child: const Icon(Icons.add, color: Colors.white),
+        ),
+      );
+      },
     );
   }
 
@@ -276,7 +302,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
                   return const SizedBox.shrink();
                 }
                 
-                final pendingUsersAsync = ref.watch(pendingUsersByBranchProvider(currentBranchId));
+                final pendingUsersAsync = ref.watch(pendingEmployeesProvider(currentBranchId));
                 
                 return pendingUsersAsync.when(
                   loading: () => Container(
@@ -289,7 +315,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       ),
                       label: const Text(
-                        'Đang tải tài khoản bị khóa...',
+                        'Đang tải nhân viên chờ duyệt...',
                         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -307,7 +333,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
                       onPressed: () => _showPendingUsersDialog(context, currentBranchId, isDark),
                       icon: const Icon(Icons.person_add_alt_1, color: Colors.white),
                       label: const Text(
-                        'Tài khoản bị khóa (0)',
+                        'Nhân viên chờ duyệt (0)',
                         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -325,7 +351,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
                       onPressed: () => _showPendingUsersDialog(context, currentBranchId, isDark),
                       icon: const Icon(Icons.person_add_alt_1, color: Colors.white),
                       label: Text(
-                        'Tài khoản bị khóa (${pendingUsers.length})',
+                        'Nhân viên chờ duyệt (${pendingUsers.length})',
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -553,40 +579,83 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
                   
                   const SizedBox(height: 16),
                   
-                  // Action buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _showEditEmployeeDialog(context, employee, isDark, textColor, cardColor),
-                          icon: const Icon(Icons.edit_outlined, size: 18),
-                          label: const Text('Chỉnh sửa'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.blue,
-                            side: const BorderSide(color: Colors.blue),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                  // Action buttons - different for pending vs active employees
+                  employee.statusId == 3 
+                    ? Row(
+                        children: [
+                          // Approve button for pending employees
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                final branchId = ref.read(currentBranchIdProvider);
+                                if (branchId != null) _approveUser(context, employee.id!, branchId);
+                              },
+                              icon: const Icon(Icons.check, size: 18, color: Colors.white),
+                              label: const Text('Duyệt', style: TextStyle(color: Colors.white)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _showDeleteConfirmDialog(context, employee, isDark, textColor, cardColor),
-                          icon: const Icon(Icons.delete_outline, size: 18),
-                          label: const Text('Xóa'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red,
-                            side: const BorderSide(color: Colors.red),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                          const SizedBox(width: 12),
+                          // Reject button for pending employees
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                final branchId = ref.read(currentBranchIdProvider);
+                                if (branchId != null) _rejectUser(context, employee.id!, branchId);
+                              },
+                              icon: const Icon(Icons.close, size: 18),
+                              label: const Text('Từ chối'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.red,
+                                side: const BorderSide(color: Colors.red),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          // Edit button for active employees
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _showEditEmployeeDialog(context, employee, isDark, textColor, cardColor),
+                              icon: const Icon(Icons.edit_outlined, size: 18),
+                              label: const Text('Chỉnh sửa'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.blue,
+                                side: const BorderSide(color: Colors.blue),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // Delete button for active employees
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _showDeleteConfirmDialog(context, employee, isDark, textColor, cardColor),
+                              icon: const Icon(Icons.delete_outline, size: 18),
+                              label: const Text('Xóa'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.red,
+                                side: const BorderSide(color: Colors.red),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -1300,7 +1369,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Tài khoản bị khóa',
+                      'Nhân viên chờ duyệt',
                       style: Style.fontTitleMini.copyWith(
                         color: isDark ? Colors.white : Colors.black,
                       ),
@@ -1319,7 +1388,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
                 Expanded(
                   child: Consumer(
                     builder: (context, ref, child) {
-                      final pendingUsersAsync = ref.watch(userApprovalProvider(branchId));
+                      final pendingUsersAsync = ref.watch(pendingEmployeesProvider(branchId));
                       
                       return pendingUsersAsync.when(
                         loading: () => const Center(child: CircularProgressIndicator()),
@@ -1332,7 +1401,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
                               Text('Lỗi: $error'),
                               const SizedBox(height: 16),
                               ElevatedButton(
-                                onPressed: () => ref.refresh(userApprovalProvider(branchId)),
+                                onPressed: () => ref.refresh(pendingUsersByBranchProvider(branchId)),
                                 child: const Text('Thử lại'),
                               ),
                             ],
@@ -1345,7 +1414,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
                                 children: [
                                   Icon(Icons.check_circle, color: Colors.green, size: 48),
                                   SizedBox(height: 16),
-                                  Text('Không có tài khoản bị khóa'),
+                                  Text('Không có nhân viên chờ duyệt'),
                                 ],
                               ),
                             )
@@ -1368,114 +1437,604 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
     );
   }
 
-  // Card cho từng user chờ duyệt
+  // Card cho từng user chờ duyệt - UI cải thiện
   Widget _buildPendingUserCard(BuildContext context, User user, int branchId, bool isDark) {
-    return Card(
-      color: isDark ? Colors.grey[800] : Colors.white,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[850] : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(
+          color: user.statusId == 0 ? Colors.orange.withOpacity(0.3) : Colors.transparent,
+          width: 1.5,
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: Colors.orange,
-                  child: Text(
-                    user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : '?',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        user.fullName,
-                        style: Style.fontTitleMini.copyWith(
-                          color: isDark ? Colors.white : Colors.black,
-                        ),
-                      ),
-                      Text(
-                        user.email,
-                        style: Style.fontContent.copyWith(
-                          color: isDark ? Colors.grey[300] : Colors.grey[600],
-                        ),
-                      ),
-                      Text(
-                        user.phone,
-                        style: Style.fontContent.copyWith(
-                          color: isDark ? Colors.grey[300] : Colors.grey[600],
-                        ),
-                      ),
-                      // Hiển thị trạng thái
-                      Container(
-                        margin: const EdgeInsets.only(top: 4),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: user.statusId == 0 ? Colors.red.withOpacity(0.2) : Colors.green.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          user.statusId == 0 ? 'Bị khóa' : 'Hoạt động',
-                          style: TextStyle(
-                            color: user.statusId == 0 ? Colors.red : Colors.green,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
-                  onPressed: () => _rejectUser(context, user.id!, branchId),
-                  icon: const Icon(Icons.close, color: Colors.red),
-                  label: const Text('Từ chối', style: TextStyle(color: Colors.red)),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: () => _approveUser(context, user.id!, branchId),
-                  icon: const Icon(Icons.check, color: Colors.white),
-                  label: const Text('Kích hoạt', style: TextStyle(color: Colors.white)),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                ),
-              ],
-            ),
+            // Header với avatar và thông tin chính
+            _buildUserHeader(user, isDark),
+            const SizedBox(height: 16),
+
+            // Thông tin chi tiết
+            _buildUserDetails(user, isDark),
+            const SizedBox(height: 16),
+
+            // Hình ảnh CCCD (nếu có)
+            if (user.fontImage != null || user.backImage != null)
+              _buildDocumentSection(user, isDark),
+
+            const SizedBox(height: 20),
+
+            // Action buttons cải thiện
+            _buildActionButtons(context, user, branchId, isDark),
           ],
         ),
       ),
     );
   }
 
+  Widget _buildUserHeader(User user, bool isDark) {
+    return Row(
+      children: [
+        // Avatar với gradient background
+        Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blue[400]!, Colors.blue[600]!],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.blue.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : '?',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                user.fullName,
+                style: Style.fontTitle.copyWith(
+                  fontSize: 18,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(Icons.email, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      user.email,
+                      style: Style.fontContent.copyWith(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Status badge cải thiện
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: user.statusId == 0
+                      ? Colors.orange.withOpacity(0.1)
+                      : user.statusId == 3
+                          ? Colors.red.withOpacity(0.1)
+                          : Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: user.statusId == 0
+                        ? Colors.orange
+                        : user.statusId == 3
+                            ? Colors.red
+                            : Colors.green,
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      user.statusId == 0
+                          ? Icons.schedule
+                          : user.statusId == 3
+                              ? Icons.block
+                              : Icons.check_circle,
+                      size: 16,
+                      color: user.statusId == 0
+                          ? Colors.orange
+                          : user.statusId == 3
+                              ? Colors.red
+                              : Colors.green,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      user.statusId == 0
+                          ? 'Chờ duyệt'
+                          : user.statusId == 3
+                              ? 'Bị khóa'
+                              : 'Hoạt động',
+                      style: TextStyle(
+                        color: user.statusId == 0
+                            ? Colors.orange
+                            : user.statusId == 3
+                                ? Colors.red
+                                : Colors.green,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUserDetails(User user, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[800] : Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          _buildInfoRow(Icons.phone, 'SĐT', user.phone, isDark),
+          const SizedBox(height: 8),
+          if (user.roleName != null)
+            _buildInfoRow(Icons.work, 'Vai trò', user.roleName!, isDark),
+          const SizedBox(height: 8),
+          if (user.companyName != null)
+            _buildInfoRow(Icons.business, 'Công ty', user.companyName!, isDark),
+          const SizedBox(height: 8),
+          _buildInfoRow(Icons.calendar_today, 'Ngày tạo',
+            user.createdAt.toLocal().toString().split(' ')[0], isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value, bool isDark) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: Colors.grey[600]),
+        const SizedBox(width: 8),
+        Text(
+          '$label: ',
+          style: Style.fontContent.copyWith(
+            color: Colors.grey[600],
+            fontSize: 14,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: Style.fontContent.copyWith(
+              color: isDark ? Colors.white : Colors.black87,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDocumentSection(User user, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[800] : Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.document_scanner, color: Colors.blue[600]),
+              const SizedBox(width: 8),
+              Text(
+                'Tài liệu định danh',
+                style: Style.fontTitleMini.copyWith(
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              if (user.fontImage != null)
+                Expanded(
+                  child: _buildDocumentImage(user.fontImage!, 'Mặt trước', isDark),
+                ),
+              if (user.fontImage != null && user.backImage != null)
+                const SizedBox(width: 12),
+              if (user.backImage != null)
+                Expanded(
+                  child: _buildDocumentImage(user.backImage!, 'Mặt sau', isDark),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDocumentImage(String imageUrl, String label, bool isDark) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: Style.fontContent.copyWith(
+            color: Colors.grey[600],
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (_) => Dialog(
+                backgroundColor: Colors.black,
+                child: InteractiveViewer(
+                  child: Image.network(imageUrl),
+                ),
+              ),
+            );
+          },
+          child: Container(
+            height: 80,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                          : null,
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey[200],
+                    child: const Icon(Icons.broken_image, color: Colors.grey),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext context, User user, int branchId, bool isDark) {
+    return Row(
+      children: [
+        // Reject button
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => _rejectUser(context, user.id!, branchId),
+            icon: const Icon(Icons.close, size: 18),
+            label: const Text('Từ chối'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red,
+              side: const BorderSide(color: Colors.red),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Approve button
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () => _showApprovalDialog(context, user, branchId),
+            icon: const Icon(Icons.check, size: 18),
+            label: const Text('Duyệt'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 2,
+              shadowColor: Colors.green.withOpacity(0.3),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Dialog xác nhận duyệt nhân viên - UI cải thiện
+  void _showApprovalDialog(BuildContext context, User user, int branchId) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.grey[850] : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header với icon
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.green[400]!, Colors.green[600]!],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_outline,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Title
+                  Text(
+                    'Xác nhận duyệt nhân viên',
+                    style: Style.fontTitle.copyWith(
+                      fontSize: 20,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Content
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.grey[800] : Colors.grey[50],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Bạn có chắc chắn muốn duyệt nhân viên này không?',
+                          style: Style.fontContent.copyWith(
+                            color: isDark ? Colors.grey[300] : Colors.grey[700],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildUserInfoRow(Icons.person, 'Tên', user.fullName, isDark),
+                        _buildUserInfoRow(Icons.email, 'Email', user.email, isDark),
+                        _buildUserInfoRow(Icons.phone, 'Điện thoại', user.phone, isDark),
+                        if (user.roleName != null)
+                          _buildUserInfoRow(Icons.work, 'Vai trò', user.roleName!, isDark),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Warning message
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.blue[600], size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Sau khi duyệt, nhân viên sẽ có thể đăng nhập và làm việc trong chi nhánh.',
+                            style: Style.fontContent.copyWith(
+                              color: Colors.blue[700],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Action buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            side: BorderSide(color: Colors.grey[400]!),
+                          ),
+                          child: Text(
+                            'Hủy',
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            _approveUser(context, user.id!, branchId);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 2,
+                            shadowColor: Colors.green.withOpacity(0.3),
+                          ),
+                          child: const Text(
+                            'Duyệt nhân viên',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildUserInfoRow(IconData icon, String label, String value, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: Colors.grey[600]),
+          const SizedBox(width: 8),
+          Text(
+            '$label: ',
+            style: Style.fontContent.copyWith(
+              color: Colors.grey[600],
+              fontSize: 14,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: Style.fontContent.copyWith(
+                color: isDark ? Colors.white : Colors.black87,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // Duyệt user
   void _approveUser(BuildContext context, int userId, int branchId) async {
-    final notifier = ref.read(userApprovalProvider(branchId).notifier);
-    final success = await notifier.approveUser(userId);
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Đang duyệt nhân viên...'),
+          ],
+        ),
+      ),
+    );
+    
+    final api = ref.read(userApprovalApiProvider);
+    final success = await api.approveUser(userId);
+    
+    // Close loading dialog
+    Navigator.of(context).pop();
     
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Đã kích hoạt tài khoản thành công'),
+          content: Text('Đã duyệt nhân viên thành công!'),
           backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
         ),
       );
-      // Refresh employee list
+      // Refresh both employee list and pending users list
       _refreshEmployees();
+      ref.invalidate(pendingUsersByBranchProvider(branchId));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Có lỗi xảy ra khi kích hoạt tài khoản'),
+          content: Text('Có lỗi xảy ra khi duyệt nhân viên'),
           backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
         ),
       );
     }
@@ -1483,8 +2042,8 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
 
   // Từ chối user
   void _rejectUser(BuildContext context, int userId, int branchId) async {
-    final notifier = ref.read(userApprovalProvider(branchId).notifier);
-    final success = await notifier.rejectUser(userId, 'Không đáp ứng yêu cầu');
+    final api = ref.read(userApprovalApiProvider);
+    final success = await api.rejectUser(userId, 'Không đáp ứng yêu cầu');
     
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1493,6 +2052,8 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
           backgroundColor: Colors.orange,
         ),
       );
+      // Refresh pending users list
+      ref.invalidate(pendingUsersByBranchProvider(branchId));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
