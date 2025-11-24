@@ -25,7 +25,7 @@ public class MenuItemServices {
 
     // Lấy menu-item theo theo id
     public List<MenuItem> getMenuById(Integer id) {
-        return menuItemRepository.findById(id);
+        return menuItemRepository.findByMenuId(id);
     }
 
     public boolean removeMenuItem(Integer categoryId, Integer itemId) {
