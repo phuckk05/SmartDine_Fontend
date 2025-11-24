@@ -84,21 +84,9 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> w
     });
   }
   
-  // Data
-  List<TableStatus> _tableStatuses = [
-    TableStatus(id: 1, name: 'Trống', code: 'EMPTY'),
-    TableStatus(id: 2, name: 'Đang sử dụng', code: 'OCCUPIED'),
-    TableStatus(id: 3, name: 'Đã đặt', code: 'RESERVED'),
-    TableStatus(id: 4, name: 'Bảo trì', code: 'MAINTENANCE'),
-  ];
-  // List<TableType> _tableTypes = [
-  //   TableType(id: 1, name: 'Bàn thường', code: 'NORMAL'),
-  //   TableType(id: 2, name: 'Bàn VIP', code: 'VIP'),
-  //   TableType(id: 3, name: 'Bàn ngoài trời', code: 'OUTDOOR'),
-  //   TableType(id: 4, name: 'Bàn gia đình', code: 'FAMILY'),
-  //   TableType(id: 5, name: 'Bàn đôi', code: 'COUPLE'),
-  // ];
-  List<TableType> _tableTypes = []; // Khởi tạo trống, sẽ load từ API
+  // Data - sẽ được load từ API
+  List<TableStatus> _tableStatuses = [];
+  List<TableType> _tableTypes = [];
   bool _tableMetaLoaded = false;
   // Load table types and statuses from API
   Future<void> _loadTableMeta() async {

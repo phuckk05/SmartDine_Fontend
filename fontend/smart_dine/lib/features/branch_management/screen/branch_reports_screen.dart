@@ -15,7 +15,26 @@ class BranchReportsScreen extends ConsumerStatefulWidget {
 }
 
 class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
-  String _selectedPeriod = 'Tháng này';
+  DateTime _selectedDate = DateTime.now();
+  String _selectedPeriod = 'Ngày';
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+      // Update date in the notifier
+      final branchIdInt = ref.read(currentBranchIdProvider)!;
+      final notifier = ref.read(branchStatisticsWithDateProvider(branchIdInt).notifier);
+      notifier.setSelectedDate(_selectedDate);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +91,7 @@ class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
         ),
       );
     }
-    final statisticsAsyncValue = ref.watch(branchStatisticsProvider(branchIdInt));
+    final statisticsAsyncValue = ref.watch(branchStatisticsWithDateProvider(branchIdInt));
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
@@ -102,8 +121,8 @@ class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
-                  // ignore: unused_result
-                  ref.refresh(branchStatisticsProvider(branchIdInt));
+                  final notifier = ref.read(branchStatisticsWithDateProvider(branchIdInt).notifier);
+                  notifier.loadStatistics(date: _selectedDate);
                 },
                 child: const Text('Thử lại'),
               ),
@@ -112,7 +131,8 @@ class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
         ),
         data: (statistics) => RefreshIndicator(
           onRefresh: () async {
-            return ref.refresh(branchStatisticsProvider(branchIdInt));
+            final notifier = ref.read(branchStatisticsWithDateProvider(branchIdInt).notifier);
+            await notifier.loadStatistics(date: _selectedDate);
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -123,15 +143,19 @@ class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
                 _buildPeriodSelector(isDark),
                 const SizedBox(height: 20),
                 if (statistics != null) ...[
-                  _buildOverviewCards(statistics, isDark),
-                  const SizedBox(height: 20),
-                  _buildRevenueChart(statistics, isDark),
-                  const SizedBox(height: 20),
-                  _buildOrderChart(statistics, isDark),
-                  const SizedBox(height: 20),
-                  _buildGrowthRatesSection(statistics, isDark),
-                  const SizedBox(height: 20),
-                  _buildSummarySection(statistics, isDark),
+                  if (statistics.isEmpty) ...[
+                    _buildNoDataState(isDark),
+                  ] else ...[
+                    _buildOverviewCards(statistics, isDark),
+                    const SizedBox(height: 20),
+                    _buildRevenueChart(statistics, isDark),
+                    const SizedBox(height: 20),
+                    _buildOrderChart(statistics, isDark),
+                    const SizedBox(height: 20),
+                    _buildGrowthRatesSection(statistics, isDark),
+                    const SizedBox(height: 20),
+                    _buildSummarySection(statistics, isDark),
+                  ],
                 ] else ...[
                   _buildEmptyDataState(isDark),
                 ],
@@ -145,7 +169,9 @@ class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
 
   Widget _buildPeriodSelector(bool isDark) {
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
-    
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -159,44 +185,132 @@ class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.date_range, color: Colors.grey[600]),
-          const SizedBox(width: 8),
-          Text(
-            'Thời gian:',
-            style: Style.fontContent.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: DropdownButtonFormField<String>(
-              value: _selectedPeriod,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+          Row(
+            children: [
+              Icon(Icons.date_range, color: Colors.grey[600]),
+              const SizedBox(width: 8),
+              Text(
+                'Chọn thời gian thống kê:',
+                style: Style.fontContent.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
-              items: ['Tuần này', 'Tháng này', 'Quý này']
-                  .map((period) => DropdownMenuItem<String>(
-                        value: period,
-                        child: Text(period),
-                      ))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedPeriod = value!;
-                });
-                // Refresh data when period changes
-                final branchIdInt = ref.read(currentBranchIdProvider)!;
-                // ignore: unused_result
-                ref.refresh(branchStatisticsProvider(branchIdInt));
-              },
-            ),
+            ],
           ),
+          const SizedBox(height: 16),
+          // Date Picker Button - Full width on mobile
+          if (isMobile) ...[
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _selectDate(context),
+                icon: const Icon(Icons.calendar_today),
+                label: Text(
+                  '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                  style: const TextStyle(fontSize: 16),
+                ),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Quick Period Buttons - Wrap on mobile
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildQuickPeriodButton('Hôm nay', isDark),
+                _buildQuickPeriodButton('Tuần này', isDark),
+                _buildQuickPeriodButton('Tháng này', isDark),
+              ],
+            ),
+          ] else ...[
+            // Desktop layout - Side by side
+            Row(
+              children: [
+                // Date Picker Button
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _selectDate(context),
+                    icon: const Icon(Icons.calendar_today),
+                    label: Text(
+                      '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Quick Period Buttons
+                _buildQuickPeriodButton('Hôm nay', isDark),
+                const SizedBox(width: 8),
+                _buildQuickPeriodButton('Tuần này', isDark),
+                const SizedBox(width: 8),
+                _buildQuickPeriodButton('Tháng này', isDark),
+              ],
+            ),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildQuickPeriodButton(String label, bool isDark) {
+    final isSelected = _selectedPeriod == label;
+    final backgroundColor = isSelected
+        ? (isDark ? Colors.blue[700] : Colors.blue)
+        : (isDark ? Colors.grey[800] : Colors.grey[200]);
+    final textColor = isSelected
+        ? Colors.white
+        : (isDark ? Colors.white70 : Colors.black87);
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedPeriod = label;
+          switch (label) {
+            case 'Hôm nay':
+              _selectedDate = DateTime.now();
+              break;
+            case 'Tuần này':
+              _selectedDate = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+              break;
+            case 'Tháng này':
+              _selectedDate = DateTime(DateTime.now().year, DateTime.now().month, 1);
+              break;
+          }
+        });
+        // Refresh data
+        final branchIdInt = ref.read(currentBranchIdProvider)!;
+        // ignore: unused_result
+        ref.refresh(branchStatisticsWithDateProvider(branchIdInt));
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: textColor,
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
       ),
     );
   }
@@ -321,7 +435,7 @@ class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
   Widget _buildRevenueChart(BranchMetrics statistics, bool isDark) {
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
     final textColor = isDark ? Style.colorLight : Style.colorDark;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -351,13 +465,74 @@ class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
             ),
           ),
           const SizedBox(height: 20),
+          // Simple revenue visualization
           Container(
             height: 200,
             child: Center(
-              child: Text(
-                'Biểu đồ doanh thu sẽ được hiển thị khi có dữ liệu chi tiết',
-                style: Style.fontContent.copyWith(color: Colors.grey),
-                textAlign: TextAlign.center,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.green[400]!,
+                          Colors.green[600]!,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.green.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.trending_up,
+                            color: Colors.white,
+                            size: 32,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${(statistics.totalRevenue / 1000).round()}k',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Tổng doanh thu',
+                    style: Style.fontContent.copyWith(
+                      color: textColor,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Giá trị trung bình: ${statistics.avgOrderValue}đ/đơn',
+                    style: Style.fontContent.copyWith(
+                      color: Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -487,12 +662,6 @@ class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
             statistics.dateRange,
             textColor,
           ),
-          const SizedBox(height: 8),
-          _buildSummaryItem(
-            'Mức độ hài lòng',
-            '${statistics.customerSatisfaction.toStringAsFixed(1)}/5.0',
-            textColor,
-          ),
         ],
       ),
     );
@@ -529,7 +698,74 @@ class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
 
 
 
-  // Empty state khi không có dữ liệu trong ngày
+  // No data state khi có dữ liệu nhưng tất cả = 0
+  Widget _buildNoDataState(bool isDark) {
+    final cardColor = isDark ? const Color(0xFF2D2D2D) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(32),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.info_outline,
+              size: 40,
+              color: Colors.orange,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Không có hoạt động nào trong ngày',
+            style: Style.fontTitle.copyWith(
+              color: textColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Hôm nay chưa có đơn hàng hoặc doanh thu nào được ghi nhận.',
+            style: Style.fontContent.copyWith(
+              color: Colors.grey[600],
+              fontSize: 16,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () => _selectDate(context),
+            icon: const Icon(Icons.calendar_today),
+            label: const Text('Chọn ngày khác'),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildEmptyDataState(bool isDark) {
     final cardColor = isDark ? const Color(0xFF2D2D2D) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black;
@@ -592,7 +828,7 @@ class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
                 onPressed: () {
                   final branchIdInt = ref.read(currentBranchIdProvider)!;
                   // ignore: unused_result
-                  ref.refresh(branchStatisticsProvider(branchIdInt));
+                  ref.refresh(branchStatisticsWithDateProvider(branchIdInt));
                 },
                 icon: const Icon(Icons.refresh),
                 label: const Text('Làm mới'),
@@ -625,11 +861,11 @@ class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
     );
   }
 
-  // Order chart giống như trong ảnh Dashboard
+  // Order chart với visualization đẹp
   Widget _buildOrderChart(BranchMetrics statistics, bool isDark) {
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black;
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -646,114 +882,89 @@ class _BranchReportsScreenState extends ConsumerState<BranchReportsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with period selector
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Đơn hàng',
-                style: Style.fontTitleMini.copyWith(
-                  color: textColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Row(
-                children: [
-                  _buildPeriodButton('Tháng', false, isDark),
-                  const SizedBox(width: 8),
-                  _buildPeriodButton('Tuần', true, isDark),
-                  const SizedBox(width: 8),
-                  _buildPeriodButton('Hôm nay', false, isDark),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          
-          // Bar chart area
-          SizedBox(
-            height: 200,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildOrderBar('Tuần 2', 30, 100, Colors.blue),
-                _buildOrderBar('Tuần 3', 80, 100, Colors.black),
-                _buildOrderBar('Tuần 4', 50, 100, Colors.blue),
-                _buildOrderBar('', 90, 100, Colors.black),
-                _buildOrderBar('', 65, 100, Colors.blue),
-                _buildOrderBar('', 85, 100, Colors.black),
-              ],
+          // Header
+          Text(
+            'Đơn hàng',
+            style: Style.fontTitleMini.copyWith(
+              color: textColor,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          
-          // Y-axis labels
-          Padding(
-            padding: const EdgeInsets.only(left: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('10k', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-                const SizedBox(height: 20),
-                Text('5k', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-                const SizedBox(height: 20),
-                Text('1k', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-                const SizedBox(height: 20),
-                Text('0', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-              ],
+          const SizedBox(height: 20),
+
+          // Order visualization
+          SizedBox(
+            height: 200,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.blue[400]!,
+                          Colors.blue[600]!,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.blue.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.receipt_long,
+                            color: Colors.white,
+                            size: 32,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${statistics.totalOrders}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Tổng đơn hàng',
+                    style: Style.fontContent.copyWith(
+                      color: textColor,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Khách hàng mới: ${statistics.newCustomers}',
+                    style: Style.fontContent.copyWith(
+                      color: Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildPeriodButton(String text, bool isSelected, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: isSelected ? Colors.blue : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black54),
-          fontSize: 12,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOrderBar(String label, double value, double maxValue, Color color) {
-    final height = (value / maxValue) * 150; // Max height 150
-    
-    return Column(
-      children: [
-        Expanded(
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              width: 24,
-              height: height,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (label.isNotEmpty)
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 11,
-            ),
-          ),
-      ],
     );
   }
 }

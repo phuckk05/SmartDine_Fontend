@@ -54,67 +54,142 @@ class SettingsScreen extends ConsumerWidget {
               style: Style.fontTitleMini.copyWith(color: textColor),
             ),
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
+            
+            // Lấy thông tin chi nhánh cho phần tài khoản
+            userSession.currentBranchId != null
+              ? FutureBuilder<Branch?>(
+                  future: BranchAPI().getBranchById(
+                    userSession.currentBranchId.toString(),
+                    userId: userSession.userId,
                   ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildInfoItem(
-                    Icons.person, 
-                    userSession.userName ?? 'Chưa có tên', 
-                    textColor, 
-                    label: 'Tên người dùng'
+                  builder: (context, snapshot) {
+                    final branch = snapshot.data;
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildInfoItem(
+                            Icons.person, 
+                            userSession.userName ?? 'Chưa có tên', 
+                            textColor, 
+                            label: 'Tên người dùng'
+                          ),
+                          const SizedBox(height: 8),
+                          _buildInfoItem(
+                            Icons.badge, 
+                            'ID: ${userSession.userId ?? 'N/A'}', 
+                            textColor, 
+                            label: 'Mã người dùng'
+                          ),
+                          const SizedBox(height: 8),
+                          _buildInfoItem(
+                            Icons.business, 
+                            snapshot.connectionState == ConnectionState.waiting
+                              ? 'Đang tải...'
+                              : 'Chi nhánh: ${branch?.name ?? userSession.currentBranchId ?? 'Chưa chọn'}', 
+                            textColor, 
+                            label: 'Chi nhánh hiện tại'
+                          ),
+                          const SizedBox(height: 8),
+                          _buildInfoItem(
+                            Icons.admin_panel_settings, 
+                            _getRoleName(userSession.userRole), 
+                            textColor, 
+                            label: 'Vai trò'
+                          ),
+                          const SizedBox(height: 8),
+                          _buildInfoItem(
+                            Icons.access_time, 
+                            userSession.loginTime?.toString().split('.')[0] ?? 'Chưa có', 
+                            textColor, 
+                            label: 'Thời gian đăng nhập'
+                          ),
+                          const SizedBox(height: 8),
+                          _buildInfoItem(
+                            Icons.apartment, 
+                            snapshot.connectionState == ConnectionState.waiting
+                              ? 'Đang tải...'
+                              : '${branch?.companyName ?? 'Company ID: ${userSession.companyId ?? 'N/A'}'}', 
+                            textColor, 
+                            label: 'Công ty'
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                )
+              : Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  _buildInfoItem(
-                    Icons.badge, 
-                    'ID: ${userSession.userId ?? 'N/A'}', 
-                    textColor, 
-                    label: 'Mã người dùng'
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildInfoItem(
+                        Icons.person, 
+                        userSession.userName ?? 'Chưa có tên', 
+                        textColor, 
+                        label: 'Tên người dùng'
+                      ),
+                      const SizedBox(height: 8),
+                      _buildInfoItem(
+                        Icons.badge, 
+                        'ID: ${userSession.userId ?? 'N/A'}', 
+                        textColor, 
+                        label: 'Mã người dùng'
+                      ),
+                      const SizedBox(height: 8),
+                      _buildInfoItem(
+                        Icons.business, 
+                        'Chi nhánh: Chưa chọn', 
+                        textColor, 
+                        label: 'Chi nhánh hiện tại'
+                      ),
+                      const SizedBox(height: 8),
+                      _buildInfoItem(
+                        Icons.admin_panel_settings, 
+                        _getRoleName(userSession.userRole), 
+                        textColor, 
+                        label: 'Vai trò'
+                      ),
+                      const SizedBox(height: 8),
+                      _buildInfoItem(
+                        Icons.access_time, 
+                        userSession.loginTime?.toString().split('.')[0] ?? 'Chưa có', 
+                        textColor, 
+                        label: 'Thời gian đăng nhập'
+                      ),
+                      const SizedBox(height: 8),
+                      _buildInfoItem(
+                        Icons.apartment, 
+                        'Company ID: ${userSession.companyId ?? 'N/A'}', 
+                        textColor, 
+                        label: 'Công ty'
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  _buildInfoItem(
-                    Icons.business, 
-                    'Chi nhánh: ${userSession.currentBranchId ?? 'Chưa chọn'}', 
-                    textColor, 
-                    label: 'Chi nhánh hiện tại'
-                  ),
-                  const SizedBox(height: 8),
-                  _buildInfoItem(
-                    Icons.admin_panel_settings, 
-                    _getRoleName(userSession.userRole), 
-                    textColor, 
-                    label: 'Vai trò'
-                  ),
-                  const SizedBox(height: 8),
-                  _buildInfoItem(
-                    Icons.access_time, 
-                    userSession.loginTime?.toString().split('.')[0] ?? 'Chưa có', 
-                    textColor, 
-                    label: 'Thời gian đăng nhập'
-                  ),
-                  const SizedBox(height: 8),
-                  _buildInfoItem(
-                    Icons.apartment, 
-                    'Company ID: ${userSession.companyId ?? 'N/A'}', 
-                    textColor, 
-                    label: 'Công ty'
-                  ),
-
-                ],
-              ),
-            ),
+                ),
             const SizedBox(height: 24),
 
             // Hồ sơ nhà hàng

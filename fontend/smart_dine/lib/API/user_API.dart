@@ -22,7 +22,7 @@ class UserAPI {
       return User.fromMap(data);
     }
     print(
-      '🔍 [API] Create user failed: ${response.statusCode} ${response.body}',
+      '[API] Create user failed: ${response.statusCode} ${response.body}',
     );
     return null;
   }

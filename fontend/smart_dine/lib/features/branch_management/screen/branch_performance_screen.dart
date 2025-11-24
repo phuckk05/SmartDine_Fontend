@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/style.dart';
 import '/widgets/appbar.dart';
-import 'package:fl_chart/fl_chart.dart';
 import '../../../providers/user_session_provider.dart';
 import '../../../providers/employee_performance_provider.dart';
 
@@ -90,7 +89,6 @@ class _BranchPerformanceScreenState
     int branchId,
   ) {
     final performances = data.employeeList ?? [];
-    final trips = data.revenueByHour ?? [];
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -118,7 +116,7 @@ class _BranchPerformanceScreenState
                 Expanded(
                   child: _buildStatCard(
                     'Tổng đơn hàng',
-                    '1,845',
+                    data.overview?['totalOrders']?.toString() ?? '0',
                     Icons.shopping_cart,
                     Colors.blue,
                     isDark,
@@ -130,7 +128,7 @@ class _BranchPerformanceScreenState
                 Expanded(
                   child: _buildStatCard(
                     'Doanh thu',
-                    '165 triệu',
+                    '${data.overview?['totalRevenue'] ?? '0'} đ',
                     Icons.attach_money,
                     Colors.green,
                     isDark,
@@ -147,7 +145,7 @@ class _BranchPerformanceScreenState
                 Expanded(
                   child: _buildStatCard(
                     'Khách hàng',
-                    '1,520',
+                    data.overview?['totalOrders']?.toString() ?? '0',
                     Icons.people,
                     Colors.orange,
                     isDark,
@@ -158,10 +156,29 @@ class _BranchPerformanceScreenState
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatCard(
-                    'Đánh giá TB',
-                    '4.8★',
-                    Icons.star,
-                    Colors.amber,
+                    'Tỷ lệ hoàn thành',
+                    '${(data.overview?['completionRate'] ?? 0.0).toStringAsFixed(1)}%',
+                    Icons.check_circle,
+                    Colors.purple,
+                    isDark,
+                    cardColor,
+                    textColor,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    'Cập nhật',
+                    data.overview?['lastUpdated'] != null
+                        ? DateTime.parse(data.overview!['lastUpdated']).toLocal().toString().split(' ')[0]
+                        : 'N/A',
+                    Icons.update,
+                    Colors.teal,
                     isDark,
                     cardColor,
                     textColor,
@@ -173,10 +190,10 @@ class _BranchPerformanceScreenState
             const SizedBox(height: 24),
 
             //------------------------------------------------------------------
-            // Top nhân viên
+            // Hiệu suất nhân viên
             //------------------------------------------------------------------
             Text(
-              'Top nhân viên',
+              'Hiệu suất nhân viên',
               style: Style.fontTitleMini.copyWith(color: textColor),
             ),
             const SizedBox(height: 12),
@@ -206,13 +223,13 @@ class _BranchPerformanceScreenState
                       ),
                       Expanded(
                         child: Text(
-                          'Số món phục vụ',
+                          'Số bàn phục vụ',
                           style: Style.fontTitleMini.copyWith(color: textColor),
                         ),
                       ),
                       Expanded(
                         child: Text(
-                          'Doanh thu',
+                          'Số đơn hoàn thành',
                           style: Style.fontTitleMini.copyWith(color: textColor),
                         ),
                       ),
@@ -220,7 +237,22 @@ class _BranchPerformanceScreenState
                   ),
                   const Divider(),
 
-                  ...performances.map(
+                  ...performances.where((employee) {
+                    // Lọc chỉ hiển thị nhân viên có role phục vụ, đầu bếp, thu ngân
+                    final roleId = employee['roleId'] ?? employee['role'];
+                    // Map role ID đơn giản: 1=phục vụ, 2=đầu bếp, 3=thu ngân, etc.
+                    final role = roleId is int ? roleId : (roleId?.toString().toLowerCase() ?? '');
+                    return role == 1 || role == '1' || // Phục vụ
+                           role == 2 || role == '2' || // Đầu bếp  
+                           role == 3 || role == '3' || // Thu ngân
+                           (role is String && (
+                             role.contains('phục vụ') || role.contains('phuc vu') ||
+                             role.contains('đầu bếp') || role.contains('dau bep') ||
+                             role.contains('chef') || role.contains('thu ngân') ||
+                             role.contains('thu ngan') || role.contains('cashier') ||
+                             role.contains('staff') || role.contains('waiter')
+                           ));
+                  }).map(
                     (e) => Row(
                       children: [
                         Expanded(
@@ -231,13 +263,13 @@ class _BranchPerformanceScreenState
                         ),
                         Expanded(
                           child: Text(
-                            e['totalServed']?.toString() ?? '-',
+                            e['tablesServed']?.toString() ?? '0',
                             style: Style.fontContent.copyWith(color: textColor),
                           ),
                         ),
                         Expanded(
                           child: Text(
-                            e['tips']?.toString() ?? '-',
+                            e['ordersCompleted']?.toString() ?? '0',
                             style: Style.fontContent.copyWith(color: textColor),
                           ),
                         ),
@@ -245,74 +277,6 @@ class _BranchPerformanceScreenState
                     ),
                   ),
                 ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            //------------------------------------------------------------------
-            // Doanh thu theo giờ (Bar chart)
-            //------------------------------------------------------------------
-            Text(
-              'Doanh thu theo giờ',
-              style: Style.fontTitleMini.copyWith(color: textColor),
-            ),
-            const SizedBox(height: 12),
-
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: SizedBox(
-                height: 200,
-                child: BarChart(
-                  BarChartData(
-                    alignment: BarChartAlignment.spaceAround,
-                    maxY: 35,
-                    barTouchData: BarTouchData(
-                      enabled: true,
-                      touchTooltipData: BarTouchTooltipData(
-                        getTooltipColor:
-                            (group) => Colors.black.withOpacity(0.8),
-                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                          const hours = [
-                            '6h-9h',
-                            '9h-12h',
-                            '12h-15h',
-                            '15h-18h',
-                            '18h-21h',
-                            '21h-24h',
-                          ];
-                          String label = hours[group.x.toInt() - 1];
-                          return BarTooltipItem(
-                            '$label\n${rod.toY.toInt()} triệu',
-                            const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    titlesData: FlTitlesData(show: true),
-                    gridData: FlGridData(show: false),
-                    borderData: FlBorderData(show: false),
-                    barGroups: List.generate(
-                      6,
-                      (i) => _buildBarGroup(i + 1, 0),
-                    ),
-                  ),
-                ),
               ),
             ),
 
@@ -327,19 +291,6 @@ class _BranchPerformanceScreenState
             ),
             const SizedBox(height: 12),
 
-            Row(
-              children: [
-                _buildTabButton('Tạo bản', false, isDark),
-                const SizedBox(width: 8),
-                _buildTabButton('Năm', false, isDark),
-                _buildTabButton('Tháng', false, isDark),
-                _buildTabButton('Tuần', true, isDark),
-                _buildTabButton('Hôm nay', false, isDark),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -348,6 +299,48 @@ class _BranchPerformanceScreenState
               ),
               child: Column(
                 children: [
+                  // Header row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          'Tên nhân viên',
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'Đơn phục vụ',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'Doanh thu',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(height: 1),
+                  const SizedBox(height: 12),
                   ...performances.map(
                     (employee) => Column(
                       children: [
@@ -355,7 +348,6 @@ class _BranchPerformanceScreenState
                           employee['name'] ?? '-',
                           employee['totalServed']?.toString() ?? '-',
                           employee['tips']?.toString() ?? '-',
-                          employee['rating']?.toString() ?? '-',
                           textColor,
                         ),
                         if (performances.indexOf(employee) <
@@ -365,53 +357,6 @@ class _BranchPerformanceScreenState
                     ),
                   ),
                 ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            //------------------------------------------------------------------
-            // Trips thức chart
-            //------------------------------------------------------------------
-            Text(
-              'Trips thức',
-              style: Style.fontTitleMini.copyWith(color: textColor),
-            ),
-            const SizedBox(height: 12),
-
-            Row(
-              children: [
-                _buildTabButton('Năm', false, isDark),
-                _buildTabButton('Tháng', false, isDark),
-                _buildTabButton('Tuần', true, isDark),
-                _buildTabButton('Hôm nay', false, isDark),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: SizedBox(
-                height: 200,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ...trips.map(
-                      (trip) => _buildTripsBar(
-                        trip.hour,
-                        (trip.revenue).toDouble(),
-                        50.0,
-                        Colors.blue,
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ),
           ],
@@ -464,23 +409,6 @@ class _BranchPerformanceScreenState
           ),
         ],
       ),
-    );
-  }
-
-  BarChartGroupData _buildBarGroup(int x, double value) {
-    return BarChartGroupData(
-      x: x,
-      barRods: [
-        BarChartRodData(
-          toY: value,
-          color: Colors.blue,
-          width: 20,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(4),
-            topRight: Radius.circular(4),
-          ),
-        ),
-      ],
     );
   }
 
@@ -558,32 +486,10 @@ class _BranchPerformanceScreenState
     );
   }
 
-  Widget _buildTabButton(String text, bool isSelected, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: isSelected ? Colors.blue : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color:
-              isSelected
-                  ? Colors.white
-                  : (isDark ? Colors.white70 : Colors.black54),
-          fontSize: 12,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-        ),
-      ),
-    );
-  }
-
   Widget _buildEmployeeRow(
     String name,
     String v1,
     String v2,
-    String v3,
     Color textColor,
   ) {
     return Row(
@@ -614,44 +520,6 @@ class _BranchPerformanceScreenState
             style: TextStyle(color: textColor),
           ),
         ),
-        Expanded(
-          child: Text(
-            v3,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: textColor),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTripsBar(
-    String label,
-    double value,
-    double maxValue,
-    Color color,
-  ) {
-    final height = (value / maxValue) * 150;
-
-    return Column(
-      children: [
-        Expanded(
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              width: 24,
-              height: height,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(4),
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 11)),
       ],
     );
   }

@@ -68,19 +68,9 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   
-  // Data
-  List<UserStatus> _userStatuses = [
-    UserStatus(id: 1, name: 'Hoạt động', code: 'ACTIVE'),
-    UserStatus(id: 2, name: 'Tạm ngưng', code: 'INACTIVE'),
-    UserStatus(id: 3, name: 'Bị khóa', code: 'BLOCKED'),
-  ];
-  
-  List<Role> _roles = [
-    Role(id: 1, name: 'Quản lý', code: 'MANAGER'),
-    Role(id: 2, name: 'Nhân viên phục vụ', code: 'WAITER'),
-    Role(id: 3, name: 'Đầu bếp', code: 'CHEF'),
-    Role(id: 4, name: 'Thu ngân', code: 'CASHIER'),
-  ];
+  // Data - sẽ được load từ API
+  List<UserStatus> _userStatuses = [];
+  List<Role> _roles = [];
   
   int? _selectedStatusId;
   int? _selectedRoleId;
@@ -135,7 +125,38 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
     final branchId = currentBranchId;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
-
+    // Load user statuses và roles từ API
+    final userStatusesAsync = ref.watch(userStatusesProvider);
+    final rolesAsync = ref.watch(rolesProvider);
+    
+    // Update lists khi data available
+    userStatusesAsync.whenData((statuses) {
+      if (_userStatuses.isEmpty || _userStatuses.length != statuses.length) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          setState(() {
+            _userStatuses = statuses.map((s) => UserStatus(
+              id: s['id'] ?? 0,
+              name: s['name'] ?? 'Unknown',
+              code: s['code'] ?? 'UNKNOWN',
+            )).toList();
+          });
+        });
+      }
+    });
+    
+    rolesAsync.whenData((roles) {
+      if (_roles.isEmpty || _roles.length != roles.length) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          setState(() {
+            _roles = roles.map((r) => Role(
+              id: r['id'] ?? 0,
+              name: r['name'] ?? 'Unknown',
+              code: r['code'] ?? 'UNKNOWN',
+            )).toList();
+          });
+        });
+      }
+    });
     
     if (branchId == null) {
       return Scaffold(
@@ -1828,6 +1849,18 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Avatar của nhân viên
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundImage: user.fontImage != null && user.fontImage!.isNotEmpty
+                      ? NetworkImage(user.fontImage!)
+                      : null,
+                    child: user.fontImage == null || user.fontImage!.isEmpty
+                      ? const Icon(Icons.person, size: 40, color: Colors.grey)
+                      : null,
+                  ),
+                  const SizedBox(height: 16),
+
                   // Header với icon
                   Container(
                     padding: const EdgeInsets.all(16),

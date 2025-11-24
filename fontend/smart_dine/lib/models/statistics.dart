@@ -25,13 +25,14 @@ class BranchMetrics {
     // Handle both old format and new API response format
     if (json.containsKey('totalOrdersToday')) {
       // New API format from OrderController
+      final totalOrders = json['totalOrdersToday'] ?? 0;
       return BranchMetrics(
         period: 'today',
         dateRange: json['date'] ?? '',
         totalRevenue: 0, // API chưa có revenue data
-        totalOrders: json['totalOrdersToday'] ?? 0,
+        totalOrders: totalOrders,
         avgOrderValue: 0, // Sẽ tính sau
-        newCustomers: json['pendingOrdersToday'] ?? 0, // Tạm dùng pending orders
+        newCustomers: totalOrders, // Mỗi đơn hàng tương ứng với một khách hàng
         customerSatisfaction: json['completionRate'] ?? 0.0,
         growthRates: GrowthRates.fromJson({}), // Empty for now
         isEmpty: false,

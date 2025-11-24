@@ -20,6 +20,7 @@ class _DishStatisticsScreenState extends ConsumerState<DishStatisticsScreen> {
   String _selectedFilter = 'Tuần';
   int _touchedIndex = -1;
 
+  // Map Vietnamese filter names to English period values for API
   String _getXLabel(double value, String filter) {
     if (filter == 'Năm') {
       return 'T${value.toInt()}';
@@ -116,9 +117,7 @@ class _DishStatisticsScreenState extends ConsumerState<DishStatisticsScreen> {
       body: dishStatisticsAsync.when(
         loading: () => _buildLoadingSkeleton(isDark, cardColor, textColor),
         error: (error, stackTrace) => _buildErrorState(error, isDark, cardColor, textColor, currentBranchId),
-        data: (data) => data?.isEmpty == true 
-          ? _buildEmptyState(isDark, cardColor, textColor)
-          : _buildContent(data ?? DishStatisticsData(dishRevenueList: [], chartData: {}, totalDishes: 0, totalRevenue: 0.0), isDark, cardColor, textColor, currentBranchId, isMobile),
+        data: (data) => _buildContent(data ?? DishStatisticsData(dishRevenueList: [], chartData: {}, totalDishes: 0, totalRevenue: 0.0), isDark, cardColor, textColor, currentBranchId, isMobile),
       ),
     );
   }
@@ -126,7 +125,7 @@ class _DishStatisticsScreenState extends ConsumerState<DishStatisticsScreen> {
   Widget _buildContent(DishStatisticsData data, bool isDark, Color cardColor, Color textColor, int branchId, bool isMobile) {
     return RefreshIndicator(
       onRefresh: () async {
-        await ref.read(dishStatisticsProvider(branchId).notifier).refresh(period: _selectedFilter.toLowerCase());
+        await ref.read(dishStatisticsProvider(branchId).notifier).refresh();
       },
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -286,15 +285,37 @@ class _DishStatisticsScreenState extends ConsumerState<DishStatisticsScreen> {
                 children: [
                   _buildTableHeader(textColor),
                   const Divider(height: 1),
-                  ...data.dishRevenueList.map((dish) => _buildTableRow(
-                    dish['name'] ?? '',
-                    dish['revenue'] ?? '0',
-                    dish['total'] ?? '0',
-                    dish['sold'] ?? '0',
-                    dish['remaining'] ?? '0',
-                    dish['percentage'] ?? '0%',
-                    textColor,
-                  )).toList(),
+                  if (data.dishRevenueList.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.restaurant_menu,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Không có dữ liệu món ăn',
+                            style: Style.fontContent.copyWith(
+                              color: textColor.withOpacity(0.7),
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    ...data.dishRevenueList.map((dish) => _buildTableRow(
+                      dish['name'] ?? '',
+                      dish['revenue'] ?? '0',
+                      dish['total'] ?? '0',
+                      dish['sold'] ?? '0',
+                      dish['remaining'] ?? '0',
+                      dish['percentage'] ?? '0%',
+                      textColor,
+                    )).toList(),
                 ],
               ),
             ),

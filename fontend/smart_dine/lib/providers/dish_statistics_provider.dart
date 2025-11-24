@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../API/dish_statistics_API.dart';
+import '../core/realtime_notifier.dart';
 
 // Provider cho dish statistics
 final dishStatisticsProvider = StateNotifierProvider.family<DishStatisticsNotifier, AsyncValue<DishStatisticsData?>, int>((ref, branchId) {
@@ -27,76 +28,67 @@ class DishStatisticsData {
   bool get isEmpty => dishRevenueList.isEmpty && totalDishes == 0;
 }
 
-class DishStatisticsNotifier extends StateNotifier<AsyncValue<DishStatisticsData?>> {
+class DishStatisticsNotifier extends RealtimeNotifier<DishStatisticsData?> {
   final DishStatisticsAPI _api;
   final int _branchId;
+  String _currentPeriod = 'week';
 
-  DishStatisticsNotifier(this._api, this._branchId) : super(const AsyncValue.loading()) {
-    loadStatistics();
-  }
+  DishStatisticsNotifier(this._api, this._branchId);
 
-  Future<void> loadStatistics({String period = 'week'}) async {
-    try {
-      state = const AsyncValue.loading();
+  @override
+  Future<DishStatisticsData?> loadData() async {
+    // Load dish revenue data and chart data in parallel
+    final futures = await Future.wait([
+      _api.getDishRevenueData(_branchId, period: _currentPeriod),
+      _api.getChartData(_branchId, period: _currentPeriod),
+    ]);
+    
+    final dishRevenueList = futures[0] as List<Map<String, dynamic>>?;
+    final chartData = futures[1] as Map<String, List<Map<String, dynamic>>>?;
+    
+    if (dishRevenueList != null && chartData != null) {
+      // Calculate totals
+      int totalDishes = 0;
+      double totalRevenue = 0.0;
       
-
-      
-      // Load dish revenue data and chart data in parallel
-      final futures = await Future.wait([
-        _api.getDishRevenueData(_branchId),
-        _api.getChartData(_branchId),
-      ]);
-      
-      final dishRevenueList = futures[0] as List<Map<String, dynamic>>?;
-      final chartData = futures[1] as Map<String, List<Map<String, dynamic>>>?;
-      
-      if (dishRevenueList != null && chartData != null) {
-        // Calculate totals
-        int totalDishes = 0;
-        double totalRevenue = 0.0;
+      for (final dish in dishRevenueList) {
+        final quantity = int.tryParse(dish['quantity']?.toString() ?? '0') ?? 0;
+        totalDishes += quantity;
         
-        for (final dish in dishRevenueList) {
-          final quantity = int.tryParse(dish['quantity']?.toString() ?? '0') ?? 0;
-          totalDishes += quantity;
-          
-          // Use raw revenue value from API (no need to parse "triệu")
-          final revenueNum = double.tryParse(dish['revenue']?.toString() ?? '0') ?? 0.0;
-          totalRevenue += revenueNum;
-        }
-        
-        final data = DishStatisticsData(
-          dishRevenueList: dishRevenueList,
-          chartData: chartData,
-          totalDishes: totalDishes,
-          totalRevenue: totalRevenue,
-          period: period,
-        );
-        
-
-        state = AsyncValue.data(data);
-      } else {
-
-        // Return empty data instead of error
-        final emptyData = DishStatisticsData(
-          dishRevenueList: [],
-          chartData: {},
-          totalDishes: 0,
-          totalRevenue: 0.0,
-          period: period,
-        );
-        state = AsyncValue.data(emptyData);
+        // Use raw revenue value from API (no need to parse "triệu")
+        final revenueNum = double.tryParse(dish['revenue']?.toString() ?? '0') ?? 0.0;
+        totalRevenue += revenueNum;
       }
-    } catch (error, stackTrace) {
+      
+      final data = DishStatisticsData(
+        dishRevenueList: dishRevenueList,
+        chartData: chartData,
+        totalDishes: totalDishes,
+        totalRevenue: totalRevenue,
+        period: _currentPeriod,
+      );
 
-      state = AsyncValue.error(error, stackTrace);
+      return data;
+    } else {
+      // Return empty data instead of error
+      final emptyData = DishStatisticsData(
+        dishRevenueList: [],
+        chartData: {},
+        totalDishes: 0,
+        totalRevenue: 0.0,
+        period: _currentPeriod,
+      );
+      return emptyData;
     }
   }
 
-  Future<void> refresh({String period = 'week'}) async {
-    await loadStatistics(period: period);
-  }
+  @override
+  Duration get pollingInterval => const Duration(minutes: 3); // Update every 3 minutes for dish statistics
 
   Future<void> changePeriod(String newPeriod) async {
-    await loadStatistics(period: newPeriod);
+    if (_currentPeriod != newPeriod) {
+      _currentPeriod = newPeriod;
+      await refresh();
+    }
   }
 }

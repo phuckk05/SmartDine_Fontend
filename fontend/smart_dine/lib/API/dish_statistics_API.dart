@@ -10,8 +10,8 @@ class DishStatisticsAPI {
   // Lấy thống kê món ăn theo chi nhánh và khoảng thời gian
   Future<Map<String, dynamic>?> getDishStatistics(int branchId, {String period = 'week'}) async {
     try {
-      // Sử dụng endpoint order statistics để tính thống kê món
-      final response = await _httpService.get('$baseUrl/orders/statistics/branch/$branchId?period=$period');
+      // Sử dụng endpoint dashboard dish statistics với period filtering
+      final response = await _httpService.get('$baseUrl/dashboard/dish-statistics/branch/$branchId?period=$period');
       final data = _httpService.handleResponse(response);
       
       if (data is Map<String, dynamic>) {
@@ -27,8 +27,8 @@ class DishStatisticsAPI {
   // Lấy thống kê chi tiết món ăn từ order items
   Future<List<Map<String, dynamic>>?> getDishSalesData(int branchId, {String period = 'week'}) async {
     try {
-      // Sử dụng endpoint summary để lấy dữ liệu sold dishes
-      final response = await _httpService.get('$baseUrl/orders/summary/today/$branchId');
+      // Sử dụng endpoint dashboard/dish-statistics với period parameter
+      final response = await _httpService.get('$baseUrl/dashboard/dish-statistics/branch/$branchId?period=$period');
       final data = _httpService.handleResponse(response);
       
       if (data is Map<String, dynamic>) {
@@ -45,9 +45,9 @@ class DishStatisticsAPI {
   }
 
   // Lấy revenue theo món ăn (tính từ sold dishes và price)
-  Future<List<Map<String, dynamic>>?> getDishRevenueData(int branchId) async {
+  Future<List<Map<String, dynamic>>?> getDishRevenueData(int branchId, {String period = 'week'}) async {
     try {
-      final salesData = await getDishSalesData(branchId);
+      final salesData = await getDishSalesData(branchId, period: period);
 
       if (salesData != null) {
         return salesData.map((dish) {
@@ -73,10 +73,10 @@ class DishStatisticsAPI {
   }
 
   // Lấy dữ liệu biểu đồ theo period
-  Future<Map<String, List<Map<String, dynamic>>>?> getChartData(int branchId) async {
+  Future<Map<String, List<Map<String, dynamic>>>?> getChartData(int branchId, {String period = 'week'}) async {
     try {
       // Try to get real data from backend first
-      final response = await _httpService.get('$baseUrl/orders/statistics/period/$branchId');
+      final response = await _httpService.get('$baseUrl/orders/statistics/period/$branchId?period=$period');
       final data = _httpService.handleResponse(response);
 
       if (data is Map<String, dynamic>) {
