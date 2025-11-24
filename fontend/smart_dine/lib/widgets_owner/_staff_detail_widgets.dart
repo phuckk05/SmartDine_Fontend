@@ -73,7 +73,14 @@ class StaffInfoCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(fontSize: 14, color: Colors.black54)),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+          const SizedBox(width: 10), // Thêm khoảng cách giữa label và value
+          Flexible(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              textAlign: TextAlign.right, // Căn phải cho đẹp hơn
+            ),
+          ),
         ],
       ),
     );

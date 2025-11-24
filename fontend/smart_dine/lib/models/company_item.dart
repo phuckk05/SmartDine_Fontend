@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mart_dine/features/admin/screen_company_detail.dart';
 import 'package:mart_dine/models/company.dart';
+import 'package:intl/intl.dart';
+import 'package:mart_dine/models/company.dart';
+import 'package:mart_dine/models/pending_company.dart';
 import 'package:mart_dine/models/pending_company.dart';
 
 class CompanyItem extends StatelessWidget {

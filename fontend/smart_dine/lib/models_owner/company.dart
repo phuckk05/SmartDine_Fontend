@@ -7,7 +7,7 @@ class Company {
   final String companyName;
   final String companyAddress;
   final String companyImageUrl;
-  final int companyCode; // Giữ int, nhưng chúng ta sẽ parse từ String
+  final String companyCode; // SỬA: Đổi thành String để chứa cả chữ và số
   final int statusId;
   // ---
   final DateTime createdAt;
@@ -29,7 +29,7 @@ class Company {
     String? companyName,
     String? companyAddress,
     String? companyImageUrl,
-    int? companyCode,
+    String? companyCode, // SỬA: Đổi thành String
     int? statusId,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -53,7 +53,7 @@ class Company {
       'name': companyName,
       'address': companyAddress,
       'image': companyImageUrl,
-      'companyCode': companyCode.toString(), // Gửi String
+      'companyCode': companyCode, // SỬA: Giờ nó đã là String
       'statusId': statusId,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
@@ -84,8 +84,8 @@ class Company {
       companyAddress: map['address'] ?? '', // Đọc 'address'
       companyImageUrl: map['image'] ?? '', // Đọc 'image'
       
-      // SỬA: Đọc 'companyCode' (String) và parse nó sang int
-      companyCode: _parseInt(map['companyCode']), 
+      // SỬA: Đọc 'companyCode' trực tiếp dưới dạng String
+      companyCode: map['companyCode']?.toString() ?? '', 
       statusId: _parseInt(map['statusId']),
       
       createdAt: _parseDate(map['createdAt']),

@@ -13,9 +13,10 @@ final categoryListProvider = FutureProvider<List<Category>>((ref) async {
   // SỬA: Lấy companyId trực tiếp từ owner profile
   final companyId = (await ref.watch(ownerProfileProvider.future)).companyId;
   if (companyId == null) {
-    throw Exception('Company ID not available');
+    // Nếu không có companyId, trả về danh sách rỗng để tránh lỗi
+    return [];
   }
-  return apiService.fetchCategories(companyId);
+  return apiService.fetchCategoriesByCompany(companyId);
 });
 
 // 2. Provider cho danh sách Item (lọc theo categoryId)
