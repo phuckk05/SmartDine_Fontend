@@ -23,6 +23,11 @@ public class MenuItemServices {
         return menuItemRepository.save(menuItem);
     }
 
+    // Lấy menu-item theo theo id
+    public List<MenuItem> getMenuById(Integer id) {
+        return menuItemRepository.findById(id);
+    }
+
     public boolean removeMenuItem(Integer categoryId, Integer itemId) {
         if (!menuItemRepository.existsByCategoryIdAndItemId(categoryId, itemId)) {
             return false;
