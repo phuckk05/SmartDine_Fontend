@@ -22,6 +22,12 @@ public class MenuItemServices {
         // Ensure timestamps maintained via entity if needed (not present now)
         return menuItemRepository.save(menuItem);
     }
+
+    // Lấy menu-item theo theo id
+    public List<MenuItem> getMenuById(Integer id) {
+        return menuItemRepository.findByMenuId(id);
+    }
+
     public boolean removeMenuItem(Integer categoryId, Integer itemId) {
         if (!menuItemRepository.existsByCategoryIdAndItemId(categoryId, itemId)) {
             return false;

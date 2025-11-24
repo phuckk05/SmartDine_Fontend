@@ -10,4 +10,6 @@ import com.smartdine.models.MenuImage;
 @Repository
 public interface MenuImageRepository extends JpaRepository<MenuImage, Integer> {
     List<MenuImage> findByItemId(Integer itemId);
+
+    void deleteByItemId(Integer itemId);
 }

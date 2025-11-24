@@ -1,5 +1,7 @@
 package com.smartdine.services;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,5 +21,22 @@ public class MenuImageServices {
      */
     public MenuImage createMenuImage(MenuImage menuImage) {
         return menuImageRepository.save(menuImage);
+    }
+
+    /**
+     * Lấy danh sách các ảnh theo itemId.
+     * @param itemId ID của item.
+     * @return Danh sách các đối tượng MenuImage.
+     */
+    public List<MenuImage> getImagesByItemId(Integer itemId) {
+        return menuImageRepository.findByItemId(itemId);
+    }
+
+    /**
+     * Xóa tất cả các ảnh liên quan đến một itemId.
+     * @param itemId ID của item.
+     */
+    public void deleteImagesByItemId(Integer itemId) {
+        menuImageRepository.deleteByItemId(itemId);
     }
 }
