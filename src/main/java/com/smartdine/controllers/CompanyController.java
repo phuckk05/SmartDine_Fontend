@@ -4,8 +4,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import com.smartdine.response.GetListCompanyAndOwnerResponse;
-import com.smartdine.response.GetListPendingCompanyAndOwnerResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,8 +17,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.smartdine.models.Company;
-import com.smartdine.services.CompanyServices;
+import com.smartdine.response.CompanyBranchResponse;
+import com.smartdine.response.GetListCompanyAndOwnerResponse;
+import com.smartdine.response.GetListPendingCompanyAndOwnerResponse;
 import com.smartdine.services.BranchServices;
+import com.smartdine.services.CompanyServices;
 
 @RestController
 @RequestMapping({ "/api/companys", "/api/company" })
@@ -168,6 +169,17 @@ public class CompanyController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.badRequest().body("Lỗi khi vô hiệu hóa công ty: " + e.getMessage());
+        }
+    }
+
+    // Lấy chi nhánh và công ty của user
+    @GetMapping("/company-branch/{userId}")
+    public ResponseEntity<?> getCompanyBranchByUser(@PathVariable Integer userId) {
+        try {
+            CompanyBranchResponse response = companyServices.getCompanyBranchByUser(userId);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
         }
     }
 

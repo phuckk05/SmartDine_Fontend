@@ -1,8 +1,10 @@
 package com.smartdine.controllers;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,9 +18,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.smartdine.models.Order;
+import com.smartdine.models.OrderItem;
 import com.smartdine.models.RestaurantTable;
 import com.smartdine.models.User;
 import com.smartdine.models.UserBranch;
+import com.smartdine.services.OrderItemService;
 import com.smartdine.services.OrderServices;
 import com.smartdine.services.PaymentService;
 import com.smartdine.services.RestaurantTableServices;
@@ -31,6 +35,9 @@ public class DashboardController {
 
     @Autowired
     private OrderServices orderServices;
+
+    @Autowired
+    private OrderItemService orderItemService;
 
     @Autowired
     private RestaurantTableServices restaurantTableServices;
@@ -168,26 +175,159 @@ public class DashboardController {
     public ResponseEntity<?> getTrendingItems(@PathVariable Integer branchId,
                                             @RequestParam(value = "limit", defaultValue = "5") int limit) {
         try {
-            // Mock trending items data - có thể thay bằng dữ liệu thực từ OrderItemService
+            LocalDate today = LocalDate.now();
+            LocalDateTime startOfDay = today.atStartOfDay();
+            LocalDateTime endOfDay = today.atTime(23, 59, 59);
+
+            // Lấy orders hôm nay theo branch
+            List<Order> todayOrders = orderServices.getOrdersByBranchId(branchId).stream()
+                .filter(order -> order.getCreatedAt().isAfter(startOfDay) && order.getCreatedAt().isBefore(endOfDay))
+                .toList();
+
+            // Lấy order items từ các orders hôm nay
+            List<Integer> orderIds = todayOrders.stream().map(Order::getId).toList();
+            List<OrderItem> orderItems = orderItemService.getOrderItemsByOrderIds(orderIds);
+
+            // Thống kê món ăn
+            Map<Integer, Map<String, Object>> itemStats = new HashMap<>();
+            for (OrderItem item : orderItems) {
+                Integer itemId = item.getItemId();
+                itemStats.putIfAbsent(itemId, new HashMap<>());
+                Map<String, Object> stats = itemStats.get(itemId);
+
+                // Tăng số lượng
+                stats.put("orders", ((Integer) stats.getOrDefault("orders", 0)) + item.getQuantity());
+
+                // Lưu thông tin item
+                stats.put("itemId", itemId);
+                stats.put("name", "Món " + itemId); // Placeholder name
+            }
+
+            // Chuyển thành list và sắp xếp theo số lượng giảm dần
+            List<Map<String, Object>> topDishes = itemStats.values().stream()
+                .sorted((a, b) -> ((Integer) b.get("orders")).compareTo((Integer) a.get("orders")))
+                .limit(limit)
+                .collect(java.util.stream.Collectors.toList());
+
             Map<String, Object> trending = new HashMap<>();
             trending.put("branchId", branchId);
-            trending.put("date", LocalDate.now().toString());
-            
-            // Mock top dishes
-            java.util.List<Map<String, Object>> topDishes = java.util.Arrays.asList(
-                Map.of("itemId", 1, "name", "Phở Bò Tái", "orders", 25, "revenue", 1250000),
-                Map.of("itemId", 2, "name", "Bún Chả Hà Nội", "orders", 18, "revenue", 900000),
-                Map.of("itemId", 3, "name", "Cơm Tấm Sườn", "orders", 15, "revenue", 750000),
-                Map.of("itemId", 4, "name", "Bánh Mì Thịt", "orders", 12, "revenue", 360000),
-                Map.of("itemId", 5, "name", "Chả Cá Lã Vọng", "orders", 8, "revenue", 640000)
-            );
-            
-            trending.put("topDishes", topDishes.stream().limit(limit).toList());
+            trending.put("date", today.toString());
+            trending.put("topDishes", topDishes);
             trending.put("totalItems", topDishes.size());
 
             return ResponseEntity.ok(trending);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Lỗi " + ex.getMessage());
+        }
+    }
+
+    // Lấy revenue trends theo branch
+    @GetMapping("/revenue-trends/branch/{branchId}")
+    public ResponseEntity<?> getRevenueTrends(@PathVariable Integer branchId,
+                                            @RequestParam(value = "days", defaultValue = "7") int days) {
+        try {
+            LocalDate endDate = LocalDate.now();
+            LocalDate startDate = endDate.minusDays(days - 1);
+
+            List<Map<String, Object>> trends = new ArrayList<>();
+
+            for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+                LocalDateTime startOfDay = date.atStartOfDay();
+                LocalDateTime endOfDay = date.atTime(23, 59, 59);
+
+                // Lấy orders trong ngày
+                List<Order> dayOrders = orderServices.getOrdersByBranchId(branchId).stream()
+                    .filter(order -> order.getCreatedAt().isAfter(startOfDay) && order.getCreatedAt().isBefore(endOfDay))
+                    .toList();
+
+                // Tính revenue từ payments trong ngày
+                BigDecimal dayRevenue = paymentService.getRevenueByDay(date, branchId, null);
+
+                Map<String, Object> trend = new HashMap<>();
+                trend.put("date", date.toString());
+                trend.put("revenue", dayRevenue.doubleValue());
+                trend.put("orders", dayOrders.size());
+                trends.add(trend);
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("branchId", branchId);
+            result.put("period", days + " days");
+            result.put("trends", trends);
+
+            return ResponseEntity.ok(result);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Lỗi lấy revenue trends: " + ex.getMessage());
+        }
+    }
+
+    // Lấy dish statistics theo branch
+    @GetMapping("/dish-statistics/branch/{branchId}")
+    public ResponseEntity<?> getDishStatistics(@PathVariable Integer branchId,
+                                             @RequestParam(value = "period", defaultValue = "week") String period) {
+        try {
+            LocalDate startDate;
+            LocalDate endDate = LocalDate.now();
+
+            // Xác định khoảng thời gian
+            switch (period.toLowerCase()) {
+                case "day":
+                    startDate = endDate;
+                    break;
+                case "week":
+                    startDate = endDate.minusDays(6);
+                    break;
+                case "month":
+                    startDate = endDate.minusDays(29);
+                    break;
+                default:
+                    startDate = endDate.minusDays(6); // Default to week
+            }
+
+            LocalDateTime startOfPeriod = startDate.atStartOfDay();
+            LocalDateTime endOfPeriod = endDate.atTime(23, 59, 59);
+
+            // Lấy orders trong khoảng thời gian
+            List<Order> periodOrders = orderServices.getOrdersByBranchId(branchId).stream()
+                .filter(order -> order.getCreatedAt().isAfter(startOfPeriod) && order.getCreatedAt().isBefore(endOfPeriod))
+                .toList();
+
+            // Lấy order items
+            List<Integer> orderIds = periodOrders.stream().map(Order::getId).toList();
+            List<OrderItem> orderItems = orderItemService.getOrderItemsByOrderIds(orderIds);
+
+            // Thống kê theo món ăn
+            Map<Integer, Map<String, Object>> dishStats = new HashMap<>();
+            for (OrderItem item : orderItems) {
+                Integer itemId = item.getItemId();
+                dishStats.putIfAbsent(itemId, new HashMap<>());
+                Map<String, Object> stats = dishStats.get(itemId);
+
+                // Tăng số lượng bán
+                int currentQuantity = (Integer) stats.getOrDefault("quantity", 0);
+                stats.put("quantity", currentQuantity + item.getQuantity());
+
+                // Lưu itemId
+                stats.put("itemId", itemId);
+                stats.put("name", "Món " + itemId); // Placeholder
+            }
+
+            // Chuyển thành list và sắp xếp theo quantity giảm dần
+            List<Map<String, Object>> topDishes = dishStats.values().stream()
+                .sorted((a, b) -> ((Integer) b.get("quantity")).compareTo((Integer) a.get("quantity")))
+                .limit(10) // Top 10 dishes
+                .collect(java.util.stream.Collectors.toList());
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("branchId", branchId);
+            result.put("period", period);
+            result.put("startDate", startDate.toString());
+            result.put("endDate", endDate.toString());
+            result.put("topDishes", topDishes);
+
+            return ResponseEntity.ok(result);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body("Lỗi lấy dish statistics: " + ex.getMessage());
         }
     }
 }

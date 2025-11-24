@@ -35,4 +35,16 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
             @Param("statusId") Integer statusId,
             @Param("startOfDay") LocalDateTime startOfDay,
             @Param("endOfDay") LocalDateTime endOfDay);
+
+    // Lấy danh sách order theo userId và branchId trong khoảng thời gian
+    List<Order> findByUserIdAndBranchIdAndCreatedAtBetween(
+            Integer userId, Integer branchId, LocalDateTime startOfDay, LocalDateTime endOfDay);
+
+    // Đếm số order theo userId và branchId trong khoảng thời gian
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.userId = :userId AND o.branchId = :branchId AND o.createdAt BETWEEN :start AND :end")
+    Long countByUserIdAndBranchIdAndCreatedAtBetween(
+            @Param("userId") Integer userId,
+            @Param("branchId") Integer branchId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end);
 }
