@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/API_staff/branch_API.dart';
 import 'package:mart_dine/API_staff/user_branch_API.dart';
+import 'package:mart_dine/features/staff/screen_order_history.dart';
 import 'package:mart_dine/features/staff/screen_user_profile.dart';
 import 'package:mart_dine/model_staff/user.dart';
 import 'package:mart_dine/models/user_session.dart';
@@ -97,10 +98,13 @@ class ScreenSettings extends ConsumerWidget {
             icon: Icons.history,
             title: 'Lịch sử gọi món',
             onTap: () {
-              // Navigator.push(
-              //   context,
-              //   MaterialPageRoute(builder: (_) => const ScreenOrderHistory()),
-              // );
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (_) => ScreenOrderHistory(branchId: resolvedBranchId),
+                ),
+              );
             },
           ),
 
