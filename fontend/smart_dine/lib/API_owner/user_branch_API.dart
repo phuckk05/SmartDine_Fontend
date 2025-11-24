@@ -64,9 +64,9 @@ class UserBranchAPI {
      }
   }
   // SỬA: Thêm branchId để xóa đúng quan hệ
-  Future<bool> unassignUserFromBranch(int userId, int branchId) async {
+  Future<bool> unassignUserFromBranch(int userId) async {
      final response = await http.delete(
-       Uri.parse('$_relationUri/user/$userId/branch/$branchId'), // SỬA: Endpoint mới
+       Uri.parse('$_relationUri/user/$userId'), // SỬA: Endpoint mới
        headers: <String, String>{
          'Accept': 'application/json',
          // 'Authorization': 'Bearer YOUR_TOKEN',

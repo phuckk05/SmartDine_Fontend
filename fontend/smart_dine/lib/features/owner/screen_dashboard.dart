@@ -24,8 +24,8 @@ import 'package:mart_dine/features/owner/screen_menu_management.dart';
 import 'package:mart_dine/providers_owner/system_stats_provider.dart'; // <<< THÊM IMPORT NÀY
 
 
-// StateProvider để giữ ID chi nhánh đang chọn (0 = Tổng quan)
-final _selectedBranchIdProvider = StateProvider<int>((ref) => 0);
+// SỬA: Loại bỏ StateProvider cho việc chọn chi nhánh, vì giờ chỉ hiển thị tổng quan
+// final _selectedBranchIdProvider = StateProvider<int>((ref) => 0);
 
 class ScreenDashboard extends ConsumerStatefulWidget {
   const ScreenDashboard({super.key});
@@ -82,82 +82,67 @@ class _ScreenDashboardState extends ConsumerState<ScreenDashboard> {
 class DashboardView extends ConsumerWidget {
   const DashboardView({super.key});
 
-  // SỬA: _restaurantCards dùng Provider `topBranchesProvider`
-  Widget _restaurantCards(WidgetRef ref) {
-    
-    // Watch API Top 4
-    final topBranchesAsync = ref.watch(topBranchesProvider);
-    // Watch API lấy TẤT CẢ chi nhánh (để lấy tên)
+  // SỬA: Widget mới để hiển thị các thẻ thống kê tổng quan
+  Widget _summaryCards(WidgetRef ref) {
+    // Lấy dữ liệu từ các provider
+    final statsAsync = ref.watch(systemStatsProvider); // SỬA: Đổi tên để thể hiện đây là AsyncValue
     final allBranchesAsync = ref.watch(branchListProvider);
-    
-    // Watch state ID đang chọn
-    final selectedBranchId = ref.watch(_selectedBranchIdProvider);
 
-    // Hàm xử lý tap
-    void handleBranchTap(int tappedBranchId) {
-      final notifier = ref.read(_selectedBranchIdProvider.notifier);
-      // Nếu nhấn lại chính nó, set về 0 (Tổng quan)
-      notifier.state = (selectedBranchId == tappedBranchId) ? 0 : tappedBranchId;
-    }
-
-    return topBranchesAsync.when(
-      loading: () => const Center(child: Padding(padding: EdgeInsets.all(20.0), child: CircularProgressIndicator())),
-      error: (err, stack) => Center(child: Text("Lỗi tải Top 4: $err", style: const TextStyle(color: Colors.red))),
-      data: (top4Data) { // SỬA 1: Đổi tên tham số 'top4' thành 'top4Data'
-        
-        // Dùng `allBranchesAsync` để lấy tên chi nhánh
-        final allBranches = ref.watch(branchListProvider).value ?? [];
-        String getBranchName(int branchId) {
-          try {
-            return allBranches.firstWhere((b) => b.id == branchId).name;
-          } catch (e) {
-            return "Chi nhánh $branchId"; // Fallback
-          }
-        }
-
-        // Helper để tránh lỗi "RangeError"
-        BranchRevenueComparison getTopBranch(int index) {
-          // SỬA 1: Dùng 'top4Data'
-          return top4Data.length > index ? top4Data[index] : BranchRevenueComparison(branchId: -index, totalRevenue: 0.0);
-        }
-
-        final top1 = getTopBranch(0);
-        final top2 = getTopBranch(1);
-        final top3 = getTopBranch(2);
-        // SỬA 1: Đổi tên biến 'top4' thành 'topBranch4' để tránh xung đột
-        final topBranch4 = getTopBranch(3);
-
+    // SỬA: Dùng .when để xử lý trạng thái của systemStatsProvider
+    return statsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) => Text("Lỗi tải thống kê: $err"),
+      data: (stats) {
+        final staffCount = stats['total_staff'] ?? '0';
         return Column(
           children: [
-            // SỬA: Bọc Row trong IntrinsicHeight để đảm bảo các box có cùng chiều cao
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch, // Đảm bảo các box kéo dài bằng nhau
-                children: [
-                  Expanded(child: _restaurantBox(top1.totalRevenue, getBranchName(top1.branchId), top1.branchId,
-                      isSelected: selectedBranchId == top1.branchId,
-                      onTap: () => handleBranchTap(top1.branchId))),
-                  const SizedBox(width: 10),
-                  Expanded(child: _restaurantBox(top2.totalRevenue, getBranchName(top2.branchId), top2.branchId,
-                      isSelected: selectedBranchId == top2.branchId,
-                      onTap: () => handleBranchTap(top2.branchId))),
-                ],
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: _summaryBox(
+                    'Tổng doanh thu',
+                    // SỬA: Ép kiểu (cast) giá trị sang double để khớp với yêu cầu của formatCurrency
+                    formatCurrency((stats['total_revenue'] as num? ?? 0.0).toDouble()),
+                    Icons.monetization_on,
+                    Colors.orange,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _summaryBox(
+                    'Tổng đơn hàng',
+                    (stats['total_orders'] ?? 0).toString(),
+                    Icons.receipt_long,
+                    Colors.blue,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 10),
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(child: _restaurantBox(top3.totalRevenue, getBranchName(top3.branchId), top3.branchId,
-                      isSelected: selectedBranchId == top3.branchId,
-                      onTap: () => handleBranchTap(top3.branchId))),
-                  const SizedBox(width: 10),
-                  Expanded(child: _restaurantBox(topBranch4.totalRevenue, getBranchName(topBranch4.branchId), topBranch4.branchId,
-                      isSelected: selectedBranchId == topBranch4.branchId,
-                      onTap: () => handleBranchTap(topBranch4.branchId))),
-                ],
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: allBranchesAsync.when(
+                    data: (branches) => _summaryBox(
+                      'Tổng chi nhánh',
+                      branches.length.toString(),
+                      Icons.store,
+                      Colors.green,
+                    ),
+                    loading: () => _summaryBox('Tổng chi nhánh', '...', Icons.store, Colors.green),
+                    error: (e, s) => _summaryBox('Tổng chi nhánh', 'Lỗi', Icons.store, Colors.green),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _summaryBox(
+                    'Tổng nhân viên',
+                    staffCount.toString(),
+                    Icons.people,
+                    Colors.purple,
+                  ),
+                ),
+              ],
             ),
           ],
         );
@@ -165,65 +150,53 @@ class DashboardView extends ConsumerWidget {
     );
   }
 
-  // _restaurantBox (Widget này giữ nguyên như code bạn cung cấp, chỉ hiển thị Doanh thu)
-  Widget _restaurantBox(double revenue, String name, int branchId,
-   {bool isSelected = false, VoidCallback? onTap}) {
-
-  final value = formatCurrency(revenue); // Dùng helper
-
-    // Vô hiệu hóa tap nếu doanh thu = 0
-    final effectiveOnTap = revenue > 0 ? onTap : null;
-
-  return GestureDetector(
-   onTap: effectiveOnTap,
-   child: ShadowCus(
-    borderRadius: 15, // ShadowCus mặc định baseColor là Colors.white
-    child: Container(
-     padding: const EdgeInsets.all(12),
-     decoration: BoxDecoration(
-       borderRadius: BorderRadius.circular(15),
-       border: isSelected 
-                ? Border.all(color: Colors.blue, width: 2) 
-                : Border.all(color: Colors.grey.shade200),
-   ),
-     // SỬA: Loại bỏ Expanded, Column sẽ tự lấp đầy Container.
-     child: Column(
-      mainAxisAlignment: MainAxisAlignment.center, 
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-       // 1. Tên chi nhánh
-       Text(
-        name,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87),
-        maxLines: 1, overflow: TextOverflow.ellipsis,
-       ),
-       const SizedBox(height: 6),
-   
-       // 2. Số tiền doanh thu
-       Text(
-        revenue > 0 ? value : "Chưa có dữ liệu",
-        style: TextStyle(
-                fontSize: revenue > 0 ? 16 : 14, 
-                fontWeight: FontWeight.bold, 
-                color: revenue > 0 ? Colors.black : Colors.black45,
-                fontStyle: revenue > 0 ? FontStyle.normal : FontStyle.italic,
-              )
-       ),
-      ],
-     ),
-    ),
-   ),
-  );
- }
-
+  // Widget con cho mỗi thẻ thống kê
+  Widget _summaryBox(String title, String value, IconData icon, Color color) {
+    return ShadowCus(
+      borderRadius: 15,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(fontSize: 13, color: Colors.black54),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   // SỬA: _doanhThu dùng Provider `revenueChartProvider`
   Widget _doanhThu(WidgetRef ref) {
     // State cho Filter (Tuan/Thang/Nam)
     final revenueFilter = ref.watch(_revenueFilterProvider);
-    // Watch API
-    // SỬA 2: Truyền 'revenueFilter' (đã được import)
-    final chartDataAsync = ref.watch(revenueChartProvider(revenueFilter));
+    // SỬA: Truyền một tuple (filter, branchId) vào provider.
+    // Vì đây là dashboard tổng quan, branchId là null.
+    final chartDataAsync = ref.watch(revenueChartProvider((revenueFilter, null)));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,6 +216,12 @@ class DashboardView extends ConsumerWidget {
                 final List<int> data = chartData.map((d) => d.value.toInt()).toList();
                 final List<String> labels = chartData.map((d) => d.label).toList();
                 
+                // THÊM: Kiểm tra nếu tất cả dữ liệu bằng 0 để tránh lỗi chia cho 0
+                final isAllZero = data.every((d) => d == 0);
+                if (isAllZero) {
+                  return const Center(child: Text("Không có dữ liệu doanh thu."));
+                }
+
                 // Cần xử lý labels (ví dụ: '2025-11-07' -> '07/11')
                 // SỬA: Dùng asMap().entries để lấy index và giảm bớt số lượng label
                 final formattedLabels = labels.asMap().entries.map((entry) {
@@ -282,8 +261,9 @@ class DashboardView extends ConsumerWidget {
   // SỬA: _donHang dùng Provider `orderChartProvider`
   Widget _donHang(WidgetRef ref) {
     final orderFilter = ref.watch(_orderFilterProvider);
-    // SỬA 2: Truyền 'orderFilter' (đã được import)
-    final chartDataAsync = ref.watch(orderChartProvider(orderFilter));
+    // SỬA: Truyền một tuple (filter, branchId) vào provider.
+    // Vì đây là dashboard tổng quan, branchId là null.
+    final chartDataAsync = ref.watch(orderChartProvider((orderFilter, null)));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,6 +285,12 @@ class DashboardView extends ConsumerWidget {
                 }).toList();
                 
                 final List<String> labels = chartData.map((d) => d.label).toList();
+
+                // THÊM: Kiểm tra nếu tất cả dữ liệu bằng 0 để tránh lỗi chia cho 0
+                final isAllZero = data.every((bar) => bar.every((val) => val == 0));
+                if (isAllZero) {
+                  return const Center(child: Text("Không có dữ liệu đơn hàng."));
+                }
                 
                 // Cần xử lý labels
                 // SỬA: Dùng asMap().entries để lấy index và giảm bớt số lượng label
@@ -389,7 +375,7 @@ Widget build(BuildContext context, WidgetRef ref) {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _restaurantCards(ref),
+              _summaryCards(ref), // SỬA: Thay thế bằng widget mới
               const SizedBox(height: 15), // SỬA: Giảm khoảng cách để tránh overflow
               _doanhThu(ref),
               const SizedBox(height: 10), // SỬA: Giảm khoảng cách để tránh overflow

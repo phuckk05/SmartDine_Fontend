@@ -32,9 +32,13 @@ class OrderAPI {
     
     // Xử lý branchId = null (Tổng quan)
     String branchQuery = (branchId == null) ? "" : "&branchId=$branchId";
+    // SỬA: Đồng bộ hóa logic với payment_API.
+    // Chỉ thêm tham số 'days' nếu period là 'daily' hoặc 'weekly'.
+    String daysQuery = (period == 'daily' || period == 'weekly') ? "&days=$days" : "";
 
     final response = await http.get(
-      Uri.parse('$_uri/count?period=$period&companyId=$companyId$branchQuery&days=$days'),
+      // SỬA: Xây dựng lại URL để chỉ bao gồm các tham số cần thiết.
+      Uri.parse('$_uri/count?period=$period&companyId=$companyId$branchQuery$daysQuery'),
       headers: {'Accept': 'application/json'},
     );
     if (response.statusCode == 200) {
@@ -57,6 +61,21 @@ class OrderAPI {
       return body.map((dynamic item) => Order.fromMap(item)).toList();
     } else {
       throw Exception('Lỗi tải danh sách đơn hàng (Mã: ${response.statusCode})');
+    }
+  }
+
+  // THÊM: GET /api/orders/branch/{branchId} để lấy đơn hàng theo chi nhánh
+  Future<List<Order>> fetchOrdersByBranch(int branchId) async {
+    final response = await http.get(
+      Uri.parse('$_uri/branch/$branchId'),
+      headers: {'Accept': 'application/json'},
+    );
+    if (response.statusCode == 200) {
+      List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
+      return body.map((dynamic item) => Order.fromMap(item)).toList();
+    } else {
+      throw Exception(
+          'Lỗi tải danh sách đơn hàng theo chi nhánh (Mã: ${response.statusCode})');
     }
   }
 }
