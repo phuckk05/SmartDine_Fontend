@@ -41,6 +41,9 @@ class ScreenPayment extends ConsumerStatefulWidget {
 }
 
 class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
+  static const int _statusServed = 3;
+  static const int _statusCancelled = 4;
+
   String _selectedPaymentMethod = 'Phương thức thanh toán';
   bool _isProcessing = false;
   bool _isExportingInvoice = false;
@@ -121,6 +124,9 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
 
     double total = 0.0;
     for (final item in widget.orderItems) {
+      if (!_isItemChargeable(item)) {
+        continue;
+      }
       final menuItem = menuMap[item.itemId];
       if (menuItem != null) {
         total += item.quantity * menuItem.price;
@@ -131,6 +137,13 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
     print('Calculated total: $total');
     return total;
   }
+
+  bool _isItemCancelled(OrderItem item) => item.statusId == _statusCancelled;
+
+  bool _isItemChargeable(OrderItem item) => item.statusId == _statusServed;
+
+  bool _isItemReadyForBilling(OrderItem item) =>
+      _isItemChargeable(item) || _isItemCancelled(item);
 
   Future<void> _resolveCashierName() async {
     final currentUser = ref.read(userNotifierProvider);
@@ -181,7 +194,9 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
 
     // Kiểm tra xem tất cả món đã được phục vụ chưa
     final unservedItems =
-        widget.orderItems.where((item) => item.statusId != 3).toList();
+        widget.orderItems
+            .where((item) => !_isItemReadyForBilling(item))
+            .toList();
     if (unservedItems.isNotEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -399,8 +414,9 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
             ? 'Chưa chọn'
             : _selectedPaymentMethod;
 
+    final billableItems = widget.orderItems.where(_isItemChargeable).toList();
     final itemRows =
-        widget.orderItems.map((item) {
+        billableItems.map((item) {
           final menuItem = menuLookup[item.itemId];
           final itemName = menuItem?.name ?? 'Món ${item.itemId}';
           final unitPrice = menuItem?.price ?? 0;
@@ -876,6 +892,8 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
     );
 
     final itemPrice = menuItem.price * item.quantity;
+    final isCancelled = _isItemCancelled(item);
+    final displayPrice = isCancelled ? 0 : itemPrice;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -903,7 +921,10 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
               children: [
                 Text(
                   menuItem.name,
-                  style: Style.fontNormal.copyWith(fontSize: 14),
+                  style: Style.fontNormal.copyWith(
+                    fontSize: 14,
+                    decoration: isCancelled ? TextDecoration.lineThrough : null,
+                  ),
                 ),
                 if (item.note != null && item.note!.isNotEmpty)
                   Text(
@@ -914,15 +935,28 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
                       fontStyle: FontStyle.italic,
                     ),
                   ),
+                if (isCancelled)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'ĐÃ HỦY - không tính tiền',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.red.shade400,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
           // Giá
           Text(
-            '${itemPrice.toStringAsFixed(0)}đ',
+            '${displayPrice.toStringAsFixed(0)}đ',
             style: Style.fontNormal.copyWith(
               fontSize: 14,
               fontWeight: FontWeight.w600,
+              color: isCancelled ? Colors.grey : null,
             ),
           ),
         ],
