@@ -105,16 +105,6 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> w
         code: e['code'] ?? '',
       )).toList();
     }
-    // } else {
-    //   // Nếu không có table types cho branch, khởi tạo danh sách mặc định
-    //   _tableTypes = [
-    //     TableType(id: 1, name: 'Bàn thường', code: 'NORMAL'),
-    //     TableType(id: 2, name: 'Bàn VIP', code: 'VIP'),
-    //     TableType(id: 3, name: 'Bàn ngoài trời', code: 'OUTDOOR'),
-    //     TableType(id: 4, name: 'Bàn gia đình', code: 'FAMILY'),
-    //     TableType(id: 5, name: 'Bàn đôi', code: 'COUPLE'),
-    //   ];
-    // }
     
     final statuses = await api.getTableStatuses();
     if (statuses != null && statuses.isNotEmpty) {
@@ -878,12 +868,23 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> w
   }
 
   // Dialog chỉnh sửa bàn
-  void _showEditTableDialog(BuildContext context, table_model.Table table, bool isDark, Color textColor, Color cardColor) {
+  void _showEditTableDialog(BuildContext context, table_model.Table table, bool isDark, Color textColor, Color cardColor) async {
+    // Ensure table meta data is loaded before opening dialog
+    if (!_tableMetaLoaded) {
+      await _loadTableMeta();
+    }
+
     // Populate controllers
     _nameController.text = table.name;
     _descriptionController.text = table.description ?? '';
-    _selectedStatusId = table.statusId;
-    _selectedTypeId = table.typeId;
+
+    // Ensure selected values exist in dropdown lists, fallback to null if not found
+    _selectedStatusId = _tableStatuses.any((s) => s.id == table.statusId)
+        ? table.statusId
+        : null;
+    _selectedTypeId = _tableTypes.any((t) => t.id == table.typeId)
+        ? table.typeId
+        : null;
 
     showDialog(
       context: context,
@@ -979,7 +980,9 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> w
                               onPressed: () async {
                                 if (_nameController.text.isNotEmpty &&
                                     _selectedStatusId != null &&
-                                    _selectedTypeId != null) {
+                                    _selectedTypeId != null &&
+                                    _tableStatuses.isNotEmpty &&
+                                    _tableTypes.isNotEmpty) {
                                   
                                   final branchId = ref.read(currentBranchIdProvider);
                                   if (branchId != null && table.id != null) {
@@ -990,8 +993,8 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> w
                                         typeId: _selectedTypeId!,
                                         statusId: _selectedStatusId!,
                                         updatedAt: DateTime.now(),
-                                        typeName: _tableTypes.firstWhere((t) => t.id == _selectedTypeId).name,
-                                        statusName: _tableStatuses.firstWhere((s) => s.id == _selectedStatusId).name,
+                                        typeName: _tableTypes.firstWhere((t) => t.id == _selectedTypeId, orElse: () => TableType(id: _selectedTypeId!, name: 'Unknown', code: '')).name,
+                                        statusName: _tableStatuses.firstWhere((s) => s.id == _selectedStatusId, orElse: () => TableStatus(id: _selectedStatusId!, name: 'Unknown', code: '')).name,
                                       );
                                       
                                       await ref.read(tableManagementProvider(branchId).notifier)
@@ -1059,19 +1062,30 @@ class _TableManagementScreenState extends ConsumerState<TableManagementScreen> w
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: isDark ? Colors.grey[800] : Colors.grey[100],
+            color: items.isEmpty ? (isDark ? Colors.grey[700] : Colors.grey[200]) : (isDark ? Colors.grey[800] : Colors.grey[100]),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
+            border: Border.all(color: items.isEmpty ? Colors.grey[500]! : (isDark ? Colors.grey[700]! : Colors.grey[300]!)),
           ),
           child: DropdownButtonHideUnderline(
-            child: DropdownButton<int>(
-              value: value,
-              isExpanded: true,
-              dropdownColor: isDark ? Colors.grey[800] : Colors.white,
-              style: Style.fontNormal.copyWith(color: textColor),
-              items: items,
-              onChanged: onChanged,
-            ),
+            child: items.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Text(
+                      'Không có dữ liệu',
+                      style: Style.fontNormal.copyWith(
+                        color: Colors.grey[600],
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  )
+                : DropdownButton<int>(
+                    value: value,
+                    isExpanded: true,
+                    dropdownColor: isDark ? Colors.grey[800] : Colors.white,
+                    style: Style.fontNormal.copyWith(color: textColor),
+                    items: items,
+                    onChanged: onChanged,
+                  ),
           ),
         ),
       ],
