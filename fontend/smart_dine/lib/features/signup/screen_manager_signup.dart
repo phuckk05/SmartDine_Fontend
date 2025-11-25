@@ -113,6 +113,7 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
         context,
         'Đăng kí thành công ,đợi chủ nhà hàng duyệt !',
       );
+      ref.read(isLoadingNotifierProvider.notifier).toggle(false);
       await Future.delayed(Duration(seconds: 4));
       if (!mounted) {
         return;
@@ -138,7 +139,6 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
         if (!mounted) {
           return;
         }
-        ref.read(isLoadingNotifierProvider.notifier).toggle(false);
       } else {
         Constrats.showThongBao(context, "Vui lòng nhập đủ thông tin !");
       }
@@ -152,7 +152,7 @@ class _ScreenManagerSignupState extends ConsumerState<ScreenManagerSignup> {
     _codeController.dispose();
     _codeRestaurantController.dispose();
     // reset lại state khi thoát
-    ref.read(isLoadingNotifierProvider.notifier).toggle(false);
+    // ref.read(isLoadingNotifierProvider.notifier).toggle(false);
     super.dispose();
   }
 

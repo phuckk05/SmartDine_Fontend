@@ -110,7 +110,7 @@ class BranchAPI {
 
   Future<Branch?> findBranchByBranchCode(String branchCode) async {
     final response = await http.get(
-      Uri.parse('${_uri}/code/${branchCode}'),
+      Uri.parse('${_uri}/${branchCode}'),
       headers: {'Content-Type': 'application/json'},
     );
     if (response.statusCode == 200 || response.statusCode == 201) {

@@ -109,6 +109,7 @@ class SettingNotifier extends StateNotifier<SettingState> {
     if (jsonString == null) return null;
 
     final Map<String, dynamic> data = jsonDecode(jsonString);
+    print('🔍 [Setting] Retrieved user data: $data');
     return User.fromMap(data);
   }
 

@@ -17,6 +17,7 @@ class CompanyNotifier extends StateNotifier<Company?> {
       final response = await companyAPI.createCompany(company);
       if (response != null) {
         state = response;
+        print('🔍 [CompanyNotifier] Created company: ${response.toMap()}');
         //Cập nhật companyId cho user
         await userAPI.updateCompanyId(userId, response.id!);
         return 1;
