@@ -238,19 +238,18 @@ class _BranchPerformanceScreenState
                   const Divider(),
 
                   ...performances.where((employee) {
-                    // Lọc chỉ hiển thị nhân viên có role phục vụ, đầu bếp, thu ngân
+                    // Lọc chỉ hiển thị nhân viên có role STAFF, CHEF, Cashier
                     final roleId = employee['roleId'] ?? employee['role'];
-                    // Map role ID đơn giản: 1=phục vụ, 2=đầu bếp, 3=thu ngân, etc.
                     final role = roleId is int ? roleId : (roleId?.toString().toLowerCase() ?? '');
-                    return role == 1 || role == '1' || // Phục vụ
-                           role == 2 || role == '2' || // Đầu bếp  
-                           role == 3 || role == '3' || // Thu ngân
+                    return role == 3 || role == '3' || // STAFF
+                           role == 4 || role == '4' || // CHEF
+                           role == 6 || role == '6' || // Cashier
                            (role is String && (
-                             role.contains('phục vụ') || role.contains('phuc vu') ||
+                             role.contains('nhân viên') || role.contains('nhan vien') ||
                              role.contains('đầu bếp') || role.contains('dau bep') ||
                              role.contains('chef') || role.contains('thu ngân') ||
                              role.contains('thu ngan') || role.contains('cashier') ||
-                             role.contains('staff') || role.contains('waiter')
+                             role.contains('staff')
                            ));
                   }).map(
                     (e) => Row(

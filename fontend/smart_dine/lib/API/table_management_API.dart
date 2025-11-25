@@ -282,7 +282,7 @@ class TableManagementAPI {
   // Lấy danh sách trạng thái bàn
   Future<List<Map<String, dynamic>>?> getTableStatuses() async {
     try {
-      final response = await _httpService.get('$baseUrl/table-statuses');
+      final response = await _httpService.get('$baseUrl/table-statuses/all');
       final data = _parseResponse(response);
       
       if (data != null) {

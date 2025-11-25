@@ -68,10 +68,22 @@ class BranchStatisticsAPI {
   // Lấy top món bán chạy - Uses real API data
   Future<List<Map<String, dynamic>>?> getTopDishes(int branchId, {int limit = 5}) async {
     try {
-      // Return empty list since we need payment/menu API for top dishes data
+      // Gọi API thật thay vì trả về empty list
+      final response = await _httpService.get('$baseUrl/menus/top-dishes/branch/$branchId?limit=$limit');
+      final data = _httpService.handleResponse(response);
+
+      if (data is List) {
+        return data.cast<Map<String, dynamic>>();
+      }
       return [];
     } catch (e) {
-            return [];
+      // Test API endpoint specifically
+      final apiWorking = await _httpService.testApiEndpoint('$baseUrl/menus/top-dishes/branch/$branchId');
+      if (!apiWorking) {
+        throw Exception('Server không phản hồi. Vui lòng thử lại sau hoặc liên hệ admin.');
+      }
+
+      rethrow;
     }
   }
 

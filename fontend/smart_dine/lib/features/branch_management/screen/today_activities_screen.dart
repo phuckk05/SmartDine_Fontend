@@ -257,6 +257,78 @@ class _TodayActivitiesScreenState extends ConsumerState<TodayActivitiesScreen> {
             ),
             const SizedBox(height: 24),
 
+            // Món ăn bị hủy (dữ liệu động)
+            Text(
+              'Món ăn bị hủy',
+              style: Style.fontTitleMini.copyWith(color: textColor),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: data.cancelledDishes.isEmpty
+                  ? Text('Không có dữ liệu', style: Style.fontCaption.copyWith(color: Style.textColorGray))
+                  : Column(
+                      children: [
+                        for (int i = 0; i < data.cancelledDishes.length; i++) ...[
+                          _buildDishRow(
+                            data.cancelledDishes[i]['name'] ?? '',
+                            data.cancelledDishes[i]['quantity']?.toString() ?? '',
+                            textColor,
+                          ),
+                          if (i < data.cancelledDishes.length - 1) const Divider(height: 24),
+                        ],
+                      ],
+                    ),
+            ),
+            const SizedBox(height: 24),
+
+            // Món ăn thêm (dữ liệu động)
+            Text(
+              'Món ăn thêm',
+              style: Style.fontTitleMini.copyWith(color: textColor),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: data.extraDishes.isEmpty
+                  ? Text('Không có dữ liệu', style: Style.fontCaption.copyWith(color: Style.textColorGray))
+                  : Column(
+                      children: [
+                        for (int i = 0; i < data.extraDishes.length; i++) ...[
+                          _buildDishRow(
+                            data.extraDishes[i]['name'] ?? '',
+                            data.extraDishes[i]['quantity']?.toString() ?? '',
+                            textColor,
+                          ),
+                          if (i < data.extraDishes.length - 1) const Divider(height: 24),
+                        ],
+                      ],
+                    ),
+            ),
+            const SizedBox(height: 24),
+
             // Đơn hàng theo giờ
             Text(
               'Đơn hàng theo giờ',

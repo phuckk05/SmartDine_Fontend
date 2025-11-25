@@ -230,7 +230,7 @@ class EmployeeManagementAPI {
   // Lấy danh sách trạng thái user
   Future<List<Map<String, dynamic>>?> getUserStatuses() async {
     try {
-      final response = await _httpService.get('$baseUrl/user-statuses');
+      final response = await _httpService.get('$baseUrl/user-statuses/all');
       final data = _parseResponse(response);
       
       if (data != null) {

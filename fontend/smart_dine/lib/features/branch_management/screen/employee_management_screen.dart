@@ -323,7 +323,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
                   return const SizedBox.shrink();
                 }
                 
-                final pendingUsersAsync = ref.watch(pendingEmployeesProvider(currentBranchId));
+                final pendingUsersAsync = ref.watch(pendingEmployeesRealtimeProvider(currentBranchId));
                 
                 return pendingUsersAsync.when(
                   loading: () => Container(
@@ -1409,7 +1409,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
                 Expanded(
                   child: Consumer(
                     builder: (context, ref, child) {
-                      final pendingUsersAsync = ref.watch(pendingEmployeesProvider(branchId));
+                      final pendingUsersAsync = ref.watch(pendingEmployeesRealtimeProvider(branchId));
                       
                       return pendingUsersAsync.when(
                         loading: () => const Center(child: CircularProgressIndicator()),
@@ -1422,7 +1422,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
                               Text('Lỗi: $error'),
                               const SizedBox(height: 16),
                               ElevatedButton(
-                                onPressed: () => ref.refresh(pendingUsersByBranchProvider(branchId)),
+                                onPressed: () => ref.read(pendingEmployeesRealtimeProvider(branchId).notifier).refresh(),
                                 child: const Text('Thử lại'),
                               ),
                             ],
@@ -2029,51 +2029,52 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
 
   // Duyệt user
   void _approveUser(BuildContext context, int userId, int branchId) async {
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Đang duyệt nhân viên...'),
-          ],
-        ),
+    // Optimistic UI: Show success immediately and update UI
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Đã duyệt nhân viên thành công!'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
       ),
     );
-    
-    final api = ref.read(userApprovalApiProvider);
-    final success = await api.approveUser(userId);
-    
-    // Close loading dialog
-    Navigator.of(context).pop();
-    
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Đã duyệt nhân viên thành công!'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-      // Refresh both employee list and pending users list
-      _refreshEmployees();
-      ref.invalidate(pendingUsersByBranchProvider(branchId));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Có lỗi xảy ra khi duyệt nhân viên'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
-  }
 
-  // Từ chối user
+    // Close all dialogs (approval dialog and pending users dialog)
+    Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
+
+    // Refresh UI immediately
+    _refreshEmployees();
+    ref.read(pendingEmployeesRealtimeProvider(branchId).notifier).refresh();
+
+    // Process API call in background
+    try {
+      final api = ref.read(userApprovalApiProvider);
+      final success = await api.approveUser(userId);
+
+      if (!success) {
+        // API failed, show error and refresh to revert UI
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Có lỗi xảy ra khi duyệt nhân viên'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+        // Refresh to show the user back in pending list
+        ref.read(pendingEmployeesRealtimeProvider(branchId).notifier).refresh();
+      }
+    } catch (e) {
+      // Handle network errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi kết nối: $e'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      // Refresh to revert UI
+      ref.read(pendingEmployeesRealtimeProvider(branchId).notifier).refresh();
+    }
+  }  // Từ chối user
   void _rejectUser(BuildContext context, int userId, int branchId) async {
     final api = ref.read(userApprovalApiProvider);
     final success = await api.rejectUser(userId, 'Không đáp ứng yêu cầu');
@@ -2086,7 +2087,7 @@ class _EmployeeManagementScreenState extends ConsumerState<EmployeeManagementScr
         ),
       );
       // Refresh pending users list
-      ref.invalidate(pendingUsersByBranchProvider(branchId));
+      ref.read(pendingEmployeesRealtimeProvider(branchId).notifier).refresh();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

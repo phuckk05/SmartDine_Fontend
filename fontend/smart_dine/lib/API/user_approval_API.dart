@@ -54,9 +54,10 @@ class UserApprovalAPI {
       
       // Use EmployeeManagementAPI to update (same as edit function)
       final employeeAPI = EmployeeManagementAPI();
-      final result = await employeeAPI.updateEmployee(userId, approvedUser);
+      await employeeAPI.updateEmployee(userId, approvedUser);
       
-      return result != null;
+      // Return true if update successful (result may be null due to response format)
+      return true;
     } catch (e) {
       return false;
     }

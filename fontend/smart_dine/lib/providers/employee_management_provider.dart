@@ -10,7 +10,11 @@ import 'user_approval_provider.dart';
 final userStatusesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   final api = ref.read(employeeManagementApiProvider);
   final statuses = await api.getUserStatuses();
-  return statuses ?? [];
+  return statuses ?? [
+    {'id': 1, 'code': 'ACTIVE', 'name': 'Hoạt động'},
+    {'id': 2, 'code': 'INACTIVE', 'name': 'Không hoạt động'},
+    {'id': 3, 'code': 'SUSPENDED', 'name': 'Tạm ngừng'},
+  ];
 });
 
 // Provider cho danh sách roles
@@ -34,6 +38,30 @@ final employeeManagementProvider = StateNotifierProvider.family<EmployeeManageme
 final pendingEmployeesProvider = FutureProvider.family<List<User>, int>((ref, branchId) async {
   final api = ref.read(userApprovalApiProvider);
   return await api.getPendingUsersByBranch(branchId);
+});
+
+// Realtime provider cho pending employees với auto-refresh
+class PendingEmployeesNotifier extends RealtimeNotifier<List<User>> {
+  final UserApprovalAPI _api;
+  final int _branchId;
+
+  PendingEmployeesNotifier(this._api, this._branchId) : super();
+
+  @override
+  Future<List<User>> loadData() async {
+    return await _api.getPendingUsersByBranch(_branchId);
+  }
+
+  @override
+  Duration get pollingInterval => const Duration(seconds: 15); // Check every 15 seconds for new pending users
+
+  @override
+  bool get enableRealtime => true;
+}
+
+final pendingEmployeesRealtimeProvider = StateNotifierProvider.family<PendingEmployeesNotifier, AsyncValue<List<User>>, int>((ref, branchId) {
+  final api = ref.read(userApprovalApiProvider);
+  return PendingEmployeesNotifier(api, branchId);
 });
 
 // Provider cho active employees (statusId = 1)

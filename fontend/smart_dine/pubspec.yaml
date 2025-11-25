@@ -77,6 +77,10 @@ dependencies:
   # Connectivity check
   connectivity_plus: ^5.0.2
 
+  # PDF generation and printing
+  pdf: ^3.10.7
+  printing: ^5.13.1
+
 
 dev_dependencies:
   flutter_test:
@@ -95,6 +99,13 @@ flutter:
     - family: Lobster
       fonts:
         - asset: assets/fonts/Lobster-Regular.ttf
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Regular.ttf
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/NotoSans-Regular.woff2
+
   #Ảnh
   assets:
    - assets/images/logoApp.png

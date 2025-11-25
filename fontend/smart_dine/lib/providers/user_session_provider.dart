@@ -125,6 +125,12 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
     await _saveSession();
   }
 
+  // Cập nhật tên công ty
+  Future<void> updateCompanyName(String companyName) async {
+    state = state.copyWith(companyName: companyName);
+    await _saveSession();
+  }
+
   // Real login thông qua AuthService (sẵn sàng khi có backend)
   Future<void> authenticateLogin(String username, String password) async {
     try {

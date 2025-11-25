@@ -9,7 +9,12 @@ import '../core/realtime_notifier.dart';
 final tableStatusesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   final api = ref.read(tableManagementApiProvider);
   final statuses = await api.getTableStatuses();
-  return statuses ?? [];
+  return statuses ?? [
+    {'id': 1, 'code': 'EMPTY', 'name': 'Trống'},
+    {'id': 2, 'code': 'OCCUPIED', 'name': 'Đang sử dụng'},
+    {'id': 3, 'code': 'RESERVED', 'name': 'Đã đặt'},
+    {'id': 4, 'code': 'MAINTENANCE', 'name': 'Bảo trì'},
+  ];
 });
 
 // Provider cho danh sách table types theo branch

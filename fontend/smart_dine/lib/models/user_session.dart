@@ -8,6 +8,7 @@ class UserSession {
   final int? role;
   final int? userRole;
   final int? companyId;
+  final String? companyName;
   final int? currentBranchId;
   final List<int> branchIds;
   final bool isAuthenticated;
@@ -21,6 +22,7 @@ class UserSession {
     this.role,
     this.userRole,
     this.companyId,
+    this.companyName,
     this.currentBranchId,
     this.branchIds = const [],
     this.isAuthenticated = false,
@@ -67,6 +69,7 @@ class UserSession {
     int? role,
     int? userRole,
     int? companyId,
+    String? companyName,
     int? currentBranchId,
     List<int>? branchIds,
     bool? isAuthenticated,
@@ -80,6 +83,7 @@ class UserSession {
       role: role ?? this.role,
       userRole: userRole ?? this.userRole,
       companyId: companyId ?? this.companyId,
+      companyName: companyName ?? this.companyName,
       currentBranchId: currentBranchId ?? this.currentBranchId,
       branchIds: branchIds ?? this.branchIds,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
@@ -96,6 +100,7 @@ class UserSession {
       'role': role,
       'userRole': userRole,
       'companyId': companyId,
+      'companyName': companyName,
       'currentBranchId': currentBranchId,
       'branchIds': branchIds,
       'isAuthenticated': isAuthenticated,
@@ -112,6 +117,7 @@ class UserSession {
       role: map['role'],
       userRole: map['userRole'] ?? map['role'],
       companyId: map['companyId'],
+      companyName: map['companyName'],
       currentBranchId: map['currentBranchId'],
       branchIds: List<int>.from(map['branchIds'] ?? []),
       isAuthenticated: map['isAuthenticated'] ?? false,
