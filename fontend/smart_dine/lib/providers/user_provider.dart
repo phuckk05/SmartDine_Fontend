@@ -49,6 +49,7 @@ class UserNotifier extends StateNotifier<User?> {
     } else {
       try {
         branch = await branchAPI.findBranchByBranchCode(branchCode);
+        print('Found branch: ${branch?.toMap()}');
         if (branch != null) {
           check = true;
         } else {

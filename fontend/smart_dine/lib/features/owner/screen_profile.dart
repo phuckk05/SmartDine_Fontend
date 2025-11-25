@@ -2,18 +2,22 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mart_dine/core/constrats.dart' show ShadowCus, kTextColorLight, kTextColorDark;
+import 'package:mart_dine/core/constrats.dart'
+    show ShadowCus, kTextColorLight, kTextColorDark;
 import 'package:mart_dine/core/style.dart';
+import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets_owner/appbar.dart';
-import 'screen_setting.dart'; 
+import 'screen_setting.dart';
 // SỬA: Import các provider, helper và màn hình cần thiết
 import 'package:mart_dine/features/signin/screen_signin.dart';
 import 'package:mart_dine/providers_owner/company_provider.dart';
 import 'package:mart_dine/providers_owner/system_stats_provider.dart';
-import 'package:mart_dine/providers_owner/role_provider.dart' show formatDate; // Dùng lại hàm formatDate
+import 'package:mart_dine/providers_owner/role_provider.dart'
+    show formatDate; // Dùng lại hàm formatDate
 import 'package:mart_dine/providers/user_session_provider.dart';
 // THÊM: Import các provider cần thiết để đếm
-import 'package:mart_dine/providers_owner/target_provider.dart' show branchListProvider;
+import 'package:mart_dine/providers_owner/target_provider.dart'
+    show branchListProvider;
 import 'package:mart_dine/providers_owner/staff_profile_provider.dart';
 
 // SỬA: Chuyển thành ConsumerWidget
@@ -23,11 +27,12 @@ class ScreenProfile extends ConsumerWidget {
   @override
   // SỬA: Thêm WidgetRef ref
   Widget build(BuildContext context, WidgetRef ref) {
-    
     // SỬA: Watch các provider
     final ownerAsync = ref.watch(ownerProfileProvider);
     final companyAsync = ref.watch(companyProvider);
-    final statsAsync = ref.watch(systemStatsProvider); // SỬA: Đổi tên để thể hiện đây là AsyncValue
+    final statsAsync = ref.watch(
+      systemStatsProvider,
+    ); // SỬA: Đổi tên để thể hiện đây là AsyncValue
     // THÊM: Watch các provider để đếm
     final allBranchesAsync = ref.watch(branchListProvider);
     final allStaffAsync = ref.watch(staffProfileProvider);
@@ -46,7 +51,7 @@ class ScreenProfile extends ConsumerWidget {
           ),
         ),
         // Thêm dòng này để TẮT icon quay lại
-        automaticallyImplyLeading: false, 
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -67,7 +72,14 @@ class ScreenProfile extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Phần 1: Thông tin nhà hàng
-            const Text('Thông tin nhà hàng', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: kTextColorDark)),
+            const Text(
+              'Thông tin nhà hàng',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: kTextColorDark,
+              ),
+            ),
             const SizedBox(height: 10),
             // SỬA: Truyền dữ liệu động
             // SỬA: Tái cấu trúc để tách biệt logic của Owner và Company
@@ -80,31 +92,55 @@ class ScreenProfile extends ConsumerWidget {
                 children: [
                   // Phần 1: Thông tin Company (tên, mã, ngày) - Phụ thuộc companyProvider
                   companyAsync.when(
-                    loading: () => _buildCompanyInfoSection("Đang tải...", "Đang tải...", null),
-                    error: (err, stack) => Text("Lỗi tải công ty: $err", style: TextStyle(color: Colors.red)),
-                    data: (company) => _buildCompanyInfoSection(
-                      company?.companyName ?? "Không có tên",
-                      company?.companyCode ?? "Không có",
-                      company?.createdAt,
-                    ),
+                    loading:
+                        () => _buildCompanyInfoSection(
+                          "Đang tải...",
+                          "Đang tải...",
+                          null,
+                        ),
+                    error:
+                        (err, stack) => Text(
+                          "Lỗi tải công ty: $err",
+                          style: TextStyle(color: Colors.red),
+                        ),
+                    data:
+                        (company) => _buildCompanyInfoSection(
+                          company?.companyName ?? "Không có tên",
+                          company?.companyCode ?? "Không có",
+                          company?.createdAt,
+                        ),
                   ),
                   const SizedBox(height: 10),
                   // Phần 2: Thông tin Owner (email, phone) - Phụ thuộc ownerProfileProvider
                   ownerAsync.when(
-                    loading: () => _buildOwnerInfoSection("Đang tải...", "Đang tải..."),
-                    error: (err, stack) => Text("Lỗi tải chủ sở hữu: $err", style: TextStyle(color: Colors.red)),
-                    data: (owner) => _buildOwnerInfoSection(
-                      owner.email,
-                      owner.phone,
-                    ),
+                    loading:
+                        () => _buildOwnerInfoSection(
+                          "Đang tải...",
+                          "Đang tải...",
+                        ),
+                    error:
+                        (err, stack) => Text(
+                          "Lỗi tải chủ sở hữu: $err",
+                          style: TextStyle(color: Colors.red),
+                        ),
+                    data:
+                        (owner) =>
+                            _buildOwnerInfoSection(owner.email, owner.phone),
                   ),
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 25),
             // Phần 2: Hệ thống & hoạt động
-            const Text('Hệ thống & hoạt động', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: kTextColorDark)),
+            const Text(
+              'Hệ thống & hoạt động',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: kTextColorDark,
+              ),
+            ),
             const SizedBox(height: 10),
             // SỬA: Truyền dữ liệu động
             // SỬA: Dùng companyAsync để lấy thông tin hệ thống của riêng công ty
@@ -116,37 +152,65 @@ class ScreenProfile extends ConsumerWidget {
                 final branchCount = branches.length.toString();
                 return allStaffAsync.when(
                   loading: () => _buildSystemInfo(branchCount, "...", "..."),
-                  error: (err, stack) => _buildRestaurantInfoError(err.toString()),
+                  error:
+                      (err, stack) => _buildRestaurantInfoError(err.toString()),
                   data: (staff) {
                     // Lọc và đếm nhân viên thuộc công ty này
-                    final staffCount = staff.where((p) => p.user.companyId == loggedInCompanyId).length.toString();
+                    final staffCount =
+                        staff
+                            .where((p) => p.user.companyId == loggedInCompanyId)
+                            .length
+                            .toString();
                     // SỬA: Xử lý statsAsync để lấy Gói dịch vụ
                     return statsAsync.when(
-                      loading: () => _buildSystemInfo(branchCount, staffCount, "..."),
-                      error: (err, stack) => _buildSystemInfo(branchCount, staffCount, "Lỗi"),
-                      data: (stats) => _buildSystemInfo(branchCount, staffCount, stats['service_package'] ?? 'N/A'),
+                      loading:
+                          () =>
+                              _buildSystemInfo(branchCount, staffCount, "..."),
+                      error:
+                          (err, stack) =>
+                              _buildSystemInfo(branchCount, staffCount, "Lỗi"),
+                      data:
+                          (stats) => _buildSystemInfo(
+                            branchCount,
+                            staffCount,
+                            stats['service_package'] ?? 'N/A',
+                          ),
                     );
                   },
                 );
               },
             ),
-            
+
             const SizedBox(height: 25),
             // Phần 3: Giấy phép kinh doanh (Giữ nguyên)
-            const Text('Giấy phép kinh doanh', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: kTextColorDark)),
-            const SizedBox(height: 10),            
+            const Text(
+              'Giấy phép kinh doanh',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: kTextColorDark,
+              ),
+            ),
+            const SizedBox(height: 10),
             // SỬA: Sửa lại tên thuộc tính để lấy URL ảnh giấy phép kinh doanh
             _buildBusinessLicense(companyAsync.value?.companyImageUrl),
             const SizedBox(height: 25),
             // Phần 4: Dịch vụ chúng tôi
-            const Text('Dịch vụ chúng tôi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: kTextColorDark)),
+            const Text(
+              'Dịch vụ chúng tôi',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: kTextColorDark,
+              ),
+            ),
             const SizedBox(height: 10),
             // SỬA: Lấy trạng thái từ companyAsync
             _buildServiceStatus(companyAsync.value?.statusId),
             const SizedBox(height: 30),
             // SỬA: Truyền ref vào nút Đăng xuất
             _buildLogoutButton(context, ref),
-            const SizedBox(height: 80), 
+            const SizedBox(height: 80),
           ],
         ),
       ),
@@ -165,17 +229,27 @@ class ScreenProfile extends ConsumerWidget {
       padding: const EdgeInsets.all(15),
       baseColor: Colors.red.shade50,
       child: Center(
-        child: Text('Lỗi tải thông tin: $error', style: TextStyle(color: Colors.red.shade700)),
+        child: Text(
+          'Lỗi tải thông tin: $error',
+          style: TextStyle(color: Colors.red.shade700),
+        ),
       ),
     );
   }
 
   // SỬA: Widget mới chỉ để hiển thị thông tin Company
-  Widget _buildCompanyInfoSection(String name, String code, DateTime? joinDate) {
+  Widget _buildCompanyInfoSection(
+    String name,
+    String code,
+    DateTime? joinDate,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(name, style: Style.fontTitle.copyWith(fontSize: 18, color: Colors.black)),
+        Text(
+          name,
+          style: Style.fontTitle.copyWith(fontSize: 18, color: Colors.black),
+        ),
         const SizedBox(height: 10),
         _buildInfoRow(Icons.vpn_key_outlined, code, label: 'Mã nhà hàng'),
         _buildInfoRow(
@@ -199,18 +273,30 @@ class ScreenProfile extends ConsumerWidget {
   }
 
   // (Hàm _buildInfoRow giữ nguyên)
-  Widget _buildInfoRow(IconData icon, String value, {String? label, bool isLabelValue = true}) {
+  Widget _buildInfoRow(
+    IconData icon,
+    String value, {
+    String? label,
+    bool isLabelValue = true,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         children: [
           Icon(icon, size: 16, color: kTextColorDark),
           const SizedBox(width: 8),
-          if (isLabelValue && label != null) 
-            Text('$label: ', style: const TextStyle(fontSize: 14, color: kTextColorDark, fontWeight: FontWeight.normal)),
-          
+          if (isLabelValue && label != null)
+            Text(
+              '$label: ',
+              style: const TextStyle(
+                fontSize: 14,
+                color: kTextColorDark,
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+
           Text(
-            isLabelValue ? value : (label != null ? '$label: $value' : value), 
+            isLabelValue ? value : (label != null ? '$label: $value' : value),
             style: const TextStyle(fontSize: 14, color: kTextColorLight),
           ),
         ],
@@ -219,7 +305,11 @@ class ScreenProfile extends ConsumerWidget {
   }
 
   // SỬA: Nhận dữ liệu động
-  Widget _buildSystemInfo(String branchCount, String staffCount, String package) {
+  Widget _buildSystemInfo(
+    String branchCount,
+    String staffCount,
+    String package,
+  ) {
     return ShadowCus(
       borderRadius: 12,
       padding: const EdgeInsets.all(15),
@@ -240,8 +330,18 @@ class ScreenProfile extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: const TextStyle(fontSize: 14, color: kTextColorDark)),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: kTextColorDark)),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 14, color: kTextColorDark),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: kTextColorDark,
+            ),
+          ),
         ],
       ),
     );
@@ -270,22 +370,37 @@ class ScreenProfile extends ConsumerWidget {
                   ),
                   clipBehavior: Clip.antiAlias,
                   // SỬA: Dùng Image.network để tải ảnh từ URL
-                  child: (imageUrl != null && imageUrl.isNotEmpty)
-                      ? Image.network(
-                          imageUrl,
-                          fit: BoxFit.cover,
-                          // Hiển thị loading trong khi tải ảnh
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return const Center(child: CircularProgressIndicator());
-                          },
-                          // Hiển thị icon lỗi nếu không tải được
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Center(child: Icon(Icons.error_outline, color: kTextColorLight, size: 40));
-                          },
-                        )
-                      // Hiển thị placeholder nếu không có URL
-                      : const Center(child: Icon(Icons.image_not_supported_outlined, color: kTextColorLight, size: 40)),
+                  child:
+                      (imageUrl != null && imageUrl.isNotEmpty)
+                          ? Image.network(
+                            imageUrl,
+                            fit: BoxFit.cover,
+                            // Hiển thị loading trong khi tải ảnh
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            },
+                            // Hiển thị icon lỗi nếu không tải được
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Center(
+                                child: Icon(
+                                  Icons.error_outline,
+                                  color: kTextColorLight,
+                                  size: 40,
+                                ),
+                              );
+                            },
+                          )
+                          // Hiển thị placeholder nếu không có URL
+                          : const Center(
+                            child: Icon(
+                              Icons.image_not_supported_outlined,
+                              color: kTextColorLight,
+                              size: 40,
+                            ),
+                          ),
                 ),
               ),
             ),
@@ -316,14 +431,17 @@ class ScreenProfile extends ConsumerWidget {
         statusText = 'Đang tải...';
         color = Colors.grey;
     }
-    
+
     return ShadowCus(
       borderRadius: 12,
       padding: const EdgeInsets.all(15),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('Trạng thái dịch vụ', style: TextStyle(fontSize: 14, color: kTextColorDark)),
+          const Text(
+            'Trạng thái dịch vụ',
+            style: TextStyle(fontSize: 14, color: kTextColorDark),
+          ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
@@ -332,7 +450,11 @@ class ScreenProfile extends ConsumerWidget {
             ),
             child: Text(
               statusText,
-              style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 14),
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
           ),
         ],
@@ -346,7 +468,7 @@ class ScreenProfile extends ConsumerWidget {
       width: double.infinity,
       height: 50,
       decoration: BoxDecoration(
-        color: Colors.blue, 
+        color: Colors.blue,
         borderRadius: BorderRadius.circular(10),
       ),
       child: MaterialButton(
@@ -355,14 +477,11 @@ class ScreenProfile extends ConsumerWidget {
           await ref.read(userSessionProvider.notifier).logout();
 
           // 3. Điều hướng về màn hình đăng nhập và xóa tất cả các màn hình trước đó
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const ScreenSignIn()),
-            (Route<dynamic> route) => false,
-          );
+          Routes.pushAndRemoveUntil(context, ScreenSignIn());
         },
         child: Text(
           'Đăng xuất',
-          style: Style.TextButton.copyWith(color: Colors.white), 
+          style: Style.TextButton.copyWith(color: Colors.white),
         ),
       ),
     );
