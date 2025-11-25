@@ -1,6 +1,6 @@
 // file: providers/target_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mart_dine/models_owner/target.dart'; 
+import 'package:mart_dine/models_owner/target_model.dart'; 
 // SỬA: Import model Branch
 import 'package:mart_dine/models_owner/branch.dart'; 
 import 'package:mart_dine/API_owner/branch_API.dart';

@@ -20,7 +20,7 @@ class KitchenApi {
           .map((item) => OrderItem.fromMap(item as Map<String, dynamic>))
           .toList();
     }
-    return [];
+        return [];
   }
 
   Future<List<OrderItem>> getOrderItemsByBranch(int branchId) async {
@@ -34,7 +34,7 @@ class KitchenApi {
           .map((item) => OrderItem.fromMap(item as Map<String, dynamic>))
           .toList();
     }
-    return [];
+        return [];
   }
 
   //Cập nhật trạng thái order item
@@ -43,12 +43,12 @@ class KitchenApi {
     final response = await http.put(
       uri,
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({"statusId": statusId}),
+      body: jsonEncode(statusId),
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception(
-        'Failed to update order item status: [${response.statusCode}',
+        'Failed to update order item status: ${response.statusCode}',
       );
     }
 

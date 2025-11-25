@@ -7,7 +7,7 @@ final userApprovalApiProvider = Provider<UserApprovalAPI>((ref) {
   return UserApprovalAPI();
 });
 
-// Provider cho danh sách users chờ duyệt theo branch - sử dụng trực tiếp API
+// Provider cho danh sách users chờ duyệt theo branch
 final pendingUsersByBranchProvider = FutureProvider.family<List<User>, int>((ref, branchId) async {
   final api = ref.read(userApprovalApiProvider);
   return await api.getPendingUsersByBranch(branchId);

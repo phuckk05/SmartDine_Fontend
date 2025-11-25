@@ -52,9 +52,15 @@ class _ScreenNotificationsState extends ConsumerState<ScreenNotifications> {
   }
 
   Future<void> _loadData() async {
-    await ref
-        .read(kitchenOrderNotifierProvider.notifier)
-        .loadTodayOrders(branchId: widget.branchId ?? 1);
+    final branchId = widget.branchId ?? 1;
+
+    await Future.wait([
+      ref.read(tableNotifierProvider.notifier).loadTables(branchId),
+      ref.read(orderNotifierProvider.notifier).loadOrdersByBranchId(branchId),
+      ref
+          .read(kitchenOrderNotifierProvider.notifier)
+          .loadTodayOrders(branchId: branchId),
+    ]);
   }
 
   String _itemName(OrderItem item) {
@@ -342,20 +348,24 @@ class _ScreenNotificationsState extends ConsumerState<ScreenNotifications> {
     final caption = Style.fontCaption;
 
     switch (item.statusId) {
+      case 1: // PENDING - xác nhận món để chuyển sang đang nấu
+        return _buildStatusButton(
+          label: 'Xác nhận món',
+          color: statusColor,
+          onPressed:
+              () => _handleStatusChange(context, item, 2, 'Đang chế biến'),
+        );
+      case 2: // COOKING - đánh dấu đã nấu xong
+        return _buildStatusButton(
+          label: 'Hoàn tất món',
+          color: statusColor,
+          onPressed: () => _handleStatusChange(context, item, 6, 'Đã nấu xong'),
+        );
       case 6: // COOKED - có thể xác nhận phục vụ
-        return Align(
-          alignment: Alignment.centerLeft,
-          child: FilledButton(
-            onPressed:
-                () => _handleStatusChange(context, item, 3, 'Đã phục vụ'),
-            style: FilledButton.styleFrom(
-              backgroundColor: statusColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('Xác nhận phục vụ'),
-          ),
+        return _buildStatusButton(
+          label: 'Xác nhận phục vụ',
+          color: statusColor,
+          onPressed: () => _handleStatusChange(context, item, 3, 'Đã phục vụ'),
         );
       case 3: // SERVED
         return Align(
@@ -368,6 +378,24 @@ class _ScreenNotificationsState extends ConsumerState<ScreenNotifications> {
           child: Text(_statusLabels[item.statusId] ?? 'Khác', style: caption),
         );
     }
+  }
+
+  Widget _buildStatusButton({
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: FilledButton(
+        onPressed: onPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: color,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        child: Text(label),
+      ),
+    );
   }
 
   static String _formatTime(DateTime time) {

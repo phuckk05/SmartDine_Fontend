@@ -1,16 +1,13 @@
 // file: screens/screen_add_restaurant.dart
 // ĐÃ CẬP NHẬT: Giữ logic "Thêm Chi Nhánh"
 // Áp dụng giao diện (style) của màn hình "Đăng Ký"
-import 'dart:io'; // THÊM: Để xử lý file ảnh
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart'; // THÊM: Thư viện chọn ảnh
 import 'package:mart_dine/core/constrats.dart' show ShadowCus, kTextColorDark;
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/models_owner/branch.dart';
-import 'package:mart_dine/API_owner/branch_API.dart';
-import 'package:mart_dine/API_owner/cloudinary_API.dart'; // THÊM: Import Cloudinary API
+import 'package:mart_dine/API_owner/branch_API.dart'; 
 import 'package:mart_dine/providers_owner/system_stats_provider.dart';
 import 'package:mart_dine/providers_owner/staff_profile_provider.dart';
 import 'package:mart_dine/models_owner/staff_profile.dart';
@@ -29,8 +26,6 @@ class _ScreenAddRestaurantState extends ConsumerState<ScreenAddRestaurant> {
   final _branchCodeCtrl = TextEditingController();
   bool _isLoading = false;
   int? _selectedManagerId; // State để lưu ID quản lý được chọn
-  File? _imageFile; // THÊM: State để lưu file ảnh được chọn
-  final ImagePicker _picker = ImagePicker(); // THÊM: Khởi tạo image picker
 
   @override
   void dispose() {
@@ -40,37 +35,12 @@ class _ScreenAddRestaurantState extends ConsumerState<ScreenAddRestaurant> {
     super.dispose();
   }
 
-  // THÊM: Hàm chọn ảnh từ thư viện
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-      });
-    }
-  }
-
-  // SỬA: Tích hợp Cloudinary API để tải ảnh lên và lấy URL.
-  Future<String> _uploadImage(File imageFile) async {
-    // Hiển thị loading ngay khi bắt đầu upload
-    setState(() => _isLoading = true);
-    try {
-      final cloudinaryApi = CloudinaryAPI();
-      final imageUrl = await cloudinaryApi.getURL(imageFile);
-      return imageUrl;
-    } catch (e) {
-      // Nếu có lỗi, dừng loading và hiển thị thông báo
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Lỗi tải ảnh lên: $e")));
-      }
-      // Ném lại lỗi để hàm _saveRestaurant biết và dừng lại
-      throw Exception("Lỗi tải ảnh.");
-    }
-  }
-
   // Hàm gọi API để lưu chi nhánh
   void _saveRestaurant() async {
     if (_formKey.currentState!.validate() && !_isLoading) {
+      setState(() => _isLoading = true);
+
+      // SỬA: Lấy companyId trực tiếp từ owner profile
       final companyId = (await ref.read(ownerProfileProvider.future)).companyId;
 
       if (companyId == null || _selectedManagerId == null) {
@@ -81,28 +51,15 @@ class _ScreenAddRestaurantState extends ConsumerState<ScreenAddRestaurant> {
         return;
       }
 
-      // Bắt đầu trạng thái loading chung
-      setState(() => _isLoading = true);
-
-      String imageUrl = '';
-      try {
-        if (_imageFile != null) {
-          imageUrl = await _uploadImage(_imageFile!);
-        }
-      } catch (e) { // Bắt lỗi từ _uploadImage
-        setState(() => _isLoading = false); // Dừng loading nếu upload lỗi
-        return; // Không tiếp tục thực hiện
-      }
-
       final newBranch = Branch(
         id: 0, // Backend sẽ gán ID
         companyId: companyId, // Lấy companyId thật
         name: _nameCtrl.text.trim(),
         branchCode: _branchCodeCtrl.text.trim(),
-        address: _addressCtrl.text.trim(), // SỬA: Cập nhật URL ảnh
-        image: imageUrl, // Lưu đường dẫn ảnh hoặc URL (nếu có)
+        address: _addressCtrl.text.trim(),
+        image: '', // Để trống hoặc thêm chức năng upload ảnh
         phone: 'N/A', // Lấy từ input khác nếu cần
-        statusId: 1, // SỬA: 1 = Đã duyệt
+        statusId: 3, // 3 = Chờ duyệt
         managerId: _selectedManagerId!,
         createdAt: DateTime.now(), // Backend có thể tự set
         updatedAt: DateTime.now(), // Backend có thể tự set
@@ -114,10 +71,10 @@ class _ScreenAddRestaurantState extends ConsumerState<ScreenAddRestaurant> {
 
         // Refresh lại FutureProvider để cập nhật danh sách ở ScreenManagement
         ref.invalidate(branchesByCompanyProvider(companyId));
-        ref.invalidate(branchListProvider); // THÊM: Invalidate danh sách tổng
+
         if (mounted) { // Kiểm tra widget còn tồn tại không
            ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(content: Text("Đã thêm và duyệt chi nhánh: ${createdBranch.name}")),
+             SnackBar(content: Text("Đã thêm chi nhánh: ${createdBranch.name}")),
            );
            Navigator.pop(context); // Quay lại ScreenManagement
         }
@@ -174,9 +131,6 @@ class _ScreenAddRestaurantState extends ConsumerState<ScreenAddRestaurant> {
   @override
   Widget build(BuildContext context) {
     final staffListAsync = ref.watch(staffProfileProvider);
-    // THÊM: Lấy thông tin owner để có companyId cho việc lọc quản lý
-    final ownerAsync = ref.watch(ownerProfileProvider);
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar( // Sử dụng AppBar tiêu chuẩn
@@ -200,74 +154,20 @@ class _ScreenAddRestaurantState extends ConsumerState<ScreenAddRestaurant> {
                 _buildTextField(label: 'Địa chỉ', controller: _addressCtrl, icon: Icons.location_on_outlined, validator: (v) => v == null || v.trim().isEmpty ? 'Vui lòng nhập địa chỉ' : null),
                 
                 // Dropdown chọn quản lý
-                const Text('Giấy phép kinh doanh', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: _pickImage,
-                  child: ShadowCus(
-                    borderRadius: 10,
-                    padding: const EdgeInsets.all(10),
-                    child: AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.shade400, width: 1, style: BorderStyle.solid),
-                        ),
-                        child: _imageFile != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.file(
-                                  _imageFile!,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            : Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.add_photo_alternate_outlined,
-                                    color: Colors.grey.shade600,
-                                    size: 40,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Chạm để thêm ảnh',
-                                    style: TextStyle(color: Colors.grey.shade700),
-                                  ),
-                                ],
-                              ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-
-                const Text('Chọn người phụ trách', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const Text('Chọn quản lý', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 8),
                 staffListAsync.when(
                   loading: () => const Center(child: CircularProgressIndicator()),
                   error: (err, stack) => Text('Lỗi tải danh sách quản lý: $err'),
                   data: (staffList) {
-                    // SỬA: Lọc tất cả nhân viên trong công ty, trừ Owner và Admin
-                    final loggedInCompanyId = ownerAsync.value?.companyId;
-                    final assignableStaff = staffList.where((s) {
-                      final roleCode = s.role.code.toUpperCase();
-                      // Chỉ lấy những người có vai trò không phải là OWNER hoặc ADMIN
-                      final isAssignable = roleCode != 'OWNER' && roleCode != 'ADMIN';
-                      final isInCompany = s.user.companyId == loggedInCompanyId;
-                      return isAssignable && isInCompany;
-                    }).toList();
-
+                    // Lọc những người có vai trò là MANAGER
+                    final managers = staffList.where((s) => s.role.code.toUpperCase() == 'MANAGER').toList();
                     return ShadowCus(
                       isConcave: true, borderRadius: 10,
                       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
                       child: DropdownButtonFormField<int>(
                         value: _selectedManagerId,
-                        isExpanded: true, // SỬA: Thêm để Dropdown chiếm hết chiều rộng
-                        items: assignableStaff.map((StaffProfile profile) {
+                        items: managers.map((StaffProfile profile) {
                           return DropdownMenuItem<int>(
                             value: profile.user.id,
                             child: Text(profile.user.fullName),
@@ -280,10 +180,10 @@ class _ScreenAddRestaurantState extends ConsumerState<ScreenAddRestaurant> {
                         },
                         decoration: InputDecoration(
                           icon: Icon(Icons.person_outline, color: Colors.grey.shade600),
-                          hintText: 'Chọn người phụ trách chi nhánh',
+                          hintText: 'Chọn quản lý cho chi nhánh',
                           border: InputBorder.none,
                         ),
-                        validator: (value) => value == null ? 'Vui lòng chọn người phụ trách' : null,
+                        validator: (value) => value == null ? 'Vui lòng chọn một quản lý' : null,
                       ),
                     );
                   },

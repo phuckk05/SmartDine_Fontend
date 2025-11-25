@@ -57,29 +57,14 @@ class SettingNotifier extends StateNotifier<SettingState> {
     try {
       state = state.copyWith(isLoading: true);
 
-      final prefs = await SharedPreferences.getInstance();
-      final savedEmail = prefs.getString("userEmail");
+      // Lấy user từ SharedPreferences
+      final savedUser = await getSavedUser();
 
-      if (savedEmail == null) {
-        print("Không tìm thấy email trong SharedPreferences");
+      if (savedUser == null) {
+        print('Không tìm thấy user trong SharedPreferences');
         state = state.copyWith(isLoading: false, isLoggedOut: true);
         return;
       }
-
-      // Gọi API lấy user theo email
-      final userRes = await http.get(
-        Uri.parse(
-          'https://smartdine-backend-oq2x.onrender.com/api/users/email/$savedEmail',
-        ),
-      );
-
-      if (userRes.statusCode != 200) {
-        print("Không thể lấy dữ liệu user từ API");
-        state = state.copyWith(isLoading: false);
-        return;
-      }
-
-      final Map<String, dynamic> userData = jsonDecode(userRes.body);
 
       // Gọi API lấy danh sách roles
       final rolesRes = await http.get(
@@ -88,15 +73,25 @@ class SettingNotifier extends StateNotifier<SettingState> {
 
       final List<dynamic> roles = json.decode(rolesRes.body);
 
-      // Khớp tên role theo roleId
+      // Tìm roleName tương ứng
       final roleMatch = roles.firstWhere(
-        (r) => r['id'] == userData['role'],
+        (r) => r['id'] == savedUser.role,
         orElse: () => {'name': 'Unknown'},
       );
 
-      // Cập nhật state
       state = state.copyWith(
-        user: userData,
+        user: {
+          "id": savedUser.id,
+          "fullName": savedUser.fullName,
+          "email": savedUser.email,
+          "phone": savedUser.phone,
+          "fontImage": savedUser.fontImage,
+          "backImage": savedUser.backImage,
+          "statusId": savedUser.statusId,
+          "role": savedUser.role,
+          "companyId": savedUser.companyId,
+          "createdAt": savedUser.createdAt,
+        },
         roleName: roleMatch['name'],
         isLoading: false,
         isLoggedOut: false,

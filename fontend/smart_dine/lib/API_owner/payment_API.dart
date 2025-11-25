@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart'; // Cần thêm package intl: flutter pub add intl
-import 'package:mart_dine/models_owner/payment.dart'; // THÊM: Import model Payment
 
 // Model cho DTO Biểu đồ
 class ChartData {
@@ -12,14 +11,9 @@ class ChartData {
   ChartData({required this.label, required this.value});
 
   factory ChartData.fromMap(Map<String, dynamic> map) {
-    // SỬA: Xử lý linh hoạt các định dạng label khác nhau mà backend có thể trả về.
-    // Tương tự như OrderCountData, nó có thể đọc 'date', 'startDate', hoặc 'month'/'year'.
-    String label = map['date']?.toString() ?? 
-                   map['startDate']?.toString() ?? 
-                   (map['month'] != null ? "${map['month']}/${map['year']}" : '');
-
+    // Backend gửi 'date' và 'revenue'
     return ChartData(
-      label: label,
+      label: map['date']?.toString() ?? '',
       value: (map['revenue'] as num?)?.toDouble() ?? 0.0,
     );
   }
@@ -46,18 +40,14 @@ class PaymentAPI {
   // GET /api/payments/revenue/trends
   Future<List<ChartData>> fetchRevenueTrends(
       String period, int companyId, int? branchId, int days) async {
-    // SỬA: Đồng bộ hóa cách xây dựng URL để giống hệt với hàm fetchOrderCount trong order_API.
-    // Xử lý tham số branchId và days một cách linh hoạt.
+    
+    // Xử lý branchId = null (Tổng quan)
     String branchQuery = (branchId == null) ? "" : "&branchId=$branchId";
-    // SỬA: Chỉ thêm tham số 'days' nếu period là 'daily' hoặc 'weekly'.
-    String daysQuery = (period == 'daily' || period == 'weekly') ? "&days=$days" : "";
 
     final response = await http.get(
-      // URL được xây dựng lại để chỉ bao gồm các tham số cần thiết.
-      Uri.parse('$_uri/revenue/trends?period=$period&companyId=$companyId$branchQuery$daysQuery'),
+      Uri.parse('$_uri/revenue/trends?period=$period&companyId=$companyId$branchQuery&days=$days'),
       headers: {'Accept': 'application/json'},
     );
-
     if (response.statusCode == 200) {
       List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
       return body.map((dynamic item) => ChartData.fromMap(item)).toList();
@@ -68,41 +58,23 @@ class PaymentAPI {
 
   // GET /api/payments/revenue/branch-comparison
   Future<List<BranchRevenueComparison>> fetchBranchComparison(
-     String period, int companyId, int? branchId, int days) async {
+      List<int>? branchIds, int companyId) async {
     
-    // Xử lý branchId = null (Tổng quan)
-    // SỬA: Đồng bộ hóa logic xây dựng URL với các hàm khác trong file.
-    final branchQuery = (branchId == null) ? "" : "&branchId=$branchId";
-    final daysQuery = (period == 'daily') ? "&days=$days" : "";
+    final DateFormat formatter = DateFormat('yyyy-MM-dd');
+    final String endDate = formatter.format(DateTime.now());
+    final String startDate = formatter.format(DateTime.now().subtract(Duration(days: 365))); // Lấy 1 năm
+    
+    String idsQuery = branchIds?.map((id) => 'branchIds=$id').join('&') ?? '';
 
     final response = await http.get(
-      // SỬA: Áp dụng daysQuery để chỉ gửi tham số 'days' khi cần thiết, tránh lỗi 400.
-      Uri.parse('$_uri/revenue/branch-comparison?period=$period&companyId=$companyId$branchQuery$daysQuery'),
+      Uri.parse('$_uri/revenue/branch-comparison?startDate=$startDate&endDate=$endDate&companyId=$companyId&$idsQuery'),
       headers: {'Accept': 'application/json'},
     );
-    
     if (response.statusCode == 200) {
       List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
       return body.map((dynamic item) => BranchRevenueComparison.fromMap(item)).toList();
     } else {
       throw Exception('Lỗi tải Branch Comparison (Mã: ${response.statusCode})');
-    }
-  }
-
-  // THÊM: Hàm mới để lấy tất cả các giao dịch, tương tự fetchOrders.
-  /// Lấy danh sách tất cả các giao dịch.
-  /// GET /api/payments
-  Future<List<Payment>> fetchAllPayments() async {
-    final response = await http.get(
-      Uri.parse(_uri), // Gọi đến endpoint base /api/payments
-      headers: {'Accept': 'application/json'},
-    );
-    if (response.statusCode == 200) {
-      List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
-      // Giả định bạn có Payment.fromMap để parse dữ liệu
-      return body.map((dynamic item) => Payment.fromMap(item)).toList();
-    } else {
-      throw Exception('Lỗi tải danh sách giao dịch (Mã: ${response.statusCode})');
     }
   }
 }

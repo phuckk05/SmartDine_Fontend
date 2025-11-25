@@ -5,10 +5,10 @@ class UserSession {
   final String? email;
   final String? name;
   final String? userName;
+  final String? phone;
   final int? role;
   final int? userRole;
   final int? companyId;
-  final String? companyName;
   final int? currentBranchId;
   final List<int> branchIds;
   final bool isAuthenticated;
@@ -19,10 +19,10 @@ class UserSession {
     this.email,
     this.name,
     this.userName,
+    this.phone,
     this.role,
     this.userRole,
     this.companyId,
-    this.companyName,
     this.currentBranchId,
     this.branchIds = const [],
     this.isAuthenticated = false,
@@ -30,9 +30,7 @@ class UserSession {
   });
 
   factory UserSession.guest() {
-    return UserSession(
-      isAuthenticated: false,
-    );
+    return UserSession(isAuthenticated: false);
   }
 
   factory UserSession.authenticated({
@@ -45,12 +43,14 @@ class UserSession {
     required int companyId,
     int? currentBranchId,
     List<int>? branchIds,
+    String? phone,
   }) {
     return UserSession(
       userId: userId,
       email: email,
       name: name,
       userName: userName ?? name,
+      phone: phone,
       role: role,
       userRole: userRole ?? role,
       companyId: companyId,
@@ -66,10 +66,10 @@ class UserSession {
     String? email,
     String? name,
     String? userName,
+    String? phone,
     int? role,
     int? userRole,
     int? companyId,
-    String? companyName,
     int? currentBranchId,
     List<int>? branchIds,
     bool? isAuthenticated,
@@ -80,10 +80,10 @@ class UserSession {
       email: email ?? this.email,
       name: name ?? this.name,
       userName: userName ?? this.userName,
+      phone: phone ?? this.phone,
       role: role ?? this.role,
       userRole: userRole ?? this.userRole,
       companyId: companyId ?? this.companyId,
-      companyName: companyName ?? this.companyName,
       currentBranchId: currentBranchId ?? this.currentBranchId,
       branchIds: branchIds ?? this.branchIds,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
@@ -97,10 +97,10 @@ class UserSession {
       'email': email,
       'name': name,
       'userName': userName,
+      'phone': phone,
       'role': role,
       'userRole': userRole,
       'companyId': companyId,
-      'companyName': companyName,
       'currentBranchId': currentBranchId,
       'branchIds': branchIds,
       'isAuthenticated': isAuthenticated,
@@ -114,20 +114,22 @@ class UserSession {
       email: map['email'],
       name: map['name'],
       userName: map['userName'] ?? map['name'],
+      phone: map['phone'],
       role: map['role'],
       userRole: map['userRole'] ?? map['role'],
       companyId: map['companyId'],
-      companyName: map['companyName'],
       currentBranchId: map['currentBranchId'],
       branchIds: List<int>.from(map['branchIds'] ?? []),
       isAuthenticated: map['isAuthenticated'] ?? false,
-      loginTime: map['loginTime'] != null ? DateTime.parse(map['loginTime']) : null,
+      loginTime:
+          map['loginTime'] != null ? DateTime.parse(map['loginTime']) : null,
     );
   }
 
   // Required methods
   String toJson() => json.encode(toMap());
-  factory UserSession.fromJson(String source) => UserSession.fromMap(json.decode(source));
+  factory UserSession.fromJson(String source) =>
+      UserSession.fromMap(json.decode(source));
 
   // Helper methods
   bool hasAccessToBranch(int branchId) => branchIds.contains(branchId);

@@ -4,10 +4,6 @@ import 'package:mart_dine/widgets/appbar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/order_management_provider.dart';
 import '../../../providers/user_session_provider.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
-import 'package:flutter/services.dart';
 
 class OrderDetailScreen extends ConsumerWidget {
   final int orderId;
@@ -15,81 +11,6 @@ class OrderDetailScreen extends ConsumerWidget {
     super.key,
     required this.orderId,
   });
-
-  Future<void> _generateInvoicePdf(BuildContext context, dynamic order) async {
-    final pdf = pw.Document();
-
-    // Load custom font for Vietnamese support
-    final fontData = await rootBundle.load('assets/fonts/NotoSans-Regular.woff2');
-    final vietnameseFont = pw.Font.ttf(fontData);
-
-    // Create bold version using the same font (PDF library limitation)
-    final vietnameseBoldFont = pw.Font.ttf(fontData);
-
-    // Fallback fonts for better compatibility
-    final fallbackFonts = [
-      pw.Font.times(),
-      pw.Font.courier(),
-      pw.Font.helvetica(),
-    ];
-
-    pdf.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text('HÓA ĐƠN', style: pw.TextStyle(fontSize: 24, font: vietnameseBoldFont, fontFallback: fallbackFonts)),
-              pw.SizedBox(height: 20),
-              pw.Text('Mã đơn: ${order.id ?? ''}', style: pw.TextStyle(font: vietnameseFont, fontFallback: fallbackFonts)),
-              pw.Text('Chi nhánh: ${order.branchId ?? ''}', style: pw.TextStyle(font: vietnameseFont, fontFallback: fallbackFonts)),
-              pw.Text('Ngày tạo: ${order.getFormattedDate()}', style: pw.TextStyle(font: vietnameseFont, fontFallback: fallbackFonts)),
-              pw.Text('Bàn: ${order.getTableDisplayName()}', style: pw.TextStyle(font: vietnameseFont, fontFallback: fallbackFonts)),
-              pw.Text('Nhân viên: ${order.userName ?? ''}', style: pw.TextStyle(font: vietnameseFont, fontFallback: fallbackFonts)),
-              pw.Text('Trạng thái: ${_getPaymentStatusName(order.statusId)}', style: pw.TextStyle(font: vietnameseFont, fontFallback: fallbackFonts)),
-              pw.SizedBox(height: 20),
-              pw.Text('Danh sách món:', style: pw.TextStyle(font: vietnameseBoldFont, fontFallback: fallbackFonts)),
-              pw.SizedBox(height: 10),
-              if (order.items?.isNotEmpty == true)
-                pw.Table(
-                  border: pw.TableBorder.all(),
-                  children: [
-                    pw.TableRow(
-                      children: [
-                        pw.Text('Tên món', style: pw.TextStyle(font: vietnameseBoldFont, fontFallback: fallbackFonts)),
-                        pw.Text('SL', style: pw.TextStyle(font: vietnameseBoldFont, fontFallback: fallbackFonts)),
-                        pw.Text('Giá', style: pw.TextStyle(font: vietnameseBoldFont, fontFallback: fallbackFonts)),
-                        pw.Text('Thành tiền', style: pw.TextStyle(font: vietnameseBoldFont, fontFallback: fallbackFonts)),
-                      ],
-                    ),
-                    ...order.items!.map<pw.TableRow>((item) {
-                      final price = item.itemPrice ?? 0;
-                      final quantity = item.quantity ?? 0;
-                      final total = price * quantity;
-                      return pw.TableRow(
-                        children: [
-                          pw.Text(item.itemName ?? 'Món ${item.itemId}', style: pw.TextStyle(font: vietnameseFont, fontFallback: fallbackFonts)),
-                          pw.Text('$quantity', style: pw.TextStyle(font: vietnameseFont, fontFallback: fallbackFonts)),
-                          pw.Text('${price.toStringAsFixed(0)}đ', style: pw.TextStyle(font: vietnameseFont, fontFallback: fallbackFonts)),
-                          pw.Text('${total.toStringAsFixed(0)}đ', style: pw.TextStyle(font: vietnameseFont, fontFallback: fallbackFonts)),
-                        ],
-                      );
-                    }),
-                  ],
-                ),
-              pw.SizedBox(height: 20),
-              pw.Text('Tổng tiền: ${order.totalAmount ?? 0}đ', style: pw.TextStyle(font: vietnameseBoldFont, fontFallback: fallbackFonts)),
-            ],
-          );
-        },
-      ),
-    );
-
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => pdf.save(),
-    );
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -323,7 +244,14 @@ class OrderDetailScreen extends ConsumerWidget {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: () => _generateInvoicePdf(context, order),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Đang in hóa đơn...'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                       shape: RoundedRectangleBorder(

@@ -6,7 +6,7 @@ import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/widgets_owner/appbar.dart';
 import 'screen_add_target.dart' hide ShadowCus, AppBarCus, Style;
 import 'package:mart_dine/providers_owner/target_provider.dart'; // Chứa cả 2 provider
-import 'package:mart_dine/models_owner/target.dart';
+import 'package:mart_dine/models_owner/target_model.dart';
 import 'package:mart_dine/models_owner/branch.dart'; // Import model Branch
 
 class ScreenTargetList extends ConsumerWidget { // Sửa thành ConsumerWidget

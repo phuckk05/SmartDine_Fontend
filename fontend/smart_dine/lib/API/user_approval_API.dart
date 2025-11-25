@@ -1,18 +1,25 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/user.dart';
-import 'user_API.dart';
-import 'employee_management_API.dart';
 
 class UserApprovalAPI {
-  static const String baseUrl = 'https://smartdine-backend-oq2x.onrender.com/api';
-  final UserAPI _userAPI = UserAPI();
+  static const String baseUrl = 'https://smartdine-backend-oq2x.onrender.com/api/user-approval';
 
-  // Lấy danh sách nhân viên chờ duyệt (statusId = 3) từ tất cả users
+  // Lấy danh sách user bị khóa theo branch (status = 0)
   Future<List<User>> getPendingUsersByBranch(int branchId) async {
     try {
-      return await _userAPI.getPendingUsers();
+      final response = await http.get(
+        Uri.parse('$baseUrl/locked/branch/$branchId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => User.fromMap(json)).toList();
+      }
+      return [];
     } catch (e) {
+      print('Error getting locked users: $e');
       return [];
     }
   }
@@ -36,29 +43,17 @@ class UserApprovalAPI {
     }
   }
 
-  // Duyệt nhân viên (chuyển từ statusId 3 → statusId 1)
+  // Duyệt user (chuyển từ status 0 sang status 1)
   Future<bool> approveUser(int userId) async {
     try {
-      // Get current user data first
-      final currentUser = await _userAPI.getUserById(userId);
-      if (currentUser == null) {
-        return false;
-      }
-      
-      // Create updated user with statusId = 1 (approved)
-      final approvedUser = currentUser.copyWith(
-        statusId: 1,
-        updatedAt: DateTime.now(),
-        statusName: 'Hoạt động',
+      final response = await http.post(
+        Uri.parse('$baseUrl/activate/$userId'),
+        headers: {'Content-Type': 'application/json'},
       );
-      
-      // Use EmployeeManagementAPI to update (same as edit function)
-      final employeeAPI = EmployeeManagementAPI();
-      await employeeAPI.updateEmployee(userId, approvedUser);
-      
-      // Return true if update successful (result may be null due to response format)
-      return true;
+
+      return response.statusCode == 200;
     } catch (e) {
+      print('Error approving user: $e');
       return false;
     }
   }
@@ -66,9 +61,10 @@ class UserApprovalAPI {
   // Từ chối user
   Future<bool> rejectUser(int userId, String reason) async {
     try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/reject/$userId?reason=${Uri.encodeComponent(reason)}'),
+      final response = await http.post(
+        Uri.parse('$baseUrl/reject/$userId'),
         headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'reason': reason}),
       );
 
       return response.statusCode == 200;
@@ -81,9 +77,10 @@ class UserApprovalAPI {
   // Block user
   Future<bool> blockUser(int userId, String reason) async {
     try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/block/$userId?reason=${Uri.encodeComponent(reason)}'),
+      final response = await http.post(
+        Uri.parse('$baseUrl/block/$userId'),
         headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'reason': reason}),
       );
 
       return response.statusCode == 200;

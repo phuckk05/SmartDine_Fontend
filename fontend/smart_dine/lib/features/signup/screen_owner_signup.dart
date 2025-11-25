@@ -17,11 +17,11 @@ import 'package:mart_dine/widgets/appbar.dart';
 import 'package:mart_dine/widgets/loading.dart';
 
 //Các state provider
-final _isCanPop = StateProvider<bool>((ref) => false);
+final _isCanPop = StateProvider.autoDispose<bool>((ref) => false);
 final _isLoadingProvider = StateProvider<bool>((ref) => false);
 
-final _imageProvider = StateProvider<File?>((ref) => null);
-final _imageUrlProvider = StateProvider<String>((ref) => "");
+final _imageProvider = StateProvider.autoDispose<File?>((ref) => null);
+final _imageUrlProvider = StateProvider.autoDispose<String>((ref) => "");
 
 // final _selectedCompanyProvider = StateProvider<Company?>((ref) => null);
 
@@ -46,12 +46,12 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
   @override
   void initState() {
     super.initState();
-  }
+      }
 
   //Hàm lấy ảnh
   Future<void> _getCCCDImage(
-    StateProvider<File?> image,
-    StateProvider<String?> imageUrl,
+    AutoDisposeStateProvider<File?> image,
+    AutoDisposeStateProvider<String?> imageUrl,
     BuildContext context,
   ) async {
     if (!ref.watch(internetProvider)) {
@@ -81,7 +81,7 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
 
     if (result != "0") {
       ref.read(_imageUrlProvider.notifier).state = result.toString();
-    } else {
+          } else {
       Constrats.showThongBao(context, "Lỗi chọn ảnh");
     }
   }
@@ -376,15 +376,12 @@ class _ScreenOwnerSignupState extends ConsumerState<ScreenOwnerSignup> {
         padding: EdgeInsets.zero, // Padding handled by MaterialButton
         child: MaterialButton(
           onPressed: () async {
-            final image = ref.watch(_imageUrlProvider);
-            Company company = Company.create(
+            final anh = ref.watch(_imageUrlProvider);
+                        Company company = Company.create(
               name: _nameController.text,
               address: _addressController.text,
-              image: image.toString(),
+              image: "765",
               companyCode: _codeController.text,
-            );
-            print(
-              "Company to sign up: ${company.name}, ${company.address}, ${company.image}, ${company.companyCode}",
             );
             checkControllers(context, company);
           },

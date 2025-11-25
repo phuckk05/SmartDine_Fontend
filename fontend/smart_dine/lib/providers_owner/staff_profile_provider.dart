@@ -11,18 +11,16 @@ import 'package:mart_dine/API_owner/user_branch_API.dart';
 import 'package:mart_dine/providers_owner/role_provider.dart'; // roleListProvider
 
 // 1. Provider lấy danh sách quan hệ User-Branch (UserId -> BranchId)
-// SỬA: Thay đổi kiểu trả về từ Map<int, List<int>> thành Map<int, int>
-final userBranchRelationProvider = FutureProvider<Map<int, int>>((ref) async {
+final userBranchRelationProvider = FutureProvider<Map<int, List<int>>>((ref) async {
   final apiService = ref.watch(userBranchApiProvider);
   final relationsList = await apiService.fetchAllRelations(); // Lấy List<UserBranch>
   
-  // Chuyển List<UserBranch> thành Map<UserId, BranchId>
-  // Giả định rằng API trả về mỗi user chỉ thuộc 1 branch. Nếu 1 user có nhiều relation, relation cuối cùng sẽ được giữ lại.
-  final Map<int, int> userToBranchMap = {};
+  // Chuyển List<UserBranch> thành Map<UserId, List<BranchId>>
+  final Map<int, List<int>> userToBranchesMap = {};
   for (var relation in relationsList) {
-    userToBranchMap[relation.userId] = relation.branchId;
+    userToBranchesMap.putIfAbsent(relation.userId, () => []).add(relation.branchId);
   }
-  return userToBranchMap;
+  return userToBranchesMap;
 });
 
 // 2. Provider lấy danh sách StaffProfile (User + Role)
@@ -140,12 +138,12 @@ class StaffProfileUpdateNotifier extends StateNotifier<AsyncValue<void>> {
           state = AsyncValue.error(e, s);
       }
    }
-   // SỬA: Xóa nhân viên khỏi chi nhánh chỉ cần userId
-   Future<void> unassignStaffFromBranch(int userId) async {
+   // SỬA: Thêm branchId để biết xóa khỏi chi nhánh nào
+   Future<void> unassignStaffFromBranch(int userId, int branchId) async {
       final userBranchApi = _ref.read(userBranchApiProvider);
       state = const AsyncValue.loading();
       try {
-          await userBranchApi.unassignUserFromBranch(userId); // SỬA: Chỉ truyền userId
+          await userBranchApi.unassignUserFromBranch(userId, branchId);
           // Refresh lại list quan hệ
           _ref.refresh(userBranchRelationProvider); 
           state = const AsyncValue.data(null);

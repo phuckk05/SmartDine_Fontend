@@ -1,4 +1,5 @@
 // import 'package:email_validator/email_validator.dart';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -9,7 +10,6 @@ import 'package:mart_dine/features/bottom_Navigation/bottom_navigation.dart';
 import 'package:mart_dine/features/forgot_passwork/screens/screen_findaccuont.dart';
 import 'package:mart_dine/features/signup/screen_select_signup.dart';
 import 'package:mart_dine/features/owner/screen_dashboard.dart';
-// import 'package:mart_dine/features/bottom_navigation/bottom_navigation.dart';
 // import 'package:mart_dine/features/staff/screen_choose_table.dart'; // Tạm ẩn
 import 'package:mart_dine/features/branch_management/screen/branch_navigation.dart';
 import 'package:mart_dine/features/staff/screen_choose_table.dart';
@@ -20,7 +20,6 @@ import 'package:mart_dine/providers/user_session_provider.dart';
 import 'package:mart_dine/providers_owner/system_stats_provider.dart';
 import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets/loading.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ScreenSignIn extends ConsumerStatefulWidget {
   const ScreenSignIn({super.key});
@@ -63,9 +62,6 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
       return;
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('userEmail', _emailController.text);
-
     ref.read(isLoadingNotifierProvider.notifier).toggle(true);
     final user = await ref
         .watch(userNotifierProvider.notifier)
@@ -97,7 +93,6 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
           case 1:
             roleName = 'Administrator';
             // Admin không cần branchId cụ thể
-            //test
             break;
           case 2:
             roleName = 'Manager';
@@ -173,6 +168,9 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
               companyId: user.companyId,
               branchIds: branchId != null ? [branchId] : [],
               defaultBranchId: branchId,
+              email: user.email,
+              phone: user.phone,
+              name: user.fullName,
             );
 
         // Điều hướng dựa theo role
@@ -215,6 +213,10 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
           );
         } else if (user.role == 6) {
           //Cashier
+          Routes.pushRightLeftConsumerFul(
+            context,
+            ScreenChooseTable(branchId: branchId),
+          );
         }
       }
     } else {

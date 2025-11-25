@@ -3,11 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/features/branch_management/screen/order_list_screen.dart';
 import 'package:mart_dine/features/branch_management/screen/today_activities_screen.dart';
-import 'package:mart_dine/features/branch_management/screen/branch_performance_screen.dart';
 import '../../../providers/branch_statistics_provider.dart';
 import '../../../providers/user_session_provider.dart';
 import '../../../models/statistics.dart';
-import '../../../providers/top_dishes_provider.dart';
 
 class BranchDashboardScreen extends ConsumerStatefulWidget {
   const BranchDashboardScreen({super.key});
@@ -111,8 +109,6 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
                       const SizedBox(height: 20),
                       if (statistics != null) ...[
                         _buildMetricsCards(statistics, isDark),
-                        const SizedBox(height: 20),
-                        _buildTopDishesSection(branchIdInt, isDark),
                         const SizedBox(height: 20),
                       ],
                       _buildQuickActions(isDark),
@@ -314,14 +310,6 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
                   ),
                 );
               }, isDark),
-              _buildQuickActionButton('Hiệu suất nhân viên', Icons.group, () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => BranchPerformanceScreen(),
-                  ),
-                );
-              }, isDark),
             ],
           ),
         ],
@@ -406,166 +394,6 @@ class _BranchDashboardScreenState extends ConsumerState<BranchDashboardScreen> {
           textColor,
         ),
       ],
-    );
-  }
-
-  Widget _buildTopDishesSection(int branchId, bool isDark) {
-    final topDishesAsyncValue = ref.watch(topDishesProvider(branchId));
-    final cardColor = isDark ? Colors.grey[900]! : Colors.white;
-    final textColor = isDark ? Style.colorLight : Style.colorDark;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Món ăn bán chạy nhất',
-                style: Style.fontTitle.copyWith(fontSize: 18, color: textColor),
-              ),
-              IconButton(
-                onPressed: () {
-                  ref.invalidate(topDishesProvider(branchId));
-                },
-                icon: const Icon(Icons.refresh, size: 20),
-                style: IconButton.styleFrom(
-                  backgroundColor: primaryColor.withOpacity(0.1),
-                  foregroundColor: primaryColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          topDishesAsyncValue.when(
-            loading: () => const Center(
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: CircularProgressIndicator(),
-              ),
-            ),
-            error: (error, stackTrace) => Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    Icon(Icons.error_outline, color: Colors.red, size: 48),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Không thể tải dữ liệu món ăn',
-                      style: Style.fontContent.copyWith(color: textColor),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            data: (topDishes) {
-              if (topDishes == null || topDishes.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      children: [
-                        Icon(Icons.restaurant_menu, color: Colors.grey, size: 48),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Chưa có dữ liệu món ăn',
-                          style: Style.fontContent.copyWith(color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-
-              return ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: topDishes.length,
-                itemBuilder: (context, index) {
-                  final dish = topDishes[index];
-                  final dishName = (dish['name'] as String?) ?? 'Không có tên';
-                  final quantity = (dish['quantity'] as int?) ?? 0;
-                  final revenue = (dish['revenue'] as int?) ?? 0;
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: primaryColor.withOpacity(0.1)),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: primaryColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            '${index + 1}',
-                            style: Style.fontTitle.copyWith(
-                              color: primaryColor,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                dishName,
-                                style: Style.fontContent.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: textColor,
-                                  fontSize: 14,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '$quantity phần • ${revenue.toString()}đ',
-                                style: Style.fontContent.copyWith(
-                                  color: Colors.grey[600],
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(
-                          Icons.trending_up,
-                          color: Colors.green,
-                          size: 20,
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ],
-      ),
     );
   }
 

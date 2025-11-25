@@ -8,10 +8,3 @@ final allOrdersProvider = FutureProvider<List<Order>>((ref) async {
   final api = ref.watch(orderApiProvider);
   return api.fetchOrders();
 });
-
-// THÊM: Provider mới để lấy đơn hàng theo branchId từ API
-final ordersByBranchProvider =
-    FutureProvider.family<List<Order>, int>((ref, branchId) async {
-  final api = ref.watch(orderApiProvider);
-  return api.fetchOrdersByBranch(branchId);
-});

@@ -75,6 +75,9 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
     required List<int> branchIds,
     int? defaultBranchId,
     int? companyId,
+    String? email,
+    String? phone,
+    String? name,
   }) async {
     // Chọn branch mặc định
     final currentBranchId =
@@ -82,7 +85,10 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
 
     state = UserSession(
       userId: userId,
+      email: email,
+      name: name ?? userName,
       userName: userName,
+      phone: phone,
       userRole: userRole,
       companyId: companyId,
       currentBranchId: currentBranchId,
@@ -116,18 +122,18 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
     String? userName,
     int? userRole,
     List<int>? branchIds,
+    String? email,
+    String? phone,
+    String? name,
   }) async {
     state = state.copyWith(
       userName: userName,
       userRole: userRole,
       branchIds: branchIds,
+      email: email,
+      phone: phone,
+      name: name,
     );
-    await _saveSession();
-  }
-
-  // Cập nhật tên công ty
-  Future<void> updateCompanyName(String companyName) async {
-    state = state.copyWith(companyName: companyName);
     await _saveSession();
   }
 
@@ -173,45 +179,4 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
 
   // Kiểm tra có phải manager không
   bool get isManager => state.isManager;
-
-  // Validate session và refresh nếu cần
-  Future<bool> validateSession() async {
-    try {
-      // Kiểm tra session cơ bản
-      if (!state.isAuthenticated || state.userId == null) {
-        return false;
-      }
-
-      // Kiểm tra currentBranchId có hợp lệ không
-      if (state.currentBranchId == null && state.branchIds.isNotEmpty) {
-        // Tự động set branch đầu tiên nếu chưa có
-        await switchBranch(state.branchIds.first);
-      }
-
-      return true;
-    } catch (e) {
-      print('Session validation error: $e');
-      return false;
-    }
-  }
-
-  // Refresh user info từ server (sẵn sàng cho tương lai)
-  Future<void> refreshUserInfo() async {
-    try {
-      if (state.userId == null) return;
-      
-      // TODO: Implement khi có API endpoint để refresh user info
-      // final userInfo = await _authService.getUserInfo(state.userId!);
-      // if (userInfo != null) {
-      //   state = state.copyWith(
-      //     userName: userInfo.userName,
-      //     userRole: userInfo.userRole,
-      //     branchIds: userInfo.branchIds,
-      //   );
-      //   await _saveSession();
-      // }
-    } catch (e) {
-      print('Error refreshing user info: $e');
-    }
-  }
 }

@@ -14,6 +14,7 @@ import 'package:mart_dine/model_staff/order_item.dart';
 import 'package:mart_dine/model_staff/table.dart';
 import 'package:mart_dine/provider_staff/table_provider.dart';
 import 'package:mart_dine/provider_staff/user_provider.dart';
+import 'package:mart_dine/providers/user_session_provider.dart';
 import 'package:mart_dine/routes.dart';
 
 class ScreenChooseTable extends ConsumerStatefulWidget {
@@ -89,7 +90,9 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
 
       // Lấy thông tin user hiện tại để kiểm tra role
       final user = ref.read(userNotifierProvider);
-      if (user != null && user.role == 2) {
+      final session = ref.read(userSessionProvider);
+      final userRole = user?.role ?? session.userRole;
+      if (userRole == 6) {
         // Role 2 là thu ngân - chuyển đến màn hình thanh toán
         // Cần lấy thông tin order và orderItems trước
         Order? currentOrder;
@@ -239,14 +242,19 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
     if (!mounted) return;
 
     try {
+      final session = ref.read(userSessionProvider);
+      final selectedBranchId = widget.branchId ?? session.currentBranchId ?? 1;
+      final sessionCompanyId = session.companyId ?? 1;
+      final sessionUserId = session.userId ?? 1;
+
       Routes.pushRightLeftConsumerFul(
         context,
         ScreenMenu(
           tableId: table.id,
           tableName: table.name,
-          branchId: widget.branchId ?? 1,
-          companyId: 1,
-          userId: 1,
+          branchId: selectedBranchId,
+          companyId: sessionCompanyId,
+          userId: sessionUserId,
           initialOrder: initialOrder,
           initialOrderItems: initialItems,
         ),
@@ -277,6 +285,7 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
         title: Text('Chọn bàn', style: Style.fontTitle),
         centerTitle: false,
         elevation: 0,
+        automaticallyImplyLeading: false,
         iconTheme: Theme.of(context).iconTheme,
         actions: [
           IconButton(

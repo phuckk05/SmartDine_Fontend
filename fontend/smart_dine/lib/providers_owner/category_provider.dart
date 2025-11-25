@@ -26,7 +26,7 @@ class CategoryUpdateNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       final updatedCategory = originalCategory.copyWith(name: newName, updatedAt: DateTime.now());
-      await _ref.read(categoryApiProvider).updateCategory(originalCategory.id!, updatedCategory);
+      await _ref.read(categoryApiProvider).updateCategory(originalCategory.id, updatedCategory);
       _ref.invalidate(categoryListProvider); // Làm mới danh sách
       state = const AsyncValue.data(null);
     } catch (e, s) {

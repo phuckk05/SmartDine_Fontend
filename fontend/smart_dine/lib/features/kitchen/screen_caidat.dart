@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:mart_dine/features/signin/screen_signin.dart';
-import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/services/auth_service.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -58,55 +56,58 @@ class SettingNotifier extends StateNotifier<SettingState> {
     try {
       state = state.copyWith(isLoading: true);
 
-      final prefs = await SharedPreferences.getInstance();
-      final savedEmail = prefs.getString("userEmail");
-
-      if (savedEmail == null) {
-        print("Không tìm thấy email trong SharedPreferences");
+      final savedUser = await getSavedUser();
+      if (savedUser == null) {
         state = state.copyWith(isLoading: false, isLoggedOut: true);
         return;
       }
 
-      /// 1. Gọi API lấy user theo email
-      final userRes = await http.get(
-        Uri.parse(
-          'https://smartdine-backend-oq2x.onrender.com/api/users/email/$savedEmail',
-        ),
-      );
-
-      if (userRes.statusCode != 200) {
-        print("Không thể lấy dữ liệu user từ API");
-        state = state.copyWith(isLoading: false);
-        return;
-      }
-
-      final userData = jsonDecode(userRes.body);
-
-      /// 2. Gọi API để lấy Role Name
+      // Lấy role
       final rolesRes = await http.get(
         Uri.parse('https://smartdine-backend-oq2x.onrender.com/api/roles/all'),
       );
-      final roles = jsonDecode(rolesRes.body);
+      final roles = json.decode(rolesRes.body);
 
       final roleMatch = roles.firstWhere(
-        (r) => r['id'] == userData['role'],
+        (r) => r['id'] == savedUser.role,
         orElse: () => {'name': 'Unknown'},
       );
 
-      /// 3. Gán dữ liệu user vào state
+      // Gán thông tin user cơ bản
       state = state.copyWith(
-        user: userData,
+        user: {
+          "id": savedUser.id,
+          "fullName": savedUser.fullName,
+          "email": savedUser.email,
+          "phone": savedUser.phone,
+          "fontImage": savedUser.fontImage,
+          "backImage": savedUser.backImage,
+          "statusId": savedUser.statusId,
+          "role": savedUser.role,
+          "companyId": savedUser.companyId,
+          "createdAt": savedUser.createdAt,
+        },
         roleName: roleMatch['name'],
         isLoading: false,
         isLoggedOut: false,
       );
 
-      /// 4. Gọi thêm API chi nhánh
-      await fetchCompanyBranch(userData['id']);
+      /// GỌI API CHI NHÁNH (mới thêm)
+      await fetchCompanyBranch(savedUser.id!);
     } catch (e) {
-      print("Lỗi fetchUserData: $e");
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(isLoading: false, isLoggedOut: false);
     }
+  }
+
+  // Lấy user đã lưu từ SharedPreferences
+  Future<User?> getSavedUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString('user');
+
+    if (jsonString == null) return null;
+
+    final Map<String, dynamic> data = jsonDecode(jsonString);
+    return User.fromMap(data);
   }
 
   // Đăng xuất
@@ -319,8 +320,8 @@ class _ScreenSettingState extends ConsumerState<ScreenSetting> {
                                 duration: Duration(seconds: 2),
                               ),
                             );
-                            // Chuyển về màn hình đăng nhập hoặc màn hình đầu tiên
-                            Routes.pushAndRemoveUntil(context, ScreenSignIn());
+
+                            
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(

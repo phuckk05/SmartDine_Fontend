@@ -55,18 +55,6 @@ class TabInfoRestaurant extends ConsumerWidget {
           _buildInfoRow("Mã chi nhánh", branchData.branchCode),
           _buildInfoRow("Quản lý", managerName), 
           const SizedBox(height: 20),
-          const Text(
-            "Giấy phép kinh doanh",
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.black54,
-            ),
-          ),
-          const SizedBox(height: 8),
-          // THÊM: Widget hiển thị ảnh giấy phép kinh doanh
-          _buildBusinessLicenseImage(branchData.image),
-
-          const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -141,37 +129,6 @@ class TabInfoRestaurant extends ConsumerWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // THÊM: Widget để hiển thị ảnh giấy phép kinh doanh
-  Widget _buildBusinessLicenseImage(String? imageUrl) {
-    return AspectRatio(
-      aspectRatio: 16 / 9,
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: (imageUrl != null && imageUrl.isNotEmpty)
-            ? Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return const Center(child: CircularProgressIndicator());
-                },
-                errorBuilder: (context, error, stackTrace) {
-                  return const Center(
-                      child: Icon(Icons.error_outline, color: Colors.red));
-                },
-              )
-            : const Center(
-                child: Icon(Icons.image_not_supported, color: Colors.grey)),
       ),
     );
   }

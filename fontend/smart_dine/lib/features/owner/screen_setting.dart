@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/constrats.dart' show ShadowCus, kTextColorLight, kTextColorDark;
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/widgets_owner/appbar.dart';
-import 'screen_account_info.dart'; // THÊM: Import màn hình thông tin tài khoản
 
 // Đặt mặc định là true để khớp ảnh
 final _darkModeProvider = StateProvider<bool>((ref) => true); 
@@ -35,13 +34,7 @@ class _ScreenSettingsState extends ConsumerState<ScreenSettings> {
             _buildSettingItem(
               icon: Icons.person_outline,
               title: 'Thông tin tài khoản',
-              // SỬA: Điều hướng đến màn hình thông tin tài khoản
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ScreenAccountInfo()),
-                );
-              },
+              onTap: () {},
             ),
             
             const SizedBox(height: 25),

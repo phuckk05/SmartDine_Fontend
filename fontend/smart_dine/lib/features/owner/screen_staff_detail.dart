@@ -98,20 +98,10 @@ class _ScreenStaffDetailState extends ConsumerState<ScreenStaffDetail> {
   }
 
   void _handleMenuAction(BuildContext context, WidgetRef ref, String action, User user) {
-    // Lấy thông tin vai trò của người dùng đang được xem
-    final roleCode = widget.profile.role.code.toUpperCase();
-
     if (action == 'edit') {
-      // KIỂM TRA: Chỉ cho phép sửa nếu vai trò không phải là 'OWNER'
-      if (roleCode == 'OWNER') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Bạn không thể sửa thông tin nhân viên này.")),
-        );
-      } else {
-        Navigator.push(context, MaterialPageRoute(builder: (_) =>
-          ScreenEditStaffInfo(profile: widget.profile), // Truyền profile gốc
-        ));
-      }
+      Navigator.push(context, MaterialPageRoute(builder: (_) =>
+        ScreenEditStaffInfo(profile: widget.profile), // Truyền profile gốc
+      ));
     } else if (action == 'toggle_lock') {
       ref.read(staffProfileUpdateNotifierProvider.notifier).toggleUserStatus(user);
     } else if (action == 'delete') {

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mart_dine/core/style.dart';
 import '../../../models/notification.dart' as model;
 import '../../../providers/notification_management_provider.dart';
-import '../../../providers/user_session_provider.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   final bool showBackButton;
@@ -27,17 +26,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   Future<void> _loadData() async {
-    // Load notifications and categories using user session data
-    final currentBranchId = ref.read(currentBranchIdProvider);
-    final currentCompanyId = ref.read(currentCompanyIdProvider);
-    
-    if (currentBranchId != null && currentCompanyId != null) {
-      ref.read(notificationManagementProvider.notifier).loadNotifications(
-        'branch-$currentBranchId', 
-        'company-$currentCompanyId'
-      );
-      ref.read(notificationCategoryProvider.notifier).loadCategories();
-    }
+    // Load notifications and categories using the provider
+    ref.read(notificationManagementProvider.notifier).loadNotifications('branch-001', 'company-001');
+    ref.read(notificationCategoryProvider.notifier).loadCategories();
   }
 
   @override

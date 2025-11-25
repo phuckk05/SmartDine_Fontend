@@ -3,11 +3,9 @@ import 'dart:convert';
 
 class Item {
   final int id;
+  final int? companyId;
   final String name;
   final double price; // Java là BigDecimal, Dart dùng double
-  final int? companyId;
-  final int? categoryId; // <<< THÊM: Trường để lưu ID nhóm món gốc
-  final String? image; // THÊM: URL ảnh của món ăn
   final int? statusId;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -15,11 +13,9 @@ class Item {
 
   Item({
     required this.id,
+    this.companyId,
     required this.name,
     required this.price,
-    this.companyId,
-    this.image, // THÊM
-    this.categoryId, // <<< THÊM
     this.statusId,
     required this.createdAt,
     required this.updatedAt,
@@ -27,11 +23,9 @@ class Item {
   });
 Item copyWith({
     int? id,
+    int? companyId,
     String? name,
     double? price,
-    int? companyId,
-    String? image, // THÊM
-    int? categoryId,
     int? statusId,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -39,11 +33,9 @@ Item copyWith({
   }) {
     return Item(
       id: id ?? this.id,
+      companyId: companyId ?? this.companyId,
       name: name ?? this.name,
       price: price ?? this.price,
-      companyId: companyId ?? this.companyId,
-      image: image ?? this.image, // THÊM
-      categoryId: categoryId ?? this.categoryId,
       statusId: statusId ?? this.statusId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -54,12 +46,10 @@ Item copyWith({
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'companyId': companyId,
       'name': name,
       'price': price,
-      'companyId': companyId,
-      'image': image, // THÊM
-      'categoryId': categoryId,
-      'statusId': statusId, // Đảm bảo trường này luôn được gửi đi
+      'statusId': statusId,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'deletedAt': deletedAt?.toIso8601String(),
@@ -77,12 +67,10 @@ Item copyWith({
 
     return Item(
       id: int.tryParse(map['id'].toString()) ?? 0,
+      companyId: int.tryParse(map['companyId'].toString()) ?? 0,
       name: map['name'] ?? '',
       price: double.tryParse(map['price'].toString()) ?? 0.0,
-      image: map['image'], // THÊM: Lấy URL ảnh từ map
-      companyId: map['companyId'] == null ? null : int.tryParse(map['companyId'].toString()),
-      categoryId: map['categoryId'] == null ? null : int.tryParse(map['categoryId'].toString()), // <<< THÊM
-      statusId: map['statusId'] == null ? null : int.tryParse(map['statusId'].toString()),
+      statusId: int.tryParse(map['statusId'].toString()) ?? 0,
       createdAt: _parseDate(map['createdAt']),
       updatedAt: _parseDate(map['updatedAt']),
       deletedAt: deletedAtValue == null ? null : _parseDate(deletedAtValue),

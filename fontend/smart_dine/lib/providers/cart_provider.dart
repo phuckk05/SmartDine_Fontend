@@ -4,6 +4,7 @@ import 'package:mart_dine/models/item.dart';
 class CartNotifier extends StateNotifier<List<Item>> {
   CartNotifier() : super([]);
 
+  @override
   List<Item> build() {
     return const [];
   }

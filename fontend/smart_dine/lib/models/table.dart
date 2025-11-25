@@ -32,15 +32,11 @@ class TableType {
   final int id;
   final String code;
   final String name;
-  final int? branchId;
-  final int? companyId;
 
   TableType({
     required this.id,
     required this.code,
     required this.name,
-    this.branchId,
-    this.companyId,
   });
 
   factory TableType.fromJson(Map<String, dynamic> json) {
@@ -48,8 +44,6 @@ class TableType {
       id: json['id'] ?? 0,
       code: json['code'] ?? '',
       name: json['name'] ?? '',
-      branchId: json['branchId'],
-      companyId: json['companyId'],
     );
   }
 
@@ -58,8 +52,6 @@ class TableType {
       'id': id,
       'code': code,
       'name': name,
-      'branchId': branchId,
-      'companyId': companyId,
     };
   }
 }

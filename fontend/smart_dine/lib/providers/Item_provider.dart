@@ -17,7 +17,7 @@ class ItemNotifier extends StateNotifier<List<Item>> {
       // Log fetch results to help diagnose empty UI states.
       // ignore: avoid_print
             state = items;
-    } catch (error, _) {
+    } catch (error, stackTrace) {
       // ignore: avoid_print
           }
   }

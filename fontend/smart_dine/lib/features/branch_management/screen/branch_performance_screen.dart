@@ -1,46 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/style.dart';
-import '/widgets/appbar.dart';
-import '../../../providers/user_session_provider.dart';
-import '../../../providers/employee_performance_provider.dart';
+import 'package:mart_dine/core/style.dart';
+import 'package:mart_dine/widgets/appbar.dart';
+import 'package:fl_chart/fl_chart.dart';
 
-class BranchPerformanceScreen extends ConsumerStatefulWidget {
+class BranchPerformanceScreen extends StatelessWidget {
   const BranchPerformanceScreen({super.key});
 
-  @override
-  ConsumerState<BranchPerformanceScreen> createState() =>
-      _BranchPerformanceScreenState();
-}
-
-class _BranchPerformanceScreenState
-    extends ConsumerState<BranchPerformanceScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Style.colorLight : Style.colorDark;
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
-
-    /// Kiểm tra user session
-    final currentBranchId = ref.watch(currentBranchIdProvider);
-    final isAuthenticated = ref.watch(isAuthenticatedProvider);
-
-    if (!isAuthenticated || currentBranchId == null) {
-      return Scaffold(
-        backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
-        appBar: AppBarCus(
-          title: 'Hiệu xuất chi nhánh',
-          isCanpop: true,
-          isButtonEnabled: true,
-        ),
-        body: _buildEmptyState(context, isDark, cardColor, textColor),
-      );
-    }
-
-    /// Watch employee performance
-    final performanceAsync = ref.watch(
-      employeePerformanceProvider(currentBranchId),
-    );
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
@@ -49,74 +19,23 @@ class _BranchPerformanceScreenState
         isCanpop: true,
         isButtonEnabled: true,
       ),
-      body: performanceAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error:
-            (error, stackTrace) => _buildErrorState(
-              error,
-              isDark,
-              cardColor,
-              textColor,
-              currentBranchId,
-            ),
-        data: (data) {
-          final performances = data?.employeeList ?? [];
-          if (data == null || performances.isEmpty) {
-            return _buildEmptyState(context, isDark, cardColor, textColor);
-          }
-
-          return _buildContent(
-            data,
-            isDark,
-            cardColor,
-            textColor,
-            currentBranchId,
-          );
-        },
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  /// BUILD NỘI DUNG CHÍNH
-  // ---------------------------------------------------------------------------
-
-  Widget _buildContent(
-    data,
-    bool isDark,
-    Color cardColor,
-    Color textColor,
-    int branchId,
-  ) {
-    final performances = data.employeeList ?? [];
-
-    return RefreshIndicator(
-      onRefresh: () async {
-        await ref
-            .read(employeePerformanceProvider(branchId).notifier)
-            .refresh();
-      },
-      child: SingleChildScrollView(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            //------------------------------------------------------------------
             // Tổng quan
-            //------------------------------------------------------------------
             Text(
               'Tổng quan chi nhánh',
               style: Style.fontTitleMini.copyWith(color: textColor),
             ),
             const SizedBox(height: 12),
-
             Row(
               children: [
                 Expanded(
                   child: _buildStatCard(
                     'Tổng đơn hàng',
-                    data.overview?['totalOrders']?.toString() ?? '0',
+                    '1,845',
                     Icons.shopping_cart,
                     Colors.blue,
                     isDark,
@@ -128,7 +47,7 @@ class _BranchPerformanceScreenState
                 Expanded(
                   child: _buildStatCard(
                     'Doanh thu',
-                    '${data.overview?['totalRevenue'] ?? '0'} đ',
+                    '165 triệu',
                     Icons.attach_money,
                     Colors.green,
                     isDark,
@@ -139,13 +58,12 @@ class _BranchPerformanceScreenState
               ],
             ),
             const SizedBox(height: 12),
-
             Row(
               children: [
                 Expanded(
                   child: _buildStatCard(
                     'Khách hàng',
-                    data.overview?['totalOrders']?.toString() ?? '0',
+                    '1,520',
                     Icons.people,
                     Colors.orange,
                     isDark,
@@ -156,10 +74,10 @@ class _BranchPerformanceScreenState
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatCard(
-                    'Tỷ lệ hoàn thành',
-                    '${(data.overview?['completionRate'] ?? 0.0).toStringAsFixed(1)}%',
-                    Icons.check_circle,
-                    Colors.purple,
+                    'Đánh giá TB',
+                    '4.8★',
+                    Icons.star,
+                    Colors.amber,
                     isDark,
                     cardColor,
                     textColor,
@@ -167,37 +85,14 @@ class _BranchPerformanceScreenState
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatCard(
-                    'Cập nhật',
-                    data.overview?['lastUpdated'] != null
-                        ? DateTime.parse(data.overview!['lastUpdated']).toLocal().toString().split(' ')[0]
-                        : 'N/A',
-                    Icons.update,
-                    Colors.teal,
-                    isDark,
-                    cardColor,
-                    textColor,
-                  ),
-                ),
-              ],
-            ),
-
             const SizedBox(height: 24),
 
-            //------------------------------------------------------------------
             // Hiệu suất nhân viên
-            //------------------------------------------------------------------
             Text(
-              'Hiệu suất nhân viên',
+              'Top nhân viên',
               style: Style.fontTitleMini.copyWith(color: textColor),
             ),
             const SizedBox(height: 12),
-
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -213,148 +108,198 @@ class _BranchPerformanceScreenState
               ),
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Nhân viên',
-                          style: Style.fontTitleMini.copyWith(color: textColor),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          'Số bàn phục vụ',
-                          style: Style.fontTitleMini.copyWith(color: textColor),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          'Số đơn hoàn thành',
-                          style: Style.fontTitleMini.copyWith(color: textColor),
-                        ),
-                      ),
-                    ],
+                  _buildEmployeeRow(
+                    '1',
+                    'Hà Đức Lương',
+                    '285 đơn',
+                    '24.5 triệu',
+                    textColor,
                   ),
-                  const Divider(),
-
-                  ...performances.where((employee) {
-                    // Lọc chỉ hiển thị nhân viên có role STAFF, CHEF, Cashier
-                    final roleId = employee['roleId'] ?? employee['role'];
-                    final role = roleId is int ? roleId : (roleId?.toString().toLowerCase() ?? '');
-                    return role == 3 || role == '3' || // STAFF
-                           role == 4 || role == '4' || // CHEF
-                           role == 6 || role == '6' || // Cashier
-                           (role is String && (
-                             role.contains('nhân viên') || role.contains('nhan vien') ||
-                             role.contains('đầu bếp') || role.contains('dau bep') ||
-                             role.contains('chef') || role.contains('thu ngân') ||
-                             role.contains('thu ngan') || role.contains('cashier') ||
-                             role.contains('staff')
-                           ));
-                  }).map(
-                    (e) => Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            e['name'] ?? '-',
-                            style: Style.fontContent.copyWith(color: textColor),
-                          ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            e['tablesServed']?.toString() ?? '0',
-                            style: Style.fontContent.copyWith(color: textColor),
-                          ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            e['ordersCompleted']?.toString() ?? '0',
-                            style: Style.fontContent.copyWith(color: textColor),
-                          ),
-                        ),
-                      ],
-                    ),
+                  const Divider(height: 24),
+                  _buildEmployeeRow(
+                    '2',
+                    'Phúc',
+                    '268 đơn',
+                    '22.8 triệu',
+                    textColor,
+                  ),
+                  const Divider(height: 24),
+                  _buildEmployeeRow(
+                    '3',
+                    'Tú Kiệt',
+                    '245 đơn',
+                    '21.2 triệu',
+                    textColor,
                   ),
                 ],
               ),
             ),
-
             const SizedBox(height: 24),
 
-            //------------------------------------------------------------------
-            // Hiệu xuất nhân viên
-            //------------------------------------------------------------------
+            // Biểu đồ doanh thu theo giờ
             Text(
-              'Hiệu xuất nhân viên',
+              'Doanh thu theo giờ',
               style: Style.fontTitleMini.copyWith(color: textColor),
             ),
             const SizedBox(height: 12),
-
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: cardColor,
                 borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: SizedBox(
+                height: 200,
+                child: BarChart(
+                  BarChartData(
+                    alignment: BarChartAlignment.spaceAround,
+                    maxY: 35,
+                    barTouchData: BarTouchData(
+                      enabled: true,
+                      touchTooltipData: BarTouchTooltipData(
+                        getTooltipColor:
+                            (group) => Colors.black.withOpacity(0.8),
+                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                          const hours = [
+                            '6h-9h',
+                            '9h-12h',
+                            '12h-15h',
+                            '15h-18h',
+                            '18h-21h',
+                            '21h-24h',
+                          ];
+                          String label = hours[group.x.toInt() - 1];
+                          return BarTooltipItem(
+                            '$label\n${rod.toY.toInt()} triệu',
+                            const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    titlesData: FlTitlesData(
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 40,
+                          getTitlesWidget: (value, meta) {
+                            return Text(
+                              '${value.toInt()}tr',
+                              style: Style.fontCaption.copyWith(
+                                color:
+                                    isDark
+                                        ? Colors.grey[400]
+                                        : Style.textColorGray,
+                                fontSize: 10,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            const titles = [
+                              '',
+                              '6-9h',
+                              '9-12h',
+                              '12-15h',
+                              '15-18h',
+                              '18-21h',
+                              '21-24h',
+                            ];
+                            if (value.toInt() < 0 ||
+                                value.toInt() >= titles.length) {
+                              return const SizedBox.shrink();
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                titles[value.toInt()],
+                                style: Style.fontCaption.copyWith(
+                                  color:
+                                      isDark
+                                          ? Colors.grey[400]
+                                          : Style.textColorGray,
+                                  fontSize: 9,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      rightTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                    ),
+                    gridData: FlGridData(show: false),
+                    borderData: FlBorderData(show: false),
+                    barGroups: [
+                      _buildBarGroup(1, 8.5),
+                      _buildBarGroup(2, 12.8),
+                      _buildBarGroup(3, 28.5),
+                      _buildBarGroup(4, 15.2),
+                      _buildBarGroup(5, 32.5),
+                      _buildBarGroup(6, 18.8),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Món ăn bán chạy
+            Text(
+              'Món ăn bán chạy',
+              style: Style.fontTitleMini.copyWith(color: textColor),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
-                  // Header row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          'Tên nhân viên',
-                          style: TextStyle(
-                            color: textColor,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          'Đơn phục vụ',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: textColor,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          'Doanh thu',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: textColor,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
+                  _buildDishRow('Phở bò', '425 phần', '8.5 triệu', textColor),
+                  const Divider(height: 24),
+                  _buildDishRow(
+                    'Cà phê sữa',
+                    '315 phần',
+                    '6.3 triệu',
+                    textColor,
                   ),
-                  const SizedBox(height: 12),
-                  const Divider(height: 1),
-                  const SizedBox(height: 12),
-                  ...performances.map(
-                    (employee) => Column(
-                      children: [
-                        _buildEmployeeRow(
-                          employee['name'] ?? '-',
-                          employee['totalServed']?.toString() ?? '-',
-                          employee['tips']?.toString() ?? '-',
-                          textColor,
-                        ),
-                        if (performances.indexOf(employee) <
-                            performances.length - 1)
-                          const Divider(height: 16),
-                      ],
-                    ),
+                  const Divider(height: 24),
+                  _buildDishRow(
+                    'Bánh mì thịt',
+                    '280 phần',
+                    '4.2 triệu',
+                    textColor,
                   ),
+                  const Divider(height: 24),
+                  _buildDishRow('Bún chả', '245 phần', '5.6 triệu', textColor),
                 ],
               ),
             ),
@@ -363,10 +308,6 @@ class _BranchPerformanceScreenState
       ),
     );
   }
-
-  // ---------------------------------------------------------------------------
-  /// CÁC WIDGET PHỤ
-  // ---------------------------------------------------------------------------
 
   Widget _buildStatCard(
     String title,
@@ -386,7 +327,7 @@ class _BranchPerformanceScreenState
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -411,151 +352,117 @@ class _BranchPerformanceScreenState
     );
   }
 
-  Widget _buildEmptyState(
-    BuildContext context,
-    bool isDark,
-    Color cardColor,
-    Color textColor,
-  ) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(32),
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.trending_up, size: 40, color: Colors.grey),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Chưa có dữ liệu hiệu xuất',
-            style: Style.fontTitle.copyWith(
-              color: textColor,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Hệ thống sẽ hiển thị hiệu xuất khi có dữ liệu.\nVui lòng đăng nhập với tài khoản có quyền truy cập chi nhánh.',
-            textAlign: TextAlign.center,
-            style: Style.fontContent.copyWith(
-              color: textColor.withOpacity(0.7),
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 32),
-          ElevatedButton.icon(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            label: const Text(
-              'Quay lại',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6200EE),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildEmployeeRow(
+    String rank,
     String name,
-    String v1,
-    String v2,
+    String orders,
+    String revenue,
     Color textColor,
   ) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
-          flex: 2,
-          child: Text(
-            name,
-            style: TextStyle(
-              color: textColor,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color:
+                rank == '1'
+                    ? Colors.amber
+                    : (rank == '2' ? Colors.grey[400] : Colors.brown[300]),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              rank,
+              style: Style.fontNormal.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ),
+        const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            v1,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: textColor),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name,
+                style: Style.fontNormal.copyWith(
+                  color: textColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                orders,
+                style: Style.fontCaption.copyWith(color: Style.textColorGray),
+              ),
+            ],
           ),
         ),
-        Expanded(
-          child: Text(
-            v2,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: textColor),
+        Text(
+          revenue,
+          style: Style.fontNormal.copyWith(
+            color: textColor,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildErrorState(
-    Object error,
-    bool isDark,
-    Color cardColor,
+  Widget _buildDishRow(
+    String dish,
+    String quantity,
+    String revenue,
     Color textColor,
-    int branchId,
   ) {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error_outline, size: 64, color: Colors.red),
-          const SizedBox(height: 16),
-          Text(
-            'Lỗi tải dữ liệu hiệu suất',
-            style: Style.fontTitle.copyWith(color: textColor),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                dish,
+                style: Style.fontNormal.copyWith(
+                  color: textColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                quantity,
+                style: Style.fontCaption.copyWith(color: Style.textColorGray),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            error.toString(),
-            style: Style.fontContent.copyWith(
-              color: textColor.withOpacity(0.7),
-            ),
-            textAlign: TextAlign.center,
+        ),
+        Text(
+          revenue,
+          style: Style.fontNormal.copyWith(
+            color: textColor,
+            fontWeight: FontWeight.bold,
           ),
-        ],
-      ),
+        ),
+      ],
+    );
+  }
+
+  BarChartGroupData _buildBarGroup(int x, double value) {
+    return BarChartGroupData(
+      x: x,
+      barRods: [
+        BarChartRodData(
+          toY: value,
+          color: Colors.blue,
+          width: 20,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(4),
+            topRight: Radius.circular(4),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -4,16 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:mart_dine/models_owner/company.dart'; 
 
-// SỬA LỖI: Lỗi 404 liên tục. Rà soát lại các file API khác cho thấy backend sử dụng `companys` (có 's').
-// Đồng bộ lại đường dẫn về `.../api/companys` để khớp với backend.
 final _uri = 'https://smartdine-backend-oq2x.onrender.com/api/companys';
 
 class CompanyAPI {
   /// Lấy thông tin công ty bằng mã code
   /// Tương ứng: GET /api/companys/{companyCode}
-  // SỬA: Endpoint đúng và rõ ràng hơn để kiểm tra code là /check-code/{companyCode}
   Future<Company?> fetchCompanyByCode(String companyCode) async {
-  final response = await http.get(Uri.parse('$_uri/check-code/$companyCode'),
+  final response = await http.get(Uri.parse('$_uri/$companyCode'),
       headers: {'Accept': 'application/json'});
 
   if (response.statusCode == 200) {
@@ -37,38 +34,41 @@ class CompanyAPI {
 
   /// Lấy thông tin công ty bằng ID
   /// Tương ứng: GET /api/companys/get/{id}
-  // SỬA LỖI: Lỗi 404 liên tục cho thấy các endpoint lấy theo ID (`/get/{id}`, `/detail/{id}`) không hoạt động.
-  // Thay đổi chiến lược: Lấy tất cả các công ty và lọc ở phía client.
   Future<Company?> fetchCompanyById(int companyId) async {
-    try {
-      // 1. Gọi API để lấy danh sách TẤT CẢ các công ty.
-      final allCompanies = await fetchAllCompanies();
-      // 2. Tìm công ty có ID khớp trong danh sách.
-      // Dùng firstWhereOrNull để tránh lỗi nếu không tìm thấy.
-      final company = allCompanies.firstWhere(
-        (c) => c.id == companyId,
-      );
-      return company;
-    } catch (e) {
-      // Ném lại lỗi nếu `fetchAllCompanies` hoặc `firstWhere` thất bại.
-      throw Exception('Lỗi khi tìm công ty với ID $companyId: $e');
+    final response = await http.get(Uri.parse('$_uri/get/$companyId'),
+        headers: {'Accept': 'application/json'});
+
+    if (response.statusCode == 200) {
+      final responseBody = utf8.decode(response.bodyBytes);
+      if (responseBody.isEmpty || responseBody == "null") {
+        return null;
+      }
+      try {
+        return Company.fromMap(jsonDecode(responseBody));
+      } catch (e) {
+        print("Lỗi giải mã Company by ID: $e \nBody: $responseBody");
+        return null;
+      }
     }
+    return null;
   }
 
   /// Lấy tất cả các công ty
   /// Tương ứng: GET /api/companys/all
   Future<List<Company>> fetchAllCompanies() async {
-    final response = await http.get(
-      Uri.parse('$_uri/all'),
-      headers: {'Content-Type': 'application/json'},
-    );
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data
-          .map((company) => Company.fromMap(company as Map<String, dynamic>))
-          .toList();
+    final response = await http.get(Uri.parse('$_uri/all'),
+        headers: {'Accept': 'application/json'});
+
+    if (response.statusCode == 200) {
+      try {
+        List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
+        return body.map((dynamic item) => Company.fromMap(item)).toList();
+      } catch (e) {
+        throw Exception('Lỗi giải mã danh sách Công ty: $e');
+      }
+    } else {
+      throw Exception('Lỗi tải danh sách Công ty (Mã: ${response.statusCode})');
     }
-        return [];
   }
 
   // API LẤY THỐNG KÊ (Backend còn thiếu)

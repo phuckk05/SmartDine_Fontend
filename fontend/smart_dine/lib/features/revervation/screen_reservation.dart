@@ -41,8 +41,18 @@ class _ScreenReservationState extends ConsumerState<ScreenReservation> {
   void initState() {
     super.initState();
     // Set default branch if provided
-    if (widget.branchId != null) {
-      _selectedBranchId = widget.branchId;
+    _selectedBranchId = widget.branchId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadTables();
+    });
+  }
+
+  Future<void> _loadTables() async {
+    final branchId = _selectedBranchId ?? widget.branchId ?? 1;
+    final currentTables = ref.read(tableNotifierProvider);
+    if (currentTables.isEmpty) {
+      await ref.read(tableNotifierProvider.notifier).loadTables(branchId);
+      ref.invalidate(unpaidTablesByBranchProvider(branchId));
     }
   }
 
@@ -119,6 +129,7 @@ class _ScreenReservationState extends ConsumerState<ScreenReservation> {
           reservationData,
           _selectedTableIds,
         );
+        if (!mounted) return;
         Constrats.showThongBao(context, 'Đặt bàn thành công!');
         // Clear form
         _formKey.currentState!.reset();
@@ -129,6 +140,7 @@ class _ScreenReservationState extends ConsumerState<ScreenReservation> {
           _selectedTableIds.clear();
         });
       } catch (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Lỗi đặt bàn: $e')));

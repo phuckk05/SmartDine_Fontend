@@ -5,7 +5,7 @@ import 'package:mart_dine/core/constrats.dart' show ShadowCus, kTextColorDark, k
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/widgets_owner/appbar.dart';
 import 'package:mart_dine/providers_owner/target_provider.dart';
-import 'package:mart_dine/models_owner/target.dart';
+import 'package:mart_dine/models_owner/target_model.dart';
 // SỬA: Import model Branch
 import 'package:mart_dine/models_owner/branch.dart';
 

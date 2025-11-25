@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/widgets/appbar.dart';
 import '../../../providers/employee_management_provider.dart';
-import '../../../providers/roles_provider.dart';
 import '../../../providers/user_session_provider.dart';
 import '../../../API/branch_API.dart';
 import '../../../models/branch.dart';
@@ -22,14 +19,8 @@ class SettingsScreen extends ConsumerWidget {
     final textColor = isDark ? Style.colorLight : Style.colorDark;
     final cardColor = isDark ? Colors.grey[900]! : Colors.white;
     
-    // Lấy thông tin user session và validate
+    // Lấy thông tin user session
     final userSession = ref.watch(userSessionProvider);
-    final userSessionNotifier = ref.read(userSessionProvider.notifier);
-    
-    // Validate session ngay khi build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      userSessionNotifier.validateSession();
-    });
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[850] : Style.backgroundColor,
@@ -57,167 +48,60 @@ class SettingsScreen extends ConsumerWidget {
               style: Style.fontTitleMini.copyWith(color: textColor),
             ),
             const SizedBox(height: 12),
-            
-            // Lấy thông tin chi nhánh cho phần tài khoản
-            userSession.currentBranchId != null
-              ? FutureBuilder<Map<String, dynamic>?>(
-                  future: _fetchBranchAndCompanyInfo(userSession.currentBranchId!, userSession.userId),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: cardColor,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: const Center(child: CircularProgressIndicator()),
-                      );
-                    }
-                    
-                    final data = snapshot.data;
-                    final branch = data?['branch'] as Branch?;
-                    final companyName = data?['companyName'] as String?;
-                    
-                    // Update userSession nếu có companyName mới
-                    if (companyName != null && userSession.companyName == null) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        userSessionNotifier.updateCompanyName(companyName);
-                      });
-                    }
-                    
-                    return Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: cardColor,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildInfoItem(
-                            Icons.person, 
-                            userSession.userName ?? 'Chưa có tên', 
-                            textColor, 
-                            label: 'Tên người dùng'
-                          ),
-                          const SizedBox(height: 8),
-                          _buildInfoItem(
-                            Icons.badge, 
-                            'ID: ${userSession.userId ?? 'N/A'}', 
-                            textColor, 
-                            label: 'Mã người dùng'
-                          ),
-                          const SizedBox(height: 8),
-                          _buildInfoItem(
-                            Icons.business, 
-                            snapshot.connectionState == ConnectionState.waiting
-                              ? 'Đang tải...'
-                              : 'Chi nhánh: ${branch?.name ?? userSession.currentBranchId ?? 'Chưa chọn'}', 
-                            textColor, 
-                            label: 'Chi nhánh hiện tại'
-                          ),
-                          const SizedBox(height: 8),
-                          _buildInfoItem(
-                            Icons.admin_panel_settings, 
-                            ref.watch(getRoleNameProvider(userSession.userRole)), 
-                            textColor, 
-                            label: 'Vai trò'
-                          ),
-                          const SizedBox(height: 8),
-                          _buildInfoItem(
-                            Icons.access_time, 
-                            userSession.loginTime?.toString().split('.')[0] ?? 'Chưa có', 
-                            textColor, 
-                            label: 'Thời gian đăng nhập'
-                          ),
-                          const SizedBox(height: 8),
-                          _buildInfoItem(
-                            Icons.apartment, 
-                            snapshot.connectionState == ConnectionState.waiting
-                              ? 'Đang tải...'
-                              : '${companyName ?? branch?.companyName ?? userSession.companyName ?? 'Company ID: ${userSession.companyId ?? 'N/A'}'}', 
-                            textColor, 
-                            label: 'Công ty'
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                )
-              : Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: cardColor,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildInfoItem(
-                        Icons.person, 
-                        userSession.userName ?? 'Chưa có tên', 
-                        textColor, 
-                        label: 'Tên người dùng'
-                      ),
-                      const SizedBox(height: 8),
-                      _buildInfoItem(
-                        Icons.badge, 
-                        'ID: ${userSession.userId ?? 'N/A'}', 
-                        textColor, 
-                        label: 'Mã người dùng'
-                      ),
-                      const SizedBox(height: 8),
-                      _buildInfoItem(
-                        Icons.business, 
-                        'Chi nhánh: Chưa chọn', 
-                        textColor, 
-                        label: 'Chi nhánh hiện tại'
-                      ),
-                      const SizedBox(height: 8),
-                      _buildInfoItem(
-                        Icons.admin_panel_settings, 
-                        ref.watch(getRoleNameProvider(userSession.userRole)), 
-                        textColor, 
-                        label: 'Vai trò'
-                      ),
-                      const SizedBox(height: 8),
-                      _buildInfoItem(
-                        Icons.access_time, 
-                        userSession.loginTime?.toString().split('.')[0] ?? 'Chưa có', 
-                        textColor, 
-                        label: 'Thời gian đăng nhập'
-                      ),
-                      const SizedBox(height: 8),
-                      _buildInfoItem(
-                        Icons.apartment, 
-                        'Company ID: ${userSession.companyId ?? 'N/A'}', 
-                        textColor, 
-                        label: 'Công ty'
-                      ),
-                    ],
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildInfoItem(
+                    Icons.person, 
+                    userSession.userName ?? 'Chưa có tên', 
+                    textColor, 
+                    label: 'Tên người dùng'
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  _buildInfoItem(
+                    Icons.badge, 
+                    'ID: ${userSession.userId ?? 'N/A'}', 
+                    textColor, 
+                    label: 'Mã người dùng'
+                  ),
+                  const SizedBox(height: 8),
+                  _buildInfoItem(
+                    Icons.business, 
+                    'Chi nhánh: ${userSession.currentBranchId ?? 'Chưa chọn'}', 
+                    textColor, 
+                    label: 'Chi nhánh hiện tại'
+                  ),
+                  const SizedBox(height: 8),
+                  _buildInfoItem(
+                    Icons.admin_panel_settings, 
+                    _getRoleName(userSession.userRole), 
+                    textColor, 
+                    label: 'Vai trò'
+                  ),
+                  const SizedBox(height: 8),
+                  _buildInfoItem(
+                    Icons.access_time, 
+                    userSession.loginTime?.toString().split('.')[0] ?? 'Chưa có', 
+                    textColor, 
+                    label: 'Thời gian đăng nhập'
+                  ),
+
+                ],
+              ),
+            ),
             const SizedBox(height: 24),
 
             // Hồ sơ nhà hàng
@@ -227,10 +111,10 @@ class SettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             
-            // Lấy thông tin chi nhánh với fallback tốt hơn
-            userSession.currentBranchId != null
-              ? FutureBuilder<Map<String, dynamic>?>(
-                  future: _fetchBranchAndCompanyInfo(userSession.currentBranchId!, userSession.userId),
+            // Lấy thông tin branch thực tế
+            userSession.currentBranchId != null 
+              ? FutureBuilder<Branch?>(
+                  future: BranchAPI().getBranchById(userSession.currentBranchId.toString()),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return Container(
@@ -250,56 +134,7 @@ class SettingsScreen extends ConsumerWidget {
                       );
                     }
                     
-                    if (snapshot.hasError) {
-                      return Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: cardColor,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Thông tin chi nhánh',
-                              style: Style.fontNormal.copyWith(
-                                color: textColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Chi nhánh: ${userSession.currentBranchId ?? 'N/A'}',
-                              style: Style.fontTitleMini.copyWith(color: Colors.orange),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Đang tải thông tin chi nhánh từ server...',
-                              style: Style.fontCaption.copyWith(color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                    
-                    final data = snapshot.data!;
-                    final branch = data['branch'] as Branch?;
-                    final companyName = data['companyName'] as String?;
-                    
-                    // Update userSession nếu có companyName mới
-                    if (companyName != null && userSession.companyName == null) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        userSessionNotifier.updateCompanyName(companyName);
-                      });
-                    }
-                    
+                    final branch = snapshot.data;
                     return Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -331,15 +166,13 @@ class SettingsScreen extends ConsumerWidget {
                           const SizedBox(height: 16),
                           _buildInfoItem(Icons.business, branch?.branchCode ?? 'N/A', textColor, label: 'Mã chi nhánh'),
                           const SizedBox(height: 8),
-                          _buildInfoItem(Icons.location_on, branch?.address ?? 'Chưa cập nhật', textColor, label: 'Địa chỉ'),
-                          const SizedBox(height: 8),
-                          _buildInfoItem(Icons.phone, branch?.managerPhone ?? 'Chưa cập nhật', textColor, label: 'SĐT quản lý'),
-                          const SizedBox(height: 8),
-                          _buildInfoItem(Icons.info, 'Chi nhánh ID: ${branch?.id ?? userSession.currentBranchId}', textColor, label: 'Mã chi nhánh'),
-                          const SizedBox(height: 8),
-                          _buildInfoItem(Icons.apartment, companyName ?? userSession.companyName ?? 'Company ID: ${userSession.companyId ?? 'N/A'}', textColor, label: 'Công ty'),
+                          _buildInfoItem(Icons.location_on, branch?.address ?? 'Chưa cập nhật', textColor),
                           const SizedBox(height: 8),
                           _buildInfoItem(Icons.calendar_today, branch?.createdAt.year.toString() ?? 'N/A', textColor, label: 'Năm thành lập'),
+                          const SizedBox(height: 8),
+                          _buildInfoItem(Icons.info, 'ID: ${branch?.id ?? userSession.currentBranchId}', textColor, label: 'Mã chi nhánh'),
+                          const SizedBox(height: 8),
+                          _buildInfoItem(Icons.apartment, 'ID: ${userSession.companyId ?? 'N/A'}', textColor, label: 'Công ty'),
                         ],
                       ),
                     );
@@ -660,31 +493,21 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  // Helper method để fetch branch và company info
-  Future<Map<String, dynamic>?> _fetchBranchAndCompanyInfo(int branchId, int? userId) async {
-    try {
-      // Fetch branch info
-      final branch = await BranchAPI().getBranchById(branchId.toString(), userId: userId);
-      
-      // Fetch company name từ API company-branch
-      String? companyName;
-      if (userId != null) {
-        final response = await http.get(
-          Uri.parse('https://smartdine-backend-oq2x.onrender.com/api/company/company-branch/$userId'),
-        );
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          companyName = data['companyName'];
-        }
-      }
-      
-      return {
-        'branch': branch,
-        'companyName': companyName,
-      };
-    } catch (e) {
-      return null;
+  // Helper method để lấy tên vai trò
+  String _getRoleName(int? role) {
+    switch (role) {
+      case 1:
+        return 'Quản trị viên';
+      case 2:
+        return 'Quản lý chi nhánh';
+      case 3:
+        return 'Nhân viên';
+      case 4:
+        return 'Đầu bếp';
+      case 5:
+        return 'Chủ sở hữu';
+      default:
+        return 'Không xác định';
     }
   }
-
 }

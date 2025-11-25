@@ -76,7 +76,6 @@ class _ScreenEditRestaurantInfoState extends ConsumerState<ScreenEditRestaurantI
        name: _nameController.text.trim(),
        address: _addressController.text.trim(),
        branchCode: _branchCodeController.text.trim(),
-       statusId: 1,
        // managerId không được sửa ở màn hình này
        updatedAt: DateTime.now(), // API Service sẽ set lại
      );

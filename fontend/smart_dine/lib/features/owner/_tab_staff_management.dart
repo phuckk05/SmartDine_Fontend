@@ -11,6 +11,79 @@ class TabStaffManagement extends ConsumerWidget {
   final int branchId;
   const TabStaffManagement({super.key, required this.branchId});
 
+  // Hàm hiển thị Dialog chọn nhân viên
+  void _showAddStaffDialog(BuildContext context, WidgetRef ref) {
+    final allStaffProfilesAsync = ref.watch(staffProfileProvider);
+    final staffBranchRelationsAsync = ref.watch(userBranchRelationProvider);
+    // Lấy companyId của owner đang đăng nhập
+    final loggedInCompanyId = ref.watch(userSessionProvider).companyId;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text("Chọn nhân viên"),
+          content: SizedBox(
+            width: double.maxFinite,
+            // Xử lý cả 2 AsyncValue
+            child: staffBranchRelationsAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Text("Lỗi tải quan hệ: $err"),
+              data: (relationsMap) {
+                // Khi quan hệ đã tải, xử lý staff profile
+                return allStaffProfilesAsync.when(
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (err, stack) => Text("Lỗi tải danh sách: $err"),
+                  data: (allStaffProfiles) {
+                    // Lọc nhân viên có vai trò 'staff' hoặc 'chef' và chưa thuộc chi nhánh này
+                    // SỬA: Thêm điều kiện lọc theo companyId
+                    final availableStaff = allStaffProfiles.where((profile) {
+                       // Chỉ hiển thị nhân viên trong cùng công ty
+                       if (profile.user.companyId != loggedInCompanyId) return false;
+
+                       final roleCode = profile.role.code.toLowerCase();
+                       final isEligibleRole = roleCode == 'staff' || roleCode == 'chef';
+                       if (!isEligibleRole) return false;
+
+                       final assignedBranches = relationsMap[profile.user.id] ?? [];
+                       return !assignedBranches.contains(branchId);
+                    }).toList();
+
+                    return availableStaff.isEmpty
+                      ? const Text("Không có nhân viên nào khác.")
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: availableStaff.length,
+                          itemBuilder: (context, index) {
+                            final profile = availableStaff[index];
+                            return ListTile(
+                              title: Text(profile.user.fullName),
+                              subtitle: Text(profile.role.name),
+                              onTap: () {
+                                // Gọi Notifier
+                                ref.read(staffProfileUpdateNotifierProvider.notifier)
+                                   .assignStaffToBranch(profile.user.id!, branchId);
+                                Navigator.of(dialogContext).pop();
+                              },
+                            );
+                          },
+                        );
+                  }
+                );
+              }
+            )
+          ),
+          actions: <Widget>[
+             TextButton(
+              child: const Text("Hủy"),
+              onPressed: () => Navigator.of(dialogContext).pop(),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final staffListAsync = ref.watch(staffProfileProvider);
@@ -33,10 +106,10 @@ class TabStaffManagement extends ConsumerWidget {
                  loading: () => const Center(child: CircularProgressIndicator()),
                  error: (err, stack) => Center(child: Text('Lỗi tải quan hệ NV-CN: $err', style: TextStyle(color: Colors.red))),
                  data: (relationsMap) {
-                    // SỬA: Lọc danh sách nhân viên có branchId khớp với chi nhánh hiện tại
+                    // Lọc danh sách nhân viên thuộc chi nhánh này
                     final branchStaffList = allStaffProfiles.where((profile) {
-                      final assignedBranchId = relationsMap[profile.user.id];
-                      return assignedBranchId == branchId;
+                      final assignedBranches = relationsMap[profile.user.id] ?? [];
+                      return assignedBranches.contains(branchId);
                     }).toList();
 
                     // Hiển thị ListView hoặc thông báo
@@ -57,6 +130,19 @@ class TabStaffManagement extends ConsumerWidget {
                  }
               );
             }
+          ),
+          const SizedBox(height: 20),
+          // Nút Thêm nhân viên
+          ElevatedButton.icon(
+            icon: const Icon(Icons.add),
+            label: const Text("Thêm nhân viên vào chi nhánh"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue, foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+            onPressed: () {
+              _showAddStaffDialog(context, ref);
+            },
           ),
           const SizedBox(height: 20),
         ],
@@ -110,20 +196,31 @@ class TabStaffManagement extends ConsumerWidget {
                   icon: const Icon(Icons.more_vert, color: Colors.black54),
                   onSelected: (String result) {
                     if (result == 'toggle_lock') {
-                      ref
-                          .read(staffProfileUpdateNotifierProvider.notifier)
-                          .toggleUserStatus(user);
+                      ref.read(staffProfileUpdateNotifierProvider.notifier).toggleUserStatus(user);
+                    
                     } else if (result == 'unassign') {
-                      // SỬA: Gọi hàm xóa khỏi chi nhánh chỉ với userId
-                      ref
-                          .read(staffProfileUpdateNotifierProvider.notifier)
-                          .unassignStaffFromBranch(user.id!);
+                      // Gọi hàm xóa khỏi chi nhánh
+                      // SỬA: Cần truyền cả userId và branchId
+                      ref.read(staffProfileUpdateNotifierProvider.notifier).unassignStaffFromBranch(user.id!, branchId);
+                    } else if (result == 'delete_permanent') {
+                      // Gọi hàm xóa vĩnh viễn
+                      ref.read(staffProfileUpdateNotifierProvider.notifier).deleteUser(user.id!);
                     }
                   },
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                    PopupMenuItem<String>(value: 'toggle_lock', child: Text(isLocked ? 'Mở khóa' : 'Khóa tài khoản')),
-                    const PopupMenuItem<String>(value: 'unassign', child: Text('Xóa khỏi chi nhánh')),
-                  ],
+                  itemBuilder: (BuildContext context) {
+                    final roleCode = profile.role.code.toUpperCase();
+                    final canBeDeleted = ['STAFF', 'CHEF', 'MANAGER'].contains(roleCode);
+
+                    return <PopupMenuEntry<String>>[
+                      PopupMenuItem<String>(
+                        value: 'toggle_lock',
+                        child: Text(isLocked ? 'Mở khóa' : 'Khóa tài khoản'),
+                      ),
+                      const PopupMenuItem<String>(value: 'unassign', child: Text('Xóa khỏi chi nhánh')),
+                      if (canBeDeleted)
+                        const PopupMenuItem<String>(value: 'delete_permanent', child: Text('Xóa vĩnh viễn (Khỏi hệ thống)', style: TextStyle(color: Colors.red))),
+                    ];
+                  },
                 ),
               ],
             ),

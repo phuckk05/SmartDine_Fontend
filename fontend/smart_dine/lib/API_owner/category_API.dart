@@ -3,12 +3,11 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:mart_dine/models_owner/categories.dart';
-import 'package:mart_dine/API_owner/item_API.dart'; // THÊM: Để sử dụng ItemAPI
 final _uri = 'https://smartdine-backend-oq2x.onrender.com/api/categories';
 
 class CategoryAPI {
-  // SỬA: Đổi tên hàm để khớp với provider
-  Future<List<Category>> fetchCategoriesByCompany(int companyId) async {
+  // SỬA: Thêm companyId và tạo Uri chính xác
+  Future<List<Category>> fetchCategories(int companyId) async {
     // Tạo URI với query parameter
     final uri = Uri.parse('$_uri/all').replace(
       queryParameters: {'companyId': companyId.toString()},
@@ -33,7 +32,6 @@ class CategoryAPI {
     final Map<String, dynamic> requestBody = {
       'name': category.name,
       'companyId': category.companyId,
-      'statusId': 1, // Mặc định là 1 (Hoạt động) khi tạo mới
     };
     final response = await http.post(
       Uri.parse(_uri),
@@ -52,7 +50,6 @@ class CategoryAPI {
     final Map<String, dynamic> requestBody = {
       'name': category.name,
       'companyId': category.companyId,
-      'statusId': category.statusId, // Gửi cả statusId khi cập nhật
     };
     final response = await http.put(
       Uri.parse('$_uri/$id'),
@@ -66,30 +63,6 @@ class CategoryAPI {
     }
   }
 
-  // THÊM: Hàm xóa category và tất cả các liên kết menu-item của nó
-  Future<void> deleteCategoryAndAssignments(int categoryId, int companyId) async {
-    // BƯỚC 1: Xóa tất cả các bản ghi trong `menu_items` có categoryId này.
-    // Vì không có API xóa hàng loạt theo category, ta phải làm thủ công:
-    // 1.1. Lấy tất cả các món ăn của công ty.
-    final itemApi = ItemAPI(); // Tạo instance của ItemAPI
-    final allItems = await itemApi.fetchAllItems(companyId);
-
-    // 1.2. Lặp qua từng món và cố gắng xóa nó khỏi category này.
-    // Lời gọi này sẽ xóa bản ghi trong `menu_items` nếu nó tồn tại.
-    // Nếu không tồn tại, API sẽ trả lỗi (ví dụ 404), nhưng ta có thể bỏ qua lỗi này.
-    for (final item in allItems) {
-      try {
-        await itemApi.unassignItemFromMenu(item.id, categoryId);
-      } catch (e) {
-        // Bỏ qua lỗi, vì có thể món ăn này không thuộc category đang xóa.
-        print('Info: Could not unassign item ${item.id} from category $categoryId (may not exist): $e');
-      }
-    }
-
-    // BƯỚC 2: Sau khi đã xóa hết các liên kết, tiến hành xóa category.
-    await deleteCategory(categoryId);
-  }
-
   Future<bool> deleteCategory(int id) async {
     final response = await http.delete(
       Uri.parse('$_uri/$id'),
@@ -100,10 +73,6 @@ class CategoryAPI {
     } else {
       if (response.statusCode == 400) {
         throw Exception('Không thể xóa nhóm món vì vẫn còn món ăn trong đó.');
-      }
-      // SỬA: Thêm trường hợp đặc biệt cho lỗi 500, có thể do nhóm món đang được sử dụng
-      if (response.statusCode == 500) {
-        throw Exception('Không thể xóa. Nhóm món này có thể đang được sử dụng trong một hoặc nhiều menu.');
       }
       throw Exception('Lỗi xóa nhóm món (Mã: ${response.statusCode})');
     }

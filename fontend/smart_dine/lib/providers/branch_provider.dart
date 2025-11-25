@@ -29,8 +29,7 @@ class BranchNotifier extends StateNotifier<Branch?> {
   ) async {
     try {
       final responseCompany = await companyAPI.exitsCompanyCode(companyCode);
-      // print('Response Company: $responseCompany');
-
+      print('Response Company: $responseCompany');
       if (responseCompany != null) {
         final branchPayload = branch.copyWith(companyId: responseCompany.id);
         final branchCreate = Branch.create(
@@ -41,7 +40,7 @@ class BranchNotifier extends StateNotifier<Branch?> {
           image: branchPayload.image,
           managerId: branchPayload.managerId,
         );
-        // print('Branch Payload: $branchCreate');
+        print('Branch Payload: $branchCreate');
         final response = await branchAPI.create(branchCreate);
         if (response != null) {
           //Cập nhạt state
@@ -80,6 +79,7 @@ class BranchNotifier extends StateNotifier<Branch?> {
       }
       return null;
     } catch (e) {
+      print('Error getting branch by manager ID: $e');
       return null;
     }
   }

@@ -31,11 +31,24 @@ class UserBranchAPI {
       Uri.parse('$uri2/user/$userId'),
       headers: {'Content-Type': 'application/json'},
     );
+
+    print(
+      'getBranchByUserId($userId) status=${response.statusCode} body=${response.body}',
+    );
+
     if (response.statusCode == 200 || response.statusCode == 201) {
       final Map<String, dynamic> data = jsonDecode(response.body);
       return data;
     }
-    print("loi lấy branch bằng userId: ${response.statusCode}");
+
+    if (response.statusCode == 404) {
+      // user chưa được gán chi nhánh
+      return null;
+    }
+
+    print(
+      "loi lấy branch bằng userId: ${response.statusCode} body=${response.body}",
+    );
     return null;
   }
 

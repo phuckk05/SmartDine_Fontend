@@ -45,7 +45,7 @@ class KitchenApi {
     final response = await http.put(
       uri,
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(statusId),
+      body: jsonEncode({'statusId': statusId}),
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
