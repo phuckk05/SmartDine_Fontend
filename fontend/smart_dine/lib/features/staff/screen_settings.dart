@@ -26,7 +26,70 @@ final _branchNameByUserProvider = FutureProvider.family<String?, int>((
   final userBranchApi = ref.watch(userBranchApiProvider);
   final data = await userBranchApi.getBranchByUserId(userId);
   if (data == null) return null;
-  return data['branchName'] ?? data['branch_name'] ?? data['branchCode'];
+
+  String? _cleanLabel(String? raw) {
+    if (raw == null) return null;
+    final trimmed = raw.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
+
+  int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    return int.tryParse(value.toString());
+  }
+
+  String? label;
+
+  label = _cleanLabel((data['branchName'] ?? data['branch_name']) as String?);
+  if (label != null) {
+    debugPrint('branch label: direct field -> $label');
+    return label;
+  }
+
+  final nested = data['branch'];
+  if (nested is Map<String, dynamic>) {
+    label = _cleanLabel(nested['name'] as String?);
+    if (label != null) {
+      debugPrint('branch label: nested name -> $label');
+      return label;
+    }
+    label = _cleanLabel(nested['branchCode'] as String?);
+    if (label != null) {
+      debugPrint('branch label: nested code -> $label');
+      return label;
+    }
+  }
+
+  final branchApi = ref.read(branchApiProvider2);
+  final branchId = _parseInt(
+    data['branchId'] ??
+        data['branch_id'] ??
+        (nested is Map<String, dynamic> ? nested['id'] : null),
+  );
+  if (branchId != null) {
+    final branch = await branchApi.getBranchById(branchId);
+    label = _cleanLabel(branch?.name);
+    if (label != null) {
+      debugPrint('branch label: loaded by id $branchId -> $label');
+      return label;
+    }
+    label = _cleanLabel(branch?.branchCode);
+    if (label != null) {
+      debugPrint('branch label: loaded code by id $branchId -> $label');
+      return label;
+    }
+  }
+
+  final branchCode = _cleanLabel(data['branchCode'] as String?);
+  if (branchCode != null) {
+    final branch = await branchApi.findBranchByBranchCode(branchCode);
+    label = _cleanLabel(branch?.name) ?? branchCode;
+    debugPrint('branch label: resolved from code $branchCode -> $label');
+    return label;
+  }
+
+  return null;
 });
 
 class ScreenSettings extends ConsumerWidget {
@@ -43,15 +106,16 @@ class ScreenSettings extends ConsumerWidget {
 
     final displayName = _resolveDisplayName(user, session);
     final resolvedBranchId = _resolveBranchId(session);
+    final userId = user?.id ?? session.userId;
+    debugPrint(
+      'Settings: userId=$userId, session.currentBranchId=${session.currentBranchId}, branchIds=${session.branchIds}',
+    );
 
     AsyncValue<String?>? branchLabelState;
-    if (resolvedBranchId != null) {
+    if (userId != null) {
+      branchLabelState = ref.watch(_branchNameByUserProvider(userId));
+    } else if (resolvedBranchId != null) {
       branchLabelState = ref.watch(_branchNameByIdProvider(resolvedBranchId));
-    } else {
-      final userId = user?.id ?? session.userId;
-      if (userId != null) {
-        branchLabelState = ref.watch(_branchNameByUserProvider(userId));
-      }
     }
 
     return Scaffold(
@@ -102,7 +166,8 @@ class ScreenSettings extends ConsumerWidget {
                 context,
                 MaterialPageRoute(
                   builder:
-                      (_) => ScreenOrderHistory(branchId: resolvedBranchId),
+                      (_) =>
+                          ScreenOrderHistory(branchId: session.currentBranchId),
                 ),
               );
             },

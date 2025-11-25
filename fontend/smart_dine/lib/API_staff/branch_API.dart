@@ -47,13 +47,19 @@ class BranchAPI {
 
   Future<Branch?> getBranchById(int branchId) async {
     final response = await http.get(
-      Uri.parse('$uri2/$branchId'),
+      Uri.parse('$uri2/id/$branchId'),
       headers: {'Content-Type': 'application/json'},
     );
     if (response.statusCode == 200 || response.statusCode == 201) {
       final Map<String, dynamic> data = jsonDecode(response.body);
       return Branch.fromMap(data);
     }
+    if (response.statusCode == 404) {
+      return null;
+    }
+    print(
+      'getBranchById($branchId) failed: ${response.statusCode} body=${response.body}',
+    );
     return null;
   }
 }
