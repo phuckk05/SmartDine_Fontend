@@ -58,59 +58,55 @@ class SettingNotifier extends StateNotifier<SettingState> {
     try {
       state = state.copyWith(isLoading: true);
 
-      final savedUser = await getSavedUser();
-      if (savedUser == null) {
+      final prefs = await SharedPreferences.getInstance();
+      final savedEmail = prefs.getString("userEmail");
+
+      if (savedEmail == null) {
+        print("Không tìm thấy email trong SharedPreferences");
         state = state.copyWith(isLoading: false, isLoggedOut: true);
         return;
       }
 
-      // Lấy role
+      /// 1. Gọi API lấy user theo email
+      final userRes = await http.get(
+        Uri.parse(
+          'https://smartdine-backend-oq2x.onrender.com/api/users/email/$savedEmail',
+        ),
+      );
+
+      if (userRes.statusCode != 200) {
+        print("Không thể lấy dữ liệu user từ API");
+        state = state.copyWith(isLoading: false);
+        return;
+      }
+
+      final userData = jsonDecode(userRes.body);
+
+      /// 2. Gọi API để lấy Role Name
       final rolesRes = await http.get(
         Uri.parse('https://smartdine-backend-oq2x.onrender.com/api/roles/all'),
       );
-      final roles = json.decode(rolesRes.body);
+      final roles = jsonDecode(rolesRes.body);
 
       final roleMatch = roles.firstWhere(
-        (r) => r['id'] == savedUser.role,
+        (r) => r['id'] == userData['role'],
         orElse: () => {'name': 'Unknown'},
       );
 
-      // Gán thông tin user cơ bản
+      /// 3. Gán dữ liệu user vào state
       state = state.copyWith(
-        user: {
-          "id": savedUser.id,
-          "fullName": savedUser.fullName,
-          "email": savedUser.email,
-          "phone": savedUser.phone,
-          "fontImage": savedUser.fontImage,
-          "backImage": savedUser.backImage,
-          "statusId": savedUser.statusId,
-          "role": savedUser.role,
-          "companyId": savedUser.companyId,
-          "createdAt": savedUser.createdAt,
-        },
+        user: userData,
         roleName: roleMatch['name'],
         isLoading: false,
         isLoggedOut: false,
       );
 
-      /// GỌI API CHI NHÁNH (mới thêm)
-      await fetchCompanyBranch(savedUser.id!);
+      /// 4. Gọi thêm API chi nhánh
+      await fetchCompanyBranch(userData['id']);
     } catch (e) {
-      state = state.copyWith(isLoading: false, isLoggedOut: false);
+      print("Lỗi fetchUserData: $e");
+      state = state.copyWith(isLoading: false);
     }
-  }
-
-  // Lấy user đã lưu từ SharedPreferences
-  Future<User?> getSavedUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString('user');
-
-    if (jsonString == null) return null;
-
-    final Map<String, dynamic> data = jsonDecode(jsonString);
-    print('🔍 [Setting] Retrieved user data: $data');
-    return User.fromMap(data);
   }
 
   // Đăng xuất

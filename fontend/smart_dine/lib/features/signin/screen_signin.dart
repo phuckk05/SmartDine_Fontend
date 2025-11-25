@@ -20,6 +20,7 @@ import 'package:mart_dine/providers/user_session_provider.dart';
 import 'package:mart_dine/providers_owner/system_stats_provider.dart';
 import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets/loading.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ScreenSignIn extends ConsumerStatefulWidget {
   const ScreenSignIn({super.key});
@@ -61,6 +62,9 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
       );
       return;
     }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userEmail', _emailController.text);
 
     ref.read(isLoadingNotifierProvider.notifier).toggle(true);
     final user = await ref
