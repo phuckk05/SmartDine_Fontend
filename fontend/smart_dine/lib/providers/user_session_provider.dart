@@ -75,6 +75,9 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
     required List<int> branchIds,
     int? defaultBranchId,
     int? companyId,
+    String? email,
+    String? name,
+    String? phone,
   }) async {
     // Chọn branch mặc định
     final currentBranchId =
@@ -83,6 +86,9 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
     state = UserSession(
       userId: userId,
       userName: userName,
+      name: name ?? userName,
+      email: email,
+      phone: phone,
       userRole: userRole,
       companyId: companyId,
       currentBranchId: currentBranchId,
@@ -199,7 +205,7 @@ class UserSessionNotifier extends StateNotifier<UserSession> {
   Future<void> refreshUserInfo() async {
     try {
       if (state.userId == null) return;
-      
+
       // TODO: Implement khi có API endpoint để refresh user info
       // final userInfo = await _authService.getUserInfo(state.userId!);
       // if (userInfo != null) {

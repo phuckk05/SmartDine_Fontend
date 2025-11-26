@@ -5,6 +5,7 @@ class UserSession {
   final String? email;
   final String? name;
   final String? userName;
+  final String? phone;
   final int? role;
   final int? userRole;
   final int? companyId;
@@ -19,6 +20,7 @@ class UserSession {
     this.email,
     this.name,
     this.userName,
+    this.phone,
     this.role,
     this.userRole,
     this.companyId,
@@ -40,6 +42,7 @@ class UserSession {
     required String email,
     required String name,
     String? userName,
+    String? phone,
     required int role,
     int? userRole,
     required int companyId,
@@ -51,6 +54,7 @@ class UserSession {
       email: email,
       name: name,
       userName: userName ?? name,
+      phone: phone,
       role: role,
       userRole: userRole ?? role,
       companyId: companyId,
@@ -66,6 +70,7 @@ class UserSession {
     String? email,
     String? name,
     String? userName,
+    String? phone,
     int? role,
     int? userRole,
     int? companyId,
@@ -80,6 +85,7 @@ class UserSession {
       email: email ?? this.email,
       name: name ?? this.name,
       userName: userName ?? this.userName,
+      phone: phone ?? this.phone,
       role: role ?? this.role,
       userRole: userRole ?? this.userRole,
       companyId: companyId ?? this.companyId,
@@ -105,6 +111,7 @@ class UserSession {
       'branchIds': branchIds,
       'isAuthenticated': isAuthenticated,
       'loginTime': loginTime?.toIso8601String(),
+      'phone': phone,
     };
   }
 
@@ -122,6 +129,7 @@ class UserSession {
       branchIds: List<int>.from(map['branchIds'] ?? []),
       isAuthenticated: map['isAuthenticated'] ?? false,
       loginTime: map['loginTime'] != null ? DateTime.parse(map['loginTime']) : null,
+      phone: map['phone'],
     );
   }
 

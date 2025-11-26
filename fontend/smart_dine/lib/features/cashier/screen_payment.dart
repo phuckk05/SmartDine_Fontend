@@ -1,14 +1,24 @@
+import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:mart_dine/API_staff/order_API.dart';
 import 'package:mart_dine/API_staff/payment_API.dart';
+import 'package:mart_dine/API_staff/user_API.dart';
 import 'package:mart_dine/core/style.dart';
 import 'package:mart_dine/model_staff/item.dart';
 import 'package:mart_dine/model_staff/order.dart';
 import 'package:mart_dine/model_staff/order_item.dart';
 import 'package:mart_dine/model_staff/payment.dart';
+import 'package:mart_dine/model_staff/user.dart';
 import 'package:mart_dine/provider_staff/menu_item_provider.dart';
 import 'package:mart_dine/provider_staff/user_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class ScreenPayment extends ConsumerStatefulWidget {
   final int tableId;
@@ -31,8 +41,20 @@ class ScreenPayment extends ConsumerStatefulWidget {
 }
 
 class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
+  static const int _statusServed = 3;
+  static const int _statusCancelled = 4;
+
   String _selectedPaymentMethod = 'Phương thức thanh toán';
   bool _isProcessing = false;
+  bool _isExportingInvoice = false;
+  String? _resolvedCashierName;
+
+  final NumberFormat _currencyFormatter = NumberFormat.currency(
+    locale: 'vi_VN',
+    symbol: 'đ',
+    decimalDigits: 0,
+  );
+  final DateFormat _dateFormatter = DateFormat('dd/MM/yyyy HH:mm');
 
   final List<String> _paymentMethods = [
     'Phương thức thanh toán',
@@ -44,14 +66,48 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
   @override
   void initState() {
     super.initState();
-    // Load menu items if companyId is provided
-    if (widget.companyId != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (widget.companyId != null) {
         ref
             .read(menuNotifierProvider.notifier)
             .loadMenusByCompanyId(widget.companyId!);
-      });
+      }
+      _resolveCashierName();
+    });
+  }
+
+  String _formatCurrency(double value) => _currencyFormatter.format(value);
+
+  String _formatOrderDate(DateTime dateTime) =>
+      _dateFormatter.format(dateTime.toLocal());
+
+  bool get _isShareSupported {
+    if (kIsWeb) return false;
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+        return true;
+      default:
+        return false;
     }
+  }
+
+  String _getCashierDisplayName(User? currentUser) {
+    if (currentUser != null) {
+      final trimmedName = currentUser.fullName.trim();
+      if (trimmedName.isNotEmpty) {
+        return trimmedName;
+      }
+      final currentUserId = currentUser.id;
+      if (currentUserId != null && currentUserId > 0) {
+        return 'NV #$currentUserId';
+      }
+    }
+    if (widget.order.userId > 0) {
+      return 'NV #${widget.order.userId}';
+    }
+    return 'Chưa xác định';
   }
 
   // Tính tổng tiền
@@ -68,6 +124,9 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
 
     double total = 0.0;
     for (final item in widget.orderItems) {
+      if (!_isItemChargeable(item)) {
+        continue;
+      }
       final menuItem = menuMap[item.itemId];
       if (menuItem != null) {
         total += item.quantity * menuItem.price;
@@ -77,6 +136,52 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
     // Debug: In ra tổng tiền tính được
     print('Calculated total: $total');
     return total;
+  }
+
+  bool _isItemCancelled(OrderItem item) => item.statusId == _statusCancelled;
+
+  bool _isItemChargeable(OrderItem item) => item.statusId == _statusServed;
+
+  bool _isItemReadyForBilling(OrderItem item) =>
+      _isItemChargeable(item) || _isItemCancelled(item);
+
+  Future<void> _resolveCashierName() async {
+    final currentUser = ref.read(userNotifierProvider);
+    if (currentUser != null) {
+      final trimmed = currentUser.fullName.trim();
+      if (trimmed.isNotEmpty) {
+        setState(() {
+          _resolvedCashierName = trimmed;
+        });
+        return;
+      }
+    }
+
+    if (widget.order.userId <= 0) return;
+
+    try {
+      final userApi = ref.read(userApiProvider);
+      final cashier = await userApi.getUserById(widget.order.userId);
+      if (!mounted) return;
+      if (cashier != null) {
+        final trimmed = cashier.fullName.trim();
+        setState(() {
+          _resolvedCashierName =
+              trimmed.isNotEmpty ? trimmed : 'NV #${widget.order.userId}';
+        });
+      } else {
+        setState(() {
+          _resolvedCashierName = 'NV #${widget.order.userId}';
+        });
+      }
+    } catch (e) {
+      debugPrint('Không thể tải tên thu ngân: $e');
+      if (mounted) {
+        setState(() {
+          _resolvedCashierName = 'NV #${widget.order.userId}';
+        });
+      }
+    }
   }
 
   Future<void> _processPayment() async {
@@ -89,7 +194,9 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
 
     // Kiểm tra xem tất cả món đã được phục vụ chưa
     final unservedItems =
-        widget.orderItems.where((item) => item.statusId != 3).toList();
+        widget.orderItems
+            .where((item) => !_isItemReadyForBilling(item))
+            .toList();
     if (unservedItems.isNotEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -205,7 +312,7 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '${widget.order.createdAt.day}/${widget.order.createdAt.month}/${widget.order.createdAt.year} - ${widget.order.createdAt.hour}:${widget.order.createdAt.minute.toString().padLeft(2, '0')}',
+                      _formatOrderDate(widget.order.createdAt),
                       style: Style.fontNormal.copyWith(color: Colors.grey),
                     ),
                   ],
@@ -235,10 +342,327 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
     }
   }
 
+  Future<void> _handleExportInvoice({bool openPrintPreview = false}) async {
+    if (_isExportingInvoice) return;
+
+    setState(() {
+      _isExportingInvoice = true;
+    });
+
+    final total = _calculateTotal();
+    final sanitizedTableName = widget.tableName.replaceAll(' ', '_');
+    final fileName = 'hoa_don_${sanitizedTableName}_${widget.order.id}.pdf';
+    final shouldOpenPrintPreview = openPrintPreview || !_isShareSupported;
+
+    try {
+      if (shouldOpenPrintPreview) {
+        await Printing.layoutPdf(
+          name: fileName,
+          onLayout: (format) => _buildInvoicePdf(total, format),
+        );
+      } else {
+        final bytes = await _buildInvoicePdf(total, PdfPageFormat.a4);
+        await Printing.sharePdf(bytes: bytes, filename: fileName);
+      }
+    } on MissingPluginException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Thiết bị hiện tại chưa hỗ trợ in/chia sẻ PDF (${e.message}).',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Không thể xuất hóa đơn: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isExportingInvoice = false;
+        });
+      }
+    }
+  }
+
+  Future<Uint8List> _buildInvoicePdf(
+    double total,
+    PdfPageFormat pageFormat,
+  ) async {
+    final pdf = pw.Document();
+    final regularFont = await PdfGoogleFonts.nunitoRegular();
+    final boldFont = await PdfGoogleFonts.nunitoBold();
+    final menuItems = ref.read(menuNotifierProvider);
+    final menuLookup = <int, Item>{};
+    for (final menuItem in menuItems) {
+      final id = menuItem.id;
+      if (id != null) {
+        menuLookup[id] = menuItem;
+      }
+    }
+
+    final cashier =
+        _resolvedCashierName ??
+        _getCashierDisplayName(ref.read(userNotifierProvider));
+    final orderDate = _formatOrderDate(widget.order.createdAt);
+    final paymentMethod =
+        _selectedPaymentMethod == 'Phương thức thanh toán'
+            ? 'Chưa chọn'
+            : _selectedPaymentMethod;
+
+    final billableItems = widget.orderItems.where(_isItemChargeable).toList();
+    final itemRows =
+        billableItems.map((item) {
+          final menuItem = menuLookup[item.itemId];
+          final itemName = menuItem?.name ?? 'Món ${item.itemId}';
+          final unitPrice = menuItem?.price ?? 0;
+          final lineTotal = unitPrice * item.quantity;
+
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Container(
+                padding: const pw.EdgeInsets.symmetric(
+                  vertical: 6,
+                  horizontal: 4,
+                ),
+                child: pw.Row(
+                  children: [
+                    pw.Expanded(
+                      flex: 4,
+                      child: pw.Text(
+                        itemName,
+                        style: pw.TextStyle(font: regularFont, fontSize: 12),
+                      ),
+                    ),
+                    pw.SizedBox(width: 8),
+                    pw.SizedBox(
+                      width: 40,
+                      child: pw.Text(
+                        'x${item.quantity}',
+                        textAlign: pw.TextAlign.right,
+                        style: pw.TextStyle(font: regularFont, fontSize: 12),
+                      ),
+                    ),
+                    pw.SizedBox(width: 8),
+                    pw.Expanded(
+                      flex: 3,
+                      child: pw.Text(
+                        _formatCurrency(unitPrice),
+                        textAlign: pw.TextAlign.right,
+                        style: pw.TextStyle(font: regularFont, fontSize: 12),
+                      ),
+                    ),
+                    pw.SizedBox(width: 8),
+                    pw.Expanded(
+                      flex: 3,
+                      child: pw.Text(
+                        _formatCurrency(lineTotal),
+                        textAlign: pw.TextAlign.right,
+                        style: pw.TextStyle(font: regularFont, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (item.note != null && item.note!.isNotEmpty)
+                pw.Padding(
+                  padding: const pw.EdgeInsets.only(left: 4, bottom: 4),
+                  child: pw.Text(
+                    'Ghi chú: ${item.note}',
+                    style: pw.TextStyle(
+                      font: regularFont,
+                      fontSize: 10,
+                      color: PdfColor.fromInt(0xFF757575),
+                    ),
+                  ),
+                ),
+              pw.Divider(),
+            ],
+          );
+        }).toList();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: pageFormat,
+        margin: const pw.EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        build:
+            (context) => [
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'SmartDine RMS',
+                        style: pw.TextStyle(font: boldFont, fontSize: 22),
+                      ),
+                      pw.SizedBox(height: 4),
+                      pw.Text(
+                        'Mã đơn: #${widget.order.id}',
+                        style: pw.TextStyle(font: regularFont, fontSize: 12),
+                      ),
+                      pw.Text(
+                        'Bàn: ${widget.tableName}',
+                        style: pw.TextStyle(font: regularFont, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.end,
+                    children: [
+                      pw.Text(
+                        'Ngày: $orderDate',
+                        style: pw.TextStyle(font: regularFont, fontSize: 12),
+                      ),
+                      pw.Text(
+                        'Thu ngân: $cashier',
+                        style: pw.TextStyle(font: regularFont, fontSize: 12),
+                      ),
+                      pw.Text(
+                        'Chi nhánh: #${widget.order.branchId}',
+                        style: pw.TextStyle(font: regularFont, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 24),
+              pw.Text(
+                'Danh sách món',
+                style: pw.TextStyle(font: boldFont, fontSize: 16),
+              ),
+              pw.SizedBox(height: 8),
+              pw.Container(
+                padding: const pw.EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 12,
+                ),
+                decoration: pw.BoxDecoration(
+                  color: PdfColor.fromInt(0xFFE0E0E0),
+                ),
+                child: pw.Row(
+                  children: [
+                    pw.Expanded(
+                      flex: 4,
+                      child: pw.Text(
+                        'Món',
+                        style: pw.TextStyle(font: boldFont, fontSize: 12),
+                      ),
+                    ),
+                    pw.SizedBox(width: 8),
+                    pw.SizedBox(
+                      width: 40,
+                      child: pw.Text(
+                        'SL',
+                        textAlign: pw.TextAlign.right,
+                        style: pw.TextStyle(font: boldFont, fontSize: 12),
+                      ),
+                    ),
+                    pw.SizedBox(width: 8),
+                    pw.Expanded(
+                      flex: 3,
+                      child: pw.Text(
+                        'Đơn giá',
+                        textAlign: pw.TextAlign.right,
+                        style: pw.TextStyle(font: boldFont, fontSize: 12),
+                      ),
+                    ),
+                    pw.SizedBox(width: 8),
+                    pw.Expanded(
+                      flex: 3,
+                      child: pw.Text(
+                        'Thành tiền',
+                        textAlign: pw.TextAlign.right,
+                        style: pw.TextStyle(font: boldFont, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              pw.Divider(),
+              ...itemRows,
+              pw.SizedBox(height: 16),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.end,
+                children: [
+                  pw.Container(
+                    padding: const pw.EdgeInsets.all(12),
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border.all(
+                        color: PdfColor.fromInt(0xFFBDBDBD),
+                      ),
+                      borderRadius: pw.BorderRadius.circular(8),
+                    ),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.end,
+                      children: [
+                        pw.Row(
+                          mainAxisSize: pw.MainAxisSize.min,
+                          children: [
+                            pw.Text(
+                              'Phương thức: ',
+                              style: pw.TextStyle(
+                                font: regularFont,
+                                fontSize: 12,
+                              ),
+                            ),
+                            pw.Text(
+                              paymentMethod,
+                              style: pw.TextStyle(font: boldFont, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                        pw.SizedBox(height: 8),
+                        pw.Text(
+                          'Tổng cộng',
+                          style: pw.TextStyle(font: boldFont, fontSize: 14),
+                        ),
+                        pw.Text(
+                          _formatCurrency(total),
+                          style: pw.TextStyle(font: boldFont, fontSize: 18),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (widget.order.note != null && widget.order.note!.isNotEmpty)
+                pw.Padding(
+                  padding: const pw.EdgeInsets.only(top: 12),
+                  child: pw.Text(
+                    'Ghi chú đơn: ${widget.order.note}',
+                    style: pw.TextStyle(font: regularFont, fontSize: 12),
+                  ),
+                ),
+              pw.SizedBox(height: 24),
+              pw.Center(
+                child: pw.Text(
+                  'Cảm ơn quý khách và hẹn gặp lại!',
+                  style: pw.TextStyle(font: regularFont, fontSize: 12),
+                ),
+              ),
+            ],
+      ),
+    );
+
+    return pdf.save();
+  }
+
   @override
   Widget build(BuildContext context) {
     final total = _calculateTotal();
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final orderTimestamp = _formatOrderDate(widget.order.createdAt);
+    final currentUser = ref.watch(userNotifierProvider);
+    final cashierName =
+        _resolvedCashierName ?? _getCashierDisplayName(currentUser);
 
     return Scaffold(
       appBar: AppBar(
@@ -252,9 +676,10 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
         actions: [
           IconButton(
             icon: const Icon(Icons.print_outlined),
-            onPressed: () {
-              // TODO: In hóa đơn
-            },
+            onPressed:
+                _isExportingInvoice
+                    ? null
+                    : () => _handleExportInvoice(openPrintPreview: true),
           ),
           IconButton(
             icon: const Icon(Icons.more_vert),
@@ -280,7 +705,15 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Thời gian: ${widget.order.createdAt.day}/${widget.order.createdAt.month}/${widget.order.createdAt.year} - ${widget.order.createdAt.hour}:${widget.order.createdAt.minute.toString().padLeft(2, '0')}',
+                  'Thời gian: $orderTimestamp',
+                  style: Style.fontNormal.copyWith(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Thu ngân: $cashierName',
                   style: Style.fontNormal.copyWith(
                     fontSize: 13,
                     color: Colors.grey.shade600,
@@ -375,9 +808,8 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
                 // Nút Lưu Hóa Đơn
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () {
-                      // TODO: Lưu hóa đơn
-                    },
+                    onPressed:
+                        _isExportingInvoice ? null : _handleExportInvoice,
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       side: BorderSide(color: Colors.orange.shade700),
@@ -385,13 +817,25 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: Text(
-                      'Lưu Hóa Đơn',
-                      style: TextStyle(
-                        color: Colors.orange.shade700,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child:
+                        _isExportingInvoice
+                            ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation(
+                                  Colors.orange.shade700,
+                                ),
+                              ),
+                            )
+                            : Text(
+                              'Xuất hóa đơn',
+                              style: TextStyle(
+                                color: Colors.orange.shade700,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -448,6 +892,8 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
     );
 
     final itemPrice = menuItem.price * item.quantity;
+    final isCancelled = _isItemCancelled(item);
+    final displayPrice = isCancelled ? 0 : itemPrice;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -475,7 +921,10 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
               children: [
                 Text(
                   menuItem.name,
-                  style: Style.fontNormal.copyWith(fontSize: 14),
+                  style: Style.fontNormal.copyWith(
+                    fontSize: 14,
+                    decoration: isCancelled ? TextDecoration.lineThrough : null,
+                  ),
                 ),
                 if (item.note != null && item.note!.isNotEmpty)
                   Text(
@@ -486,15 +935,28 @@ class _ScreenPaymentState extends ConsumerState<ScreenPayment> {
                       fontStyle: FontStyle.italic,
                     ),
                   ),
+                if (isCancelled)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'ĐÃ HỦY - không tính tiền',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.red.shade400,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
           // Giá
           Text(
-            '${itemPrice.toStringAsFixed(0)}đ',
+            '${displayPrice.toStringAsFixed(0)}đ',
             style: Style.fontNormal.copyWith(
               fontSize: 14,
               fontWeight: FontWeight.w600,
+              color: isCancelled ? Colors.grey : null,
             ),
           ),
         ],

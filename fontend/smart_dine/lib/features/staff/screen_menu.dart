@@ -13,11 +13,11 @@ import 'package:mart_dine/model_staff/order_item.dart';
 import 'package:mart_dine/provider_staff/cart_provider.dart';
 import 'package:mart_dine/provider_staff/menu_item_provider.dart';
 import 'package:mart_dine/provider_staff/user_provider.dart';
+import 'package:mart_dine/providers/user_session_provider.dart';
 import 'package:mart_dine/API_staff/order_API.dart';
 import 'package:mart_dine/API_staff/order_item_API.dart';
 import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets/icon_back.dart';
-import 'package:mart_dine/providers/user_session_provider.dart';
 // Import provider của bạn để gọi API
 // Giả sử bạn có model OrderItem đã import
 
@@ -72,6 +72,15 @@ class _StatusDisplay {
   });
 }
 
+class _OrderTotals {
+  final int quantity;
+  final double amount;
+
+  const _OrderTotals({required this.quantity, required this.amount});
+
+  static const empty = _OrderTotals(quantity: 0, amount: 0);
+}
+
 //State provider
 final _selectedCategoryProvider = StateProvider<String>((ref) => 'Tất cả');
 final _selectedMenuProvider = StateProvider<String>((ref) => 'Tất cả');
@@ -86,6 +95,13 @@ final _currentOrderProvider = StateProvider<Order?>((ref) => null);
 final _existingOrderItemsProvider = StateProvider<List<OrderItem>>((ref) => []);
 
 class _ScreenMenuState extends ConsumerState<ScreenMenu> {
+  bool _isCashier() {
+    final user = ref.read(userNotifierProvider);
+    final session = ref.read(userSessionProvider);
+    final role = user?.role ?? session.userRole;
+    return role == 6;
+  }
+
   // Loại bỏ dấu tiếng Việt cho tìm kiếm
   String _removeVietnameseDiacritics(String str) {
     const vietnamese =
@@ -717,32 +733,42 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
     return display;
   }
 
-  int _combinedQuantity(
-    List<_DisplayOrderItem> existing,
-    List<_DisplayOrderItem> current,
-  ) {
-    int total = 0;
-    for (final entry in existing) {
-      total += entry.quantity;
-    }
-    for (final entry in current) {
-      total += entry.quantity;
-    }
-    return total;
-  }
+  bool _isBillableStatus(int statusId) => statusId != 4 && statusId != 5;
 
-  double _combinedPrice(
-    List<_DisplayOrderItem> existing,
-    List<_DisplayOrderItem> current,
+  _OrderTotals _calculateTotals(
+    List<Item> menuItems,
+    List<_DisplayOrderItem> cartItems,
   ) {
-    double total = 0;
-    for (final entry in existing) {
-      total += entry.item.price * entry.quantity;
+    final existingItems = ref.watch(_existingOrderItemsProvider);
+    if (existingItems.isEmpty && cartItems.isEmpty) {
+      return _OrderTotals.empty;
     }
-    for (final entry in current) {
-      total += entry.item.price * entry.quantity;
+
+    final menuMap = <int, Item>{};
+    for (final menuItem in menuItems) {
+      final id = menuItem.id;
+      if (id != null) {
+        menuMap[id] = menuItem;
+      }
     }
-    return total;
+
+    int quantity = 0;
+    double amount = 0;
+
+    for (final orderItem in existingItems) {
+      if (!_isBillableStatus(orderItem.statusId)) continue;
+      final menuItem = menuMap[orderItem.itemId];
+      if (menuItem == null) continue;
+      quantity += orderItem.quantity;
+      amount += menuItem.price * orderItem.quantity;
+    }
+
+    for (final entry in cartItems) {
+      quantity += entry.quantity;
+      amount += entry.item.price * entry.quantity;
+    }
+
+    return _OrderTotals(quantity: quantity, amount: amount);
   }
 
   Widget _buildCartListTile(_DisplayOrderItem entry, ThemeData theme) {
@@ -1141,16 +1167,9 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                     // *** BỎ COMMENT VÀ SỬA LẠI TỔNG TIỀN ***
                     Builder(
                       builder: (context) {
-                        final existingDisplay = _buildExistingDisplay(
-                          _menuItems,
-                        );
                         final cartDisplay = _buildCartDisplay(_selectedItems);
-                        final totalQuantity = _combinedQuantity(
-                          existingDisplay,
-                          cartDisplay,
-                        );
-                        final totalPrice = _combinedPrice(
-                          existingDisplay,
+                        final totals = _calculateTotals(
+                          _menuItems,
                           cartDisplay,
                         );
 
@@ -1158,11 +1177,11 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Tổng cộng ($totalQuantity món):',
+                              'Tổng cộng (${totals.quantity} món):',
                               style: Style.fontNormal,
                             ),
                             Text(
-                              _formatCurrency(totalPrice),
+                              _formatCurrency(totals.amount),
                               style: Style.fontTitleMini.copyWith(
                                 color: Theme.of(context).colorScheme.primary,
                               ),
@@ -1226,10 +1245,8 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                                     ? null
                                     : () {
                                       // Kiểm tra role của user hiện tại
-                                      final user = ref.read(
-                                        userNotifierProvider,
-                                      );
-                                      if (user != null && user.role == 2) {
+                                      final isCashier = _isCashier();
+                                      if (isCashier) {
                                         // Role 2 là thu ngân - chuyển đến thanh toán
                                         _processPayment();
                                       } else {
@@ -1265,11 +1282,8 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
                                           ? 'Đã yêu cầu thanh toán'
                                           : () {
                                             // Kiểm tra role để hiển thị text phù hợp
-                                            final user = ref.read(
-                                              userNotifierProvider,
-                                            );
-                                            if (user != null &&
-                                                user.role == 2) {
+                                            final isCashier = _isCashier();
+                                            if (isCashier) {
                                               return 'THANH TOÁN';
                                             } else {
                                               return 'YÊU CẦU THANH TOÁN';
@@ -1529,7 +1543,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             color:
                 isSelected

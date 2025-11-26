@@ -173,6 +173,9 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
               companyId: user.companyId,
               branchIds: branchId != null ? [branchId] : [],
               defaultBranchId: branchId,
+              email: user.email,
+              name: user.fullName,
+              phone: user.phone,
             );
 
         // Điều hướng dựa theo role

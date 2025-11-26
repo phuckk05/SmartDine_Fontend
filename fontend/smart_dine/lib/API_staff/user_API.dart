@@ -75,6 +75,26 @@ class UserAPI {
     }
     return null;
   }
+
+  Future<User?> getUserById(int userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$uri2/$userId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (response.statusCode == 200) {
+        if (response.body.isEmpty) {
+          return null;
+        }
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        return User.fromMap(data);
+      }
+      return null;
+    } catch (e) {
+      print('getUserById error: $e');
+      return null;
+    }
+  }
 }
 
 //userApiProvider

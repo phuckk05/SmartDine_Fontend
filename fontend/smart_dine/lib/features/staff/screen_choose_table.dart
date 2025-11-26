@@ -14,8 +14,8 @@ import 'package:mart_dine/model_staff/order_item.dart';
 import 'package:mart_dine/model_staff/table.dart';
 import 'package:mart_dine/provider_staff/table_provider.dart';
 import 'package:mart_dine/provider_staff/user_provider.dart';
-import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/providers/user_session_provider.dart';
+import 'package:mart_dine/routes.dart';
 
 class ScreenChooseTable extends ConsumerStatefulWidget {
   final int? branchId;
@@ -43,15 +43,6 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
     }
     return result;
   }
-
-  int? _resolveBranchId({bool listen = false}) {
-    final session =
-        listen ? ref.watch(userSessionProvider) : ref.read(userSessionProvider);
-    if (widget.branchId != null) return widget.branchId;
-    if (session.currentBranchId != null) return session.currentBranchId;
-    if (session.branchIds.isNotEmpty) return session.branchIds.first;
-    return null;
-  }
   //Table provider
 
   @override
@@ -67,11 +58,7 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
   //Load tables
   Future<void> _loadTables() async {
     if (_isDisposed) return;
-    final branchId = _resolveBranchId();
-    if (branchId == null) {
-      // Không thể tải bàn nếu chưa có branchId hợp lệ
-      return;
-    }
+    final branchId = widget.branchId ?? 1;
     try {
       await ref.read(tableNotifierProvider.notifier).loadTables(branchId);
       if (_isDisposed) return;
@@ -87,20 +74,10 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
   Future<void> _openTable(DiningTable table, bool hasUnpaidOrders) async {
     if (!mounted) return;
 
-    final branchId = _resolveBranchId();
-    if (branchId == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Không xác định được chi nhánh hiện tại.'),
-          ),
-        );
-      }
-      return;
-    }
-
     // Kiểm tra trạng thái bàn để quyết định hành động
-    final unpaidTableStatus = ref.read(unpaidTablesByBranchProvider(branchId));
+    final unpaidTableStatus = ref.read(
+      unpaidTablesByBranchProvider(widget.branchId ?? 1),
+    );
     final tableStatus = unpaidTableStatus.when(
       data: (statusMap) => statusMap[table.id],
       loading: () => null,
@@ -113,7 +90,9 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
 
       // Lấy thông tin user hiện tại để kiểm tra role
       final user = ref.read(userNotifierProvider);
-      if (user != null && user.role == 2) {
+      final session = ref.read(userSessionProvider);
+      final userRole = user?.role ?? session.userRole;
+      if (userRole == 6) {
         // Role 2 là thu ngân - chuyển đến màn hình thanh toán
         // Cần lấy thông tin order và orderItems trước
         Order? currentOrder;
@@ -264,26 +243,16 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
 
     try {
       final session = ref.read(userSessionProvider);
-      final sessionCompanyId = session.companyId;
-      final sessionUserId = session.userId;
-
-      if (sessionCompanyId == null || sessionUserId == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Thiếu thông tin người dùng hoặc công ty.'),
-            ),
-          );
-        }
-        return;
-      }
+      final selectedBranchId = widget.branchId ?? session.currentBranchId ?? 1;
+      final sessionCompanyId = session.companyId ?? 1;
+      final sessionUserId = session.userId ?? 1;
 
       Routes.pushRightLeftConsumerFul(
         context,
         ScreenMenu(
           tableId: table.id,
           tableName: table.name,
-          branchId: branchId,
+          branchId: selectedBranchId,
           companyId: sessionCompanyId,
           userId: sessionUserId,
           initialOrder: initialOrder,
@@ -297,11 +266,8 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
 
   @override
   Widget build(BuildContext context) {
-    final branchId = _resolveBranchId(listen: true);
-    final AsyncValue<Map<int, int>> unpaidTableStatus =
-        branchId != null
-            ? ref.watch(unpaidTablesByBranchProvider(branchId))
-            : const AsyncValue.data(<int, int>{});
+    final branchId = widget.branchId ?? 1;
+    final unpaidTableStatus = ref.watch(unpaidTablesByBranchProvider(branchId));
     final allTables = ref.watch(tableNotifierProvider);
     final searchKeyword = _searchController.text;
     // Lọc bàn theo tên (không dấu, không phân biệt hoa thường)
@@ -316,10 +282,10 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
 
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         title: Text('Chọn bàn', style: Style.fontTitle),
         centerTitle: false,
         elevation: 0,
+        automaticallyImplyLeading: false,
         iconTheme: Theme.of(context).iconTheme,
         actions: [
           IconButton(
@@ -333,7 +299,7 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
             onPressed: () {
               Routes.pushRightLeftConsumerFul(
                 context,
-                ScreenNotifications(branchId: branchId),
+                ScreenNotifications(branchId: widget.branchId),
               );
             },
             icon: const Icon(Icons.notifications_none),
@@ -351,49 +317,17 @@ class _ScreenChooseTableState extends ConsumerState<ScreenChooseTable> {
       ),
       body: RefreshIndicator(
         onRefresh: _loadTables,
-        child:
-            branchId == null
-                ? _buildMissingBranchMessage(context)
-                : ListView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Style.paddingPhone,
-                  ),
-                  children: [
-                    const SizedBox(height: 8),
-                    _search(context),
-                    const SizedBox(height: 16),
-                    _buildTableGrid(context, tables, unpaidTableStatus),
-                    const SizedBox(height: 24),
-                  ],
-                ),
-      ),
-    );
-  }
-
-  Widget _buildMissingBranchMessage(BuildContext context) {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      children: [
-        const SizedBox(height: 120),
-        Padding(
+        child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: Style.paddingPhone),
-          child: Column(
-            children: [
-              Icon(
-                Icons.info_outline,
-                size: 48,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Không xác định được chi nhánh hiện tại. Vui lòng đăng nhập hoặc chọn chi nhánh trước.',
-                style: Style.fontCaption,
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+          children: [
+            const SizedBox(height: 8),
+            _search(context),
+            const SizedBox(height: 16),
+            _buildTableGrid(context, tables, unpaidTableStatus),
+            const SizedBox(height: 24),
+          ],
         ),
-      ],
+      ),
     );
   }
 

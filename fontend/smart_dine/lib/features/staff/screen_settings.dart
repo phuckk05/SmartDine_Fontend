@@ -1,11 +1,96 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mart_dine/features/owner/screen_account_info.dart';
-import 'package:mart_dine/features/signin/screen_signin.dart';
+import 'package:mart_dine/API_staff/branch_API.dart';
+import 'package:mart_dine/API_staff/user_branch_API.dart';
+import 'package:mart_dine/features/staff/screen_oder_history.dart';
+import 'package:mart_dine/features/staff/screen_user_profile.dart';
+import 'package:mart_dine/model_staff/user.dart';
 import 'package:mart_dine/models/user_session.dart';
 import 'package:mart_dine/provider_staff/mode_provider.dart';
+import 'package:mart_dine/provider_staff/user_provider.dart';
 import 'package:mart_dine/providers/user_session_provider.dart';
-import 'package:mart_dine/routes.dart';
+
+final _branchNameByIdProvider = FutureProvider.family<String?, int>((
+  ref,
+  branchId,
+) async {
+  final branchApi = ref.watch(branchApiProvider2);
+  final branch = await branchApi.getBranchById(branchId);
+  return branch?.name;
+});
+
+final _branchNameByUserProvider = FutureProvider.family<String?, int>((
+  ref,
+  userId,
+) async {
+  final userBranchApi = ref.watch(userBranchApiProvider);
+  final data = await userBranchApi.getBranchByUserId(userId);
+  if (data == null) return null;
+
+  String? _cleanLabel(String? raw) {
+    if (raw == null) return null;
+    final trimmed = raw.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
+
+  int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    return int.tryParse(value.toString());
+  }
+
+  String? label;
+
+  label = _cleanLabel((data['branchName'] ?? data['branch_name']) as String?);
+  if (label != null) {
+    debugPrint('branch label: direct field -> $label');
+    return label;
+  }
+
+  final nested = data['branch'];
+  if (nested is Map<String, dynamic>) {
+    label = _cleanLabel(nested['name'] as String?);
+    if (label != null) {
+      debugPrint('branch label: nested name -> $label');
+      return label;
+    }
+    label = _cleanLabel(nested['branchCode'] as String?);
+    if (label != null) {
+      debugPrint('branch label: nested code -> $label');
+      return label;
+    }
+  }
+
+  final branchApi = ref.read(branchApiProvider2);
+  final branchId = _parseInt(
+    data['branchId'] ??
+        data['branch_id'] ??
+        (nested is Map<String, dynamic> ? nested['id'] : null),
+  );
+  if (branchId != null) {
+    final branch = await branchApi.getBranchById(branchId);
+    label = _cleanLabel(branch?.name);
+    if (label != null) {
+      debugPrint('branch label: loaded by id $branchId -> $label');
+      return label;
+    }
+    label = _cleanLabel(branch?.branchCode);
+    if (label != null) {
+      debugPrint('branch label: loaded code by id $branchId -> $label');
+      return label;
+    }
+  }
+
+  final branchCode = _cleanLabel(data['branchCode'] as String?);
+  if (branchCode != null) {
+    final branch = await branchApi.findBranchByBranchCode(branchCode);
+    label = _cleanLabel(branch?.name) ?? branchCode;
+    debugPrint('branch label: resolved from code $branchCode -> $label');
+    return label;
+  }
+
+  return null;
+});
 
 class ScreenSettings extends ConsumerWidget {
   const ScreenSettings({super.key});
@@ -16,7 +101,22 @@ class ScreenSettings extends ConsumerWidget {
     final scaffoldColor = Theme.of(context).scaffoldBackgroundColor;
     final textColor = Theme.of(context).colorScheme.onSurface;
     final isDarkMode = ref.watch(modeProvider);
+    final user = ref.watch(userNotifierProvider);
     final session = ref.watch(userSessionProvider);
+
+    final displayName = _resolveDisplayName(user, session);
+    final resolvedBranchId = _resolveBranchId(session);
+    final userId = user?.id ?? session.userId;
+    debugPrint(
+      'Settings: userId=$userId, session.currentBranchId=${session.currentBranchId}, branchIds=${session.branchIds}',
+    );
+
+    AsyncValue<String?>? branchLabelState;
+    if (userId != null) {
+      branchLabelState = ref.watch(_branchNameByUserProvider(userId));
+    } else if (resolvedBranchId != null) {
+      branchLabelState = ref.watch(_branchNameByIdProvider(resolvedBranchId));
+    }
 
     return Scaffold(
       backgroundColor: scaffoldColor,
@@ -35,7 +135,13 @@ class ScreenSettings extends ConsumerWidget {
       body: ListView(
         children: [
           // User profile section
-          _buildUserProfile(context, ref, session),
+          _buildUserProfile(
+            context,
+            displayName: displayName,
+            branchLabelState: branchLabelState,
+            fallbackBranchId: resolvedBranchId,
+            onLogout: () => _handleLogout(context, ref),
+          ),
 
           // Account section
           _buildSectionHeader(context, 'Tài khoản'),
@@ -44,21 +150,26 @@ class ScreenSettings extends ConsumerWidget {
             icon: Icons.person_outline,
             title: 'Thông tin tài khoản',
             onTap: () {
-              Routes.pushRightLeftConsumerLess(
+              Navigator.push(
                 context,
-                const ScreenAccountInfo(),
+                MaterialPageRoute(builder: (_) => const ScreenUserProfile()),
               );
             },
           ),
+
           _buildSettingsItem(
             context: context,
             icon: Icons.history,
             title: 'Lịch sử gọi món',
             onTap: () {
-              // Navigator.push(
-              //   context,
-              //   MaterialPageRoute(builder: (_) => const ScreenOrderHistory()),
-              // );
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (_) =>
+                          ScreenOrderHistory(branchId: session.currentBranchId),
+                ),
+              );
             },
           ),
 
@@ -72,15 +183,17 @@ class ScreenSettings extends ConsumerWidget {
 
   // Widget for the user profile card
   Widget _buildUserProfile(
-    BuildContext context,
-    WidgetRef ref,
-    UserSession session,
-  ) {
-    final userName = session.userName ?? session.name ?? 'Nhân viên';
-    final branchLabel =
-        session.currentBranchId != null
-            ? 'CN ${session.currentBranchId}'
-            : '__';
+    BuildContext context, {
+    required String displayName,
+    required AsyncValue<String?>? branchLabelState,
+    int? fallbackBranchId,
+    required VoidCallback onLogout,
+  }) {
+    final branchChip = _buildBranchChipFromState(
+      context,
+      branchLabelState,
+      fallbackBranchId: fallbackBranchId,
+    );
 
     return Container(
       padding: const EdgeInsets.all(16.0),
@@ -89,79 +202,103 @@ class ScreenSettings extends ConsumerWidget {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
-              Text(
-                userName,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  displayName,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
-              Chip(
-                avatar: const Icon(
-                  Icons.storefront,
-                  size: 16,
-                  color: Colors.blue,
+              TextButton.icon(
+                onPressed: onLogout,
+                icon: const Icon(Icons.logout, color: Colors.redAccent),
+                label: const Text(
+                  'Đăng xuất',
+                  style: TextStyle(color: Colors.redAccent),
                 ),
-                label: Text(branchLabel),
-                backgroundColor: Colors.blue.withOpacity(0.1),
-                padding: EdgeInsets.zero,
+                style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
               ),
             ],
           ),
-          OutlinedButton(
-            onPressed: () => _confirmLogout(context, ref),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.black,
-              side: BorderSide(color: Colors.grey.shade400),
-            ),
-            child: const Text('Đăng xuất'),
-          ),
+          const SizedBox(height: 8),
+          branchChip,
         ],
       ),
     );
   }
 
-  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
-    final shouldLogout =
-        await showDialog<bool>(
-          context: context,
-          builder:
-              (dialogContext) => AlertDialog(
-                title: const Text('Đăng xuất'),
-                content: const Text('Bạn có chắc chắn muốn đăng xuất không?'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(false),
-                    child: const Text('Hủy'),
-                  ),
-                  FilledButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(true),
-                    child: const Text('Đăng xuất'),
-                  ),
-                ],
-              ),
-        ) ??
-        false;
+  String _resolveDisplayName(User? user, UserSession session) {
+    final candidates = <String?>[
+      user?.fullName,
+      session.userName,
+      session.name,
+      user?.email,
+      session.email,
+    ];
 
-    if (!shouldLogout) return;
-
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      await ref.read(userSessionProvider.notifier).logout();
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Đăng xuất thành công')),
-      );
-      Routes.pushAndRemoveUntil(context, const ScreenSignIn());
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Đăng xuất thất bại: $e')));
+    for (final value in candidates) {
+      if (value != null && value.trim().isNotEmpty) {
+        return value;
+      }
     }
+
+    return 'Chưa xác định';
+  }
+
+  int? _resolveBranchId(UserSession session) {
+    if (session.currentBranchId != null) {
+      return session.currentBranchId;
+    }
+    if (session.branchIds.isNotEmpty) {
+      return session.branchIds.first;
+    }
+    return null;
+  }
+
+  Widget _buildBranchChipFromState(
+    BuildContext context,
+    AsyncValue<String?>? branchLabelState, {
+    int? fallbackBranchId,
+  }) {
+    final fallbackLabel =
+        fallbackBranchId != null
+            ? 'Chi nhánh #$fallbackBranchId'
+            : 'Chưa có chi nhánh';
+
+    if (branchLabelState == null) {
+      return _buildBranchChip(context, fallbackLabel);
+    }
+
+    return branchLabelState.when(
+      data: (name) {
+        final label =
+            (name != null && name.trim().isNotEmpty) ? name : fallbackLabel;
+        return _buildBranchChip(context, label);
+      },
+      loading:
+          () => const SizedBox(
+            height: 24,
+            width: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+      error: (_, __) => _buildBranchChip(context, fallbackLabel),
+    );
+  }
+
+  Widget _buildBranchChip(BuildContext context, String label) {
+    return Chip(
+      avatar: const Icon(Icons.storefront, size: 16, color: Colors.blue),
+      label: Text(label),
+      backgroundColor: Colors.blue.withOpacity(0.1),
+      padding: EdgeInsets.zero,
+    );
   }
 
   // Widget for section headers
@@ -202,6 +339,11 @@ class ScreenSettings extends ConsumerWidget {
         onTap: onTap,
       ),
     );
+  }
+
+  void _handleLogout(BuildContext context, WidgetRef ref) {
+    ref.read(userNotifierProvider.notifier).signOut();
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   // Widget for the dark mode toggle
