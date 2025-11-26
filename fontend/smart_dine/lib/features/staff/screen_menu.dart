@@ -17,6 +17,7 @@ import 'package:mart_dine/API_staff/order_API.dart';
 import 'package:mart_dine/API_staff/order_item_API.dart';
 import 'package:mart_dine/routes.dart';
 import 'package:mart_dine/widgets/icon_back.dart';
+import 'package:mart_dine/providers/user_session_provider.dart';
 // Import provider của bạn để gọi API
 // Giả sử bạn có model OrderItem đã import
 
@@ -1528,7 +1529,7 @@ class _ScreenMenuState extends ConsumerState<ScreenMenu> {
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
           decoration: BoxDecoration(
             color:
                 isSelected

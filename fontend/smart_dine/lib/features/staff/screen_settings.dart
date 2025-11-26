@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mart_dine/features/staff/screen_user_profile.dart';
+import 'package:mart_dine/features/owner/screen_account_info.dart';
+import 'package:mart_dine/features/signin/screen_signin.dart';
+import 'package:mart_dine/models/user_session.dart';
 import 'package:mart_dine/provider_staff/mode_provider.dart';
+import 'package:mart_dine/providers/user_session_provider.dart';
+import 'package:mart_dine/routes.dart';
 
 class ScreenSettings extends ConsumerWidget {
   const ScreenSettings({super.key});
@@ -12,6 +16,7 @@ class ScreenSettings extends ConsumerWidget {
     final scaffoldColor = Theme.of(context).scaffoldBackgroundColor;
     final textColor = Theme.of(context).colorScheme.onSurface;
     final isDarkMode = ref.watch(modeProvider);
+    final session = ref.watch(userSessionProvider);
 
     return Scaffold(
       backgroundColor: scaffoldColor,
@@ -30,7 +35,7 @@ class ScreenSettings extends ConsumerWidget {
       body: ListView(
         children: [
           // User profile section
-          _buildUserProfile(context),
+          _buildUserProfile(context, ref, session),
 
           // Account section
           _buildSectionHeader(context, 'Tài khoản'),
@@ -39,13 +44,12 @@ class ScreenSettings extends ConsumerWidget {
             icon: Icons.person_outline,
             title: 'Thông tin tài khoản',
             onTap: () {
-              Navigator.push(
+              Routes.pushRightLeftConsumerLess(
                 context,
-                MaterialPageRoute(builder: (_) => const ScreenUserProfile()),
+                const ScreenAccountInfo(),
               );
             },
           ),
-
           _buildSettingsItem(
             context: context,
             icon: Icons.history,
@@ -67,7 +71,17 @@ class ScreenSettings extends ConsumerWidget {
   }
 
   // Widget for the user profile card
-  Widget _buildUserProfile(BuildContext context) {
+  Widget _buildUserProfile(
+    BuildContext context,
+    WidgetRef ref,
+    UserSession session,
+  ) {
+    final userName = session.userName ?? session.name ?? 'Nhân viên';
+    final branchLabel =
+        session.currentBranchId != null
+            ? 'CN ${session.currentBranchId}'
+            : '__';
+
     return Container(
       padding: const EdgeInsets.all(16.0),
       margin: const EdgeInsets.all(16.0),
@@ -81,9 +95,12 @@ class ScreenSettings extends ConsumerWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Nhân viên 1',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Text(
+                userName,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
               Chip(
@@ -92,23 +109,59 @@ class ScreenSettings extends ConsumerWidget {
                   size: 16,
                   color: Colors.blue,
                 ),
-                label: const Text('Chi nhánh A'),
+                label: Text(branchLabel),
                 backgroundColor: Colors.blue.withOpacity(0.1),
                 padding: EdgeInsets.zero,
               ),
             ],
           ),
           OutlinedButton(
-            onPressed: () {},
+            onPressed: () => _confirmLogout(context, ref),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.black,
               side: BorderSide(color: Colors.grey.shade400),
             ),
-            child: Text('Đăng xuất'),
+            child: const Text('Đăng xuất'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
+    final shouldLogout =
+        await showDialog<bool>(
+          context: context,
+          builder:
+              (dialogContext) => AlertDialog(
+                title: const Text('Đăng xuất'),
+                content: const Text('Bạn có chắc chắn muốn đăng xuất không?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(false),
+                    child: const Text('Hủy'),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(true),
+                    child: const Text('Đăng xuất'),
+                  ),
+                ],
+              ),
+        ) ??
+        false;
+
+    if (!shouldLogout) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(userSessionProvider.notifier).logout();
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Đăng xuất thành công')),
+      );
+      Routes.pushAndRemoveUntil(context, const ScreenSignIn());
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Đăng xuất thất bại: $e')));
+    }
   }
 
   // Widget for section headers

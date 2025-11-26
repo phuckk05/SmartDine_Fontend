@@ -215,6 +215,10 @@ class _ScreenSignInState extends ConsumerState<ScreenSignIn> {
           );
         } else if (user.role == 6) {
           //Cashier
+          Routes.pushRightLeftConsumerFul(
+            context,
+            ScreenChooseTable(branchId: branchId),
+          );
         }
       }
     } else {
